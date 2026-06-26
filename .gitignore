@@ -46,3 +46,6 @@ next-env.d.ts
 
 # seeded photos live in object storage, not the repo
 /public/places/
+
+.vercel
+.env*
