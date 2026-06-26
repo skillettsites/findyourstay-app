@@ -269,6 +269,19 @@ export async function createListing(input: NewListingInput): Promise<{ id: strin
   return { id, slug };
 }
 
+// A homely B&B/apartment (not a hotel) with real photos, for the example site.
+export async function getDemoListing(): Promise<Listing | null> {
+  const { data } = await sb
+    .from(T.listings)
+    .select("*")
+    .in("property_type", ["guest_house", "apartment", "villa", "cottage", "chalet"])
+    .in("status", ["active", "unclaimed"])
+    .eq("real_photo", true)
+    .order("rating", { ascending: false, nullsFirst: false })
+    .limit(1);
+  return data && data[0] ? rowToListing(data[0]) : null;
+}
+
 export async function getHostListings(limit = 10): Promise<Listing[]> {
   const { data } = await sb.from(T.listings).select("*").eq("source", "host").order("created_at", { ascending: false }).limit(limit);
   return (data ?? []).map(rowToListing);

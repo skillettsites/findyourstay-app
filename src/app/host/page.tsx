@@ -3,7 +3,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { PricingCards } from "@/components/host/PricingCards";
 import { BackButton } from "@/components/BackButton";
-import { getFeaturedListings } from "@/lib/db";
+import { getFeaturedListings, getDemoListing } from "@/lib/db";
 import { suggestDomain } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +14,7 @@ export const metadata = {
 };
 
 export default async function HostPage() {
-  const demo = (await getFeaturedListings(1))[0];
+  const demo = (await getDemoListing()) ?? (await getFeaturedListings(1))[0];
   const demoSlug = demo?.slug;
   const demoDomain = demo ? suggestDomain(demo.propertyName) : "yourstay.com";
   const demoPhoto = demo?.photos?.[0] ?? "https://picsum.photos/seed/host-site-preview/900/520";
