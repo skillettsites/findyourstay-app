@@ -27,9 +27,11 @@ export function middleware(req: NextRequest) {
   const host = req.headers.get("host") ?? "";
   if (!host || isAppHost(host)) return NextResponse.next();
 
-  // Custom domain -> serve that host's booking site, keeping the URL intact.
+  // Custom domain -> serve that host's standalone site, preserving the page path
+  // (/ -> home, /rooms, /gallery, /location, /book) and keeping the URL intact.
   const url = req.nextUrl.clone();
-  url.pathname = `/sites/by-domain/${encodeURIComponent(host.split(":")[0])}`;
+  const sub = req.nextUrl.pathname === "/" ? "" : req.nextUrl.pathname;
+  url.pathname = `/sites/by-domain/${encodeURIComponent(host.split(":")[0])}${sub}`;
   return NextResponse.rewrite(url);
 }
 
