@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, useMotionValueEvent, useScroll } from "motion/react";
 import { Brand } from "./Brand";
 import { SearchBar } from "./SearchBar";
@@ -23,11 +23,7 @@ export function Header({ showSearch = true }: { showSearch?: boolean }) {
         scrolled ? "border-line" : "border-transparent"
       }`}
     >
-      <motion.div
-        animate={{ height: scrolled ? 60 : 72 }}
-        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-        className="mx-auto max-w-7xl px-4 sm:px-6 flex items-center justify-between gap-4"
-      >
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 h-[60px] sm:h-[68px] flex items-center justify-between gap-4">
         <Brand />
         {showSearch && (
           <div className="hidden md:block">
@@ -42,18 +38,77 @@ export function Header({ showSearch = true }: { showSearch?: boolean }) {
             List your stay
           </Link>
           <Magnetic>
-            <Link
-              href="/host/dashboard"
-              className="flex items-center gap-2 border border-line rounded-full pl-3 pr-1.5 py-1.5 bg-white hover:shadow-float transition-shadow"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 6h18M3 12h18M3 18h18" strokeLinecap="round" />
-              </svg>
-              <span className="grid place-items-center w-7 h-7 rounded-full bg-ink text-white text-xs font-semibold">H</span>
-            </Link>
+            <Menu />
           </Magnetic>
         </nav>
-      </motion.div>
+      </div>
     </motion.header>
   );
+}
+
+const EXPLORE = [
+  { href: "/s", label: "All stays" },
+  { href: "/s?type=guest_house", label: "Guesthouses & B&Bs" },
+  { href: "/s?type=apartment", label: "Apartments" },
+  { href: "/s?type=villa", label: "Villas" },
+  { href: "/s?type=chalet", label: "Cabins & chalets" },
+];
+
+function Menu() {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function onDown(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-label="Menu"
+        aria-expanded={open}
+        className="flex items-center gap-2 border border-line rounded-full pl-3 pr-1.5 py-1.5 bg-white hover:shadow-float transition-shadow"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M3 6h18M3 12h18M3 18h18" strokeLinecap="round" />
+        </svg>
+        <span className="grid place-items-center w-7 h-7 rounded-full bg-ink text-white">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 2c-3.3 0-8 1.7-8 5v1h16v-1c0-3.3-4.7-5-8-5Z" /></svg>
+        </span>
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full mt-2 w-60 bg-white border border-line rounded-2xl shadow-float py-2 text-sm overflow-hidden">
+          <p className="px-4 pt-1.5 pb-1 text-[11px] font-bold uppercase tracking-wide text-muted">Explore</p>
+          {EXPLORE.map((l) => (
+            <Item key={l.href} href={l.href} onClick={() => setOpen(false)}>{l.label}</Item>
+          ))}
+          <Divider />
+          <Item href="/host#pricing" onClick={() => setOpen(false)}>Pricing</Item>
+          <Item href="/host" onClick={() => setOpen(false)}>List your stay</Item>
+          <Item href="/host/dashboard" onClick={() => setOpen(false)}>Host dashboard</Item>
+          <Divider />
+          <Item href="/host/dashboard" onClick={() => setOpen(false)}>Log in</Item>
+          <Item href="/host/new" onClick={() => setOpen(false)} strong>Sign up</Item>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Item({ href, children, onClick, strong = false }: { href: string; children: React.ReactNode; onClick: () => void; strong?: boolean }) {
+  return (
+    <Link href={href} onClick={onClick} className={`block px-4 py-2.5 hover:bg-mist transition ${strong ? "font-semibold text-brand" : "text-ink"}`}>
+      {children}
+    </Link>
+  );
+}
+
+function Divider() {
+  return <div className="my-1.5 h-px bg-line" />;
 }

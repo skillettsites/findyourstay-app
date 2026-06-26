@@ -5,6 +5,7 @@ import { Footer } from "@/components/Footer";
 import { ListingCard } from "@/components/ListingCard";
 import { ResultsMap } from "@/components/ResultsMap";
 import { BookingBox } from "@/components/BookingBox";
+import { RoomGallery } from "@/components/RoomGallery";
 import { BackButton } from "@/components/BackButton";
 import { Stagger, StaggerItem } from "@/components/Motion";
 import { getListingBySlug, getRelatedListings, recordEvent } from "@/lib/db";
@@ -85,27 +86,7 @@ export default async function RoomPage({ params }: { params: Promise<{ slug: str
 
         {/* Gallery */}
         {hasPhotos ? (
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-4 sm:grid-rows-2 gap-2 rounded-3xl overflow-hidden sm:h-[440px] shadow-card">
-            {/* eslint-disable @next/next/no-img-element */}
-            <div className="relative overflow-hidden sm:col-span-2 sm:row-span-2 group/g">
-              <img
-                src={photos[0]}
-                alt={listing.propertyName}
-                className="w-full h-60 sm:h-full object-cover transition-transform duration-700 ease-out group-hover/g:scale-105"
-              />
-            </div>
-            {photos.slice(1, 5).map((p, i) => (
-              <div key={i} className="relative overflow-hidden hidden sm:block group/g">
-                <img src={p} alt="" className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover/g:scale-105" />
-              </div>
-            ))}
-            {photos.length < 2 && (
-              <div className="hidden sm:flex sm:col-span-2 sm:row-span-2 bg-mist items-center justify-center text-center p-6">
-                <p className="text-muted text-sm">More photos coming soon.</p>
-              </div>
-            )}
-            {/* eslint-enable @next/next/no-img-element */}
-          </div>
+          <RoomGallery photos={photos} name={listing.propertyName} />
         ) : (
           <div className="mt-4 grid place-items-center rounded-3xl bg-gradient-to-br from-rose-50 to-mist h-60 sm:h-[440px] shadow-card text-muted">
             <div className="text-center">

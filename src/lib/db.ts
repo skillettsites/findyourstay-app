@@ -208,9 +208,10 @@ async function geocode(address: string): Promise<{ lat: number; lng: number } | 
   }
 }
 
-// Offset by up to ~275m so the public map shows a general area, never the exact spot.
+// Offset by up to ~40m so the public map shows a tight approximate spot, never
+// the exact pin. Kept small so the circle reads as "this block", not a region.
 function fuzz(lat: number, lng: number): { lat: number; lng: number } {
-  const d = 0.0025;
+  const d = 0.00035;
   return { lat: lat + (Math.random() - 0.5) * 2 * d, lng: lng + (Math.random() - 0.5) * 2 * d };
 }
 
@@ -222,6 +223,8 @@ export interface NewListingInput {
   propertyType: string;
   neighborhood?: string;
   address?: string;
+  lat?: number;
+  lng?: number;
   description?: string;
   pricePerNight?: number;
   amenities?: string[];
@@ -234,10 +237,11 @@ export interface NewListingInput {
 }
 
 export async function createListing(input: NewListingInput): Promise<{ id: string; slug: string }> {
-  let lat = 0, lng = 0, country = input.country;
-  // Exact address -> precise coords (geocoded), used only to derive an approximate
-  // public point. The address itself is never stored or shown to guests.
-  if (input.address) {
+  let lat = Number(input.lat ?? 0), lng = Number(input.lng ?? 0), country = input.country;
+  // Exact address -> precise coords. The address autocomplete already resolves
+  // coordinates client-side; only fall back to a server geocode if it didn't.
+  // The address itself is never stored or shown to guests, just a fuzzed point.
+  if ((!lat || !lng) && input.address) {
     const g = await geocode(`${input.address}, ${input.cityName}, ${input.country}`);
     if (g) { lat = g.lat; lng = g.lng; }
   }

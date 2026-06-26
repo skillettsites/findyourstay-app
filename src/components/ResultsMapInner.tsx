@@ -23,13 +23,13 @@ export default function ResultsMapInner({ points, approxArea = false }: { points
 
   const center: [number, number] = [points[0].lat, points[0].lng];
 
-  // Single-listing view: show a general-area circle instead of an exact pin.
+  // Single-listing view: show a small general-area circle instead of an exact pin.
   if (approxArea && points.length === 1) {
     const p = points[0];
     return (
-      <MapContainer center={[p.lat, p.lng]} zoom={14} scrollWheelZoom className="w-full h-full">
+      <MapContainer center={[p.lat, p.lng]} zoom={16} scrollWheelZoom className="w-full h-full">
         <TileLayer attribution="&copy; OpenStreetMap" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-        <Circle center={[p.lat, p.lng]} radius={450} pathOptions={{ color: "#e8385a", fillColor: "#e8385a", fillOpacity: 0.12, weight: 1.5 }} />
+        <Circle center={[p.lat, p.lng]} radius={40} pathOptions={{ color: "#e8385a", fillColor: "#e8385a", fillOpacity: 0.15, weight: 1.5 }} />
       </MapContainer>
     );
   }

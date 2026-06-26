@@ -14,7 +14,19 @@ const TYPE_LABEL: Record<string, string> = {
 const TIER_PRICE: Record<string, number> = { free: 0, standard: 79, featured: 149, pro: 299 };
 const ADDON = 120;
 
-interface City { slug: string; name: string; country: string; }
+const slugify = (s: string) =>
+  s.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 60);
+
+interface GeoResult {
+  id: string;
+  label: string;
+  address: string;
+  city: string;
+  neighborhood: string;
+  country: string;
+  lat: number;
+  lng: number;
+}
 
 export function ListingWizard({ initialTier = "featured", initialBuild = false }: { initialTier?: string; initialBuild?: boolean }) {
   const router = useRouter();
@@ -22,12 +34,12 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false }
 
   const [name, setName] = useState("");
   const [type, setType] = useState("guest_house");
-  const [city, setCity] = useState<City | null>(null);
-  const [cityQuery, setCityQuery] = useState("");
-  const [citySug, setCitySug] = useState<City[]>([]);
-  const [cityOpen, setCityOpen] = useState(false);
-  const [neighborhood, setNeighborhood] = useState("");
-  const [address, setAddress] = useState("");
+  // Single address field; the city, neighbourhood and coordinates are all
+  // derived from whichever address the host selects (no separate city field).
+  const [addrQuery, setAddrQuery] = useState("");
+  const [addrSug, setAddrSug] = useState<GeoResult[]>([]);
+  const [addrOpen, setAddrOpen] = useState(false);
+  const [place, setPlace] = useState<GeoResult | null>(null);
 
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
@@ -47,7 +59,7 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false }
   const [error, setError] = useState("");
   const [doneSlug, setDoneSlug] = useState<string | null>(null);
 
-  const cityRef = useRef<HTMLDivElement>(null);
+  const addrRef = useRef<HTMLDivElement>(null);
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -55,18 +67,24 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false }
   }, [name, domain]);
 
   useEffect(() => {
-    if (!cityOpen) return;
+    if (!addrOpen) return;
+    if (place && addrQuery === place.label) return; // already chosen, don't re-query
+    if (addrQuery.trim().length < 3) { setAddrSug([]); return; }
     if (debounce.current) clearTimeout(debounce.current);
     debounce.current = setTimeout(async () => {
-      const res = await fetch(`/api/autocomplete?q=${encodeURIComponent(cityQuery)}`);
-      const data = await res.json();
-      setCitySug((data.suggestions ?? []).map((s: { citySlug: string; cityName: string; country: string }) => ({ slug: s.citySlug, name: s.cityName, country: s.country })));
-    }, 160);
-  }, [cityQuery, cityOpen]);
+      try {
+        const res = await fetch(`/api/geo/autocomplete?q=${encodeURIComponent(addrQuery)}`);
+        const data = await res.json();
+        setAddrSug(data.results ?? []);
+      } catch {
+        setAddrSug([]);
+      }
+    }, 220);
+  }, [addrQuery, addrOpen, place]);
 
   useEffect(() => {
     function onDown(e: MouseEvent) {
-      if (cityRef.current && !cityRef.current.contains(e.target as Node)) setCityOpen(false);
+      if (addrRef.current && !addrRef.current.contains(e.target as Node)) setAddrOpen(false);
     }
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
@@ -78,7 +96,7 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false }
 
   const urlOk = /^(https?:\/\/)?[\w-]+(\.[\w-]+)+.*$/.test(bookingUrl.trim());
   const canNext =
-    step === 1 ? Boolean(name.trim() && city) :
+    step === 1 ? Boolean(name.trim() && place) :
     step === 2 ? true :
     step === 3 ? (method === "own" ? urlOk : Boolean(domain.trim())) :
     true;
@@ -96,8 +114,11 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false }
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          propertyName: name, citySlug: city?.slug, cityName: city?.name, country: city?.country,
-          propertyType: type, neighborhood, address: address.trim() || undefined,
+          propertyName: name,
+          citySlug: place ? slugify(place.city) : undefined,
+          cityName: place?.city, country: place?.country,
+          propertyType: type, neighborhood: place?.neighborhood || undefined,
+          address: place?.address || undefined, lat: place?.lat, lng: place?.lng,
           description, pricePerNight: price ? Number(price) : undefined,
           amenities, photos,
           bookingUrl: method === "own" ? (/^https?:\/\//.test(bookingUrl.trim()) ? bookingUrl.trim() : `https://${bookingUrl.trim()}`) : undefined,
@@ -162,37 +183,44 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false }
               {TYPES.map((t) => <option key={t} value={t}>{TYPE_LABEL[t]}</option>)}
             </select>
           </Field>
-          <Field label="City">
-            <div ref={cityRef} className="relative">
+          <Field label="Exact address (private)">
+            <div ref={addrRef} className="relative">
               <input
-                value={city ? `${city.name}, ${city.country}` : cityQuery}
-                onChange={(e) => { setCity(null); setCityQuery(e.target.value); }}
-                onFocus={() => setCityOpen(true)}
-                placeholder="Start typing a city"
+                value={addrQuery}
+                onChange={(e) => { setPlace(null); setAddrQuery(e.target.value); setAddrOpen(true); }}
+                onFocus={() => setAddrOpen(true)}
+                placeholder="Start typing your address…"
+                autoComplete="off"
                 className={inputCls}
               />
-              {cityOpen && citySug.length > 0 && (
-                <ul className="absolute z-20 left-0 right-0 mt-1 bg-white border border-line rounded-xl shadow-float max-h-60 overflow-auto">
-                  {citySug.map((c) => (
-                    <li key={c.slug}>
-                      <button type="button" onMouseDown={(e) => { e.preventDefault(); setCity(c); setCityOpen(false); }} className="w-full text-left px-4 py-2.5 hover:bg-mist">
-                        <span className="font-medium">{c.name}</span> <span className="text-muted text-sm">{c.country}</span>
+              {addrOpen && !place && addrSug.length > 0 && (
+                <ul className="absolute z-30 left-0 right-0 mt-1 bg-white border border-line rounded-xl shadow-float max-h-64 overflow-auto">
+                  {addrSug.map((s) => (
+                    <li key={s.id}>
+                      <button
+                        type="button"
+                        onMouseDown={(e) => { e.preventDefault(); setPlace(s); setAddrQuery(s.label); setAddrOpen(false); }}
+                        className="w-full flex items-start gap-2.5 text-left px-4 py-2.5 hover:bg-mist"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-brand mt-0.5 shrink-0"><path d="M12 2c3.5 0 6 2.6 6 6.2 0 4-3.4 8-5.3 10.9a.8.8 0 0 1-1.4 0C9.4 16.2 6 12.2 6 8.2 6 4.6 8.5 2 12 2Zm0 4.2a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z" /></svg>
+                        <span className="text-sm">{s.label}</span>
                       </button>
                     </li>
                   ))}
                 </ul>
               )}
             </div>
-          </Field>
-          <Field label="Neighbourhood (optional)">
-            <input value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} placeholder="e.g. Old Town" className={inputCls} />
-          </Field>
-          <Field label="Exact address (private)">
-            <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="e.g. 12 Harbour Street" className={inputCls} />
-            <p className="text-xs text-muted mt-1.5 flex items-start gap-1.5">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-brand mt-0.5 shrink-0"><rect x="4" y="10" width="16" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>
-              Used only to place you in the right area. Guests never see your exact address, just an approximate spot on the map.
-            </p>
+            {place ? (
+              <p className="text-xs text-emerald-700 mt-1.5 flex items-center gap-1.5">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0"><path d="M5 12l4 4L19 6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                We&apos;ll list this in <b className="font-semibold">{place.neighborhood ? `${place.neighborhood}, ` : ""}{place.city}, {place.country}</b>
+              </p>
+            ) : (
+              <p className="text-xs text-muted mt-1.5 flex items-start gap-1.5">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-brand mt-0.5 shrink-0"><rect x="4" y="10" width="16" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>
+                Pick your address from the list. We use it only to place you in the right area, guests just see an approximate spot on the map, never the exact address.
+              </p>
+            )}
           </Field>
         </div>
       )}

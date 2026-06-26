@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import type { Listing } from "@/lib/types";
 import { formatPrice, prettyType } from "@/lib/format";
@@ -15,18 +15,43 @@ export function ListingCard({ listing, hrefSuffix = "" }: { listing: Listing; hr
   const hasPhotos = photos.length > 0;
   const badge = TIER_CONFIG[listing.tier].badge;
 
-  function go(d: number, e: React.MouseEvent) {
-    e.preventDefault();
+  const touchX = useRef<number | null>(null);
+  const swiped = useRef(false);
+
+  function step(d: number) {
     setDir(d);
     setI((p) => (p + d + photos.length) % photos.length);
   }
+  function go(d: number, e: React.MouseEvent) {
+    e.preventDefault();
+    step(d);
+  }
+  function onTouchStart(e: React.TouchEvent) {
+    touchX.current = e.touches[0].clientX;
+    swiped.current = false;
+  }
+  function onTouchEnd(e: React.TouchEvent) {
+    if (touchX.current == null || photos.length < 2) return;
+    const dx = e.changedTouches[0].clientX - touchX.current;
+    if (Math.abs(dx) > 40) {
+      swiped.current = true; // suppress the click-through navigation for this gesture
+      step(dx < 0 ? 1 : -1);
+    }
+    touchX.current = null;
+  }
 
   return (
-    <Link href={`/rooms/${listing.slug}${hrefSuffix}`} className="group block">
+    <Link
+      href={`/rooms/${listing.slug}${hrefSuffix}`}
+      className="group block"
+      onClickCapture={(e) => { if (swiped.current) { e.preventDefault(); swiped.current = false; } }}
+    >
       <motion.div
         whileHover={{ y: -6 }}
         transition={{ type: "spring", stiffness: 320, damping: 26 }}
-        className="relative aspect-square rounded-2xl overflow-hidden bg-mist shadow-card group-hover:shadow-float transition-shadow duration-300"
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+        className="relative aspect-square rounded-2xl overflow-hidden bg-mist shadow-card group-hover:shadow-float transition-shadow duration-300 touch-pan-y"
       >
         {hasPhotos ? (
           <AnimatePresence initial={false} custom={dir} mode="popLayout">
@@ -123,7 +148,7 @@ function CarBtn({ dir, onClick }: { dir: "prev" | "next"; onClick: (e: React.Mou
     <button
       onClick={onClick}
       aria-label={dir}
-      className={`absolute top-1/2 -translate-y-1/2 ${dir === "prev" ? "left-2.5" : "right-2.5"} grid place-items-center w-8 h-8 rounded-full bg-white/95 shadow-card opacity-0 group-hover:opacity-100 transition hover:scale-110 active:scale-95`}
+      className={`absolute top-1/2 -translate-y-1/2 ${dir === "prev" ? "left-2.5" : "right-2.5"} hidden sm:grid place-items-center w-8 h-8 rounded-full bg-white/95 shadow-card opacity-0 group-hover:opacity-100 transition hover:scale-110 active:scale-95`}
     >
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
         <path d={dir === "prev" ? "M15 6l-6 6 6 6" : "M9 6l6 6-6 6"} strokeLinecap="round" strokeLinejoin="round" />

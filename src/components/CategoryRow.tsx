@@ -12,7 +12,7 @@ export function CategoryRow() {
   const base = pathname === "/s" ? params.toString() : "";
 
   return (
-    <div className="sticky top-[60px] z-20 glass border-b border-line">
+    <div className="sticky top-[60px] sm:top-[68px] z-20 glass border-b border-line">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="flex gap-8 overflow-x-auto no-scrollbar py-3">
           {CATEGORIES.map((c) => {
