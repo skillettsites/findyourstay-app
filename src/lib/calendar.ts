@@ -66,6 +66,17 @@ export async function removeBlock(id: string) {
   await sb.from(T.calendar).delete().eq("id", id);
 }
 
+// Free up a held range (e.g. when a host declines a booking request).
+export async function removeBlocksForRange(listingId: string, start: string, end: string, source: string) {
+  await sb
+    .from(T.calendar)
+    .delete()
+    .eq("listing_id", listingId)
+    .eq("source", source)
+    .eq("start_date", start)
+    .eq("end_date", end);
+}
+
 export async function getIcalUrls(listingId: string): Promise<string[]> {
   const { data } = await sb.from(T.listings).select("external_ical_urls").eq("id", listingId).maybeSingle();
   const v = data?.external_ical_urls;

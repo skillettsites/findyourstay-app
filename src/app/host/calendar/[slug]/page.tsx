@@ -1,9 +1,10 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Header } from "@/components/Header";
 import { BackButton } from "@/components/BackButton";
 import { CalendarManager } from "@/components/host/CalendarManager";
 import { getListingBySlug } from "@/lib/db";
 import { getBlocks, getIcalUrls } from "@/lib/calendar";
+import { getUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -11,8 +12,11 @@ const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
 export default async function CalendarPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  const user = await getUser();
+  if (!user) redirect(`/login?next=${encodeURIComponent(`/host/calendar/${slug}`)}`);
   const listing = await getListingBySlug(slug);
   if (!listing) notFound();
+  if (listing.hostId !== user!.id) notFound(); // only the owner manages the calendar
 
   const [blocks, urls] = await Promise.all([getBlocks(listing.id), getIcalUrls(listing.id)]);
   const exportUrl = `${SITE}/api/calendar/${listing.id}`;

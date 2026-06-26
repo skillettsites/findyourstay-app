@@ -49,6 +49,7 @@ export async function createBillingCheckout(opts: {
     mode: "subscription",
     customer_email: opts.email,
     line_items,
+    allow_promotion_codes: true, // founding hosts can enter FOUNDING100 for a free first year
     success_url: `${SITE}/host/dashboard?paid=1`,
     cancel_url: `${SITE}/host/new`,
   });

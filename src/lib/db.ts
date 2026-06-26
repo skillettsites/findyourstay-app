@@ -217,6 +217,7 @@ function fuzz(lat: number, lng: number): { lat: number; lng: number } {
 
 export interface NewListingInput {
   propertyName: string;
+  hostId?: string;
   citySlug?: string;
   cityName: string;
   country: string;
@@ -262,7 +263,7 @@ export async function createListing(input: NewListingInput): Promise<{ id: strin
   const id = crypto.randomUUID();
 
   await sb.from(T.listings).insert({
-    id, host_id: null, status: "active", source: "host",
+    id, host_id: input.hostId ?? null, status: "active", source: "host",
     property_name: input.propertyName, slug, city_slug: input.citySlug ?? slugify(input.cityName),
     city_name: input.cityName, country, lat, lng, neighborhood: input.neighborhood ?? null,
     description: input.description ?? null, property_type: input.propertyType, price_range: priceRange,
@@ -289,6 +290,86 @@ export async function getDemoListing(): Promise<Listing | null> {
 export async function getHostListings(limit = 10): Promise<Listing[]> {
   const { data } = await sb.from(T.listings).select("*").eq("source", "host").order("created_at", { ascending: false }).limit(limit);
   return (data ?? []).map(rowToListing);
+}
+
+// Listings owned by a specific logged-in host.
+export async function getListingsByHost(hostId: string, limit = 50): Promise<Listing[]> {
+  const { data } = await sb
+    .from(T.listings)
+    .select("*")
+    .eq("host_id", hostId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  return (data ?? []).map(rowToListing);
+}
+
+export interface EnquiryRow {
+  id: string; listingId: string; listingName: string; guestEmail: string;
+  checkIn: string | null; checkOut: string | null; guests: number | null;
+  message: string | null; createdAt: string;
+}
+
+export async function getEnquiriesForListings(listings: Listing[], limit = 30): Promise<EnquiryRow[]> {
+  const ids = listings.map((l) => l.id);
+  if (!ids.length) return [];
+  const nameById = new Map(listings.map((l) => [l.id, l.propertyName]));
+  const { data } = await sb
+    .from(T.enquiries)
+    .select("*")
+    .in("listing_id", ids)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  return ((data ?? []) as Row[]).map((r) => ({
+    id: String(r.id),
+    listingId: r.listing_id as string,
+    listingName: nameById.get(r.listing_id as string) ?? "",
+    guestEmail: r.guest_email as string,
+    checkIn: (r.check_in as string) ?? null,
+    checkOut: (r.check_out as string) ?? null,
+    guests: r.guests == null ? null : Number(r.guests),
+    message: (r.message as string) ?? null,
+    createdAt: r.created_at as string,
+  }));
+}
+
+export interface BookingRow {
+  id: string; listingId: string; listingName: string; guestEmail: string;
+  checkIn: string; checkOut: string; guests: number | null; status: string; createdAt: string;
+}
+
+export async function getBookingsForListings(listings: Listing[], limit = 30): Promise<BookingRow[]> {
+  const ids = listings.map((l) => l.id);
+  if (!ids.length) return [];
+  const nameById = new Map(listings.map((l) => [l.id, l.propertyName]));
+  const { data } = await sb
+    .from(T.bookings)
+    .select("*")
+    .in("listing_id", ids)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  return ((data ?? []) as Row[]).map((r) => ({
+    id: String(r.id),
+    listingId: r.listing_id as string,
+    listingName: nameById.get(r.listing_id as string) ?? "",
+    guestEmail: r.guest_email as string,
+    checkIn: r.check_in as string,
+    checkOut: r.check_out as string,
+    guests: r.guests == null ? null : Number(r.guests),
+    status: (r.status as string) ?? "requested",
+    createdAt: r.created_at as string,
+  }));
+}
+
+export async function getBookingForHost(bookingId: string, hostId: string): Promise<{ id: string; listingId: string; guestEmail: string; checkIn: string; checkOut: string } | null> {
+  const { data: b } = await sb.from(T.bookings).select("*").eq("id", bookingId).maybeSingle();
+  if (!b) return null;
+  const { data: l } = await sb.from(T.listings).select("host_id,property_name").eq("id", b.listing_id as string).maybeSingle();
+  if (!l || l.host_id !== hostId) return null;
+  return { id: String(b.id), listingId: b.listing_id as string, guestEmail: b.guest_email as string, checkIn: b.check_in as string, checkOut: b.check_out as string };
+}
+
+export async function setBookingStatus(bookingId: string, status: string): Promise<void> {
+  await sb.from(T.bookings).update({ status }).eq("id", bookingId);
 }
 
 export async function getListingStats(listingId: string): Promise<{ views: number; enquiries: number }> {

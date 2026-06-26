@@ -6,6 +6,7 @@ import { motion, useMotionValueEvent, useScroll } from "motion/react";
 import { Brand } from "./Brand";
 import { SearchBar } from "./SearchBar";
 import { Magnetic } from "./Motion";
+import { supabaseBrowser } from "@/lib/supabase-browser";
 
 export function Header({ showSearch = true }: { showSearch?: boolean }) {
   const { scrollY } = useScroll();
@@ -56,6 +57,7 @@ const EXPLORE = [
 
 function Menu() {
   const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -64,6 +66,15 @@ function Menu() {
     }
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
+  }, []);
+
+  useEffect(() => {
+    const supabase = supabaseBrowser();
+    supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? null));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      setEmail(session?.user?.email ?? null);
+    });
+    return () => sub.subscription.unsubscribe();
   }, []);
 
   return (
@@ -77,13 +88,20 @@ function Menu() {
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M3 6h18M3 12h18M3 18h18" strokeLinecap="round" />
         </svg>
-        <span className="grid place-items-center w-7 h-7 rounded-full bg-ink text-white">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 2c-3.3 0-8 1.7-8 5v1h16v-1c0-3.3-4.7-5-8-5Z" /></svg>
+        <span className={`grid place-items-center w-7 h-7 rounded-full text-white text-xs font-semibold ${email ? "bg-brand-gradient" : "bg-ink"}`}>
+          {email ? email[0].toUpperCase() : (
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 2c-3.3 0-8 1.7-8 5v1h16v-1c0-3.3-4.7-5-8-5Z" /></svg>
+          )}
         </span>
       </button>
 
       {open && (
         <div className="absolute right-0 top-full mt-2 w-60 bg-white border border-line rounded-2xl shadow-float py-2 text-sm overflow-hidden">
+          {email && (
+            <p className="px-4 pt-1.5 pb-2 text-xs text-muted truncate border-b border-line mb-1">
+              Signed in as <span className="font-semibold text-ink">{email}</span>
+            </p>
+          )}
           <p className="px-4 pt-1.5 pb-1 text-[11px] font-bold uppercase tracking-wide text-muted">Explore</p>
           {EXPLORE.map((l) => (
             <Item key={l.href} href={l.href} onClick={() => setOpen(false)}>{l.label}</Item>
@@ -91,10 +109,18 @@ function Menu() {
           <Divider />
           <Item href="/host#pricing" onClick={() => setOpen(false)}>Pricing</Item>
           <Item href="/host" onClick={() => setOpen(false)}>List your stay</Item>
-          <Item href="/host/dashboard" onClick={() => setOpen(false)}>Host dashboard</Item>
           <Divider />
-          <Item href="/host/dashboard" onClick={() => setOpen(false)}>Log in</Item>
-          <Item href="/host/new" onClick={() => setOpen(false)} strong>Sign up</Item>
+          {email ? (
+            <>
+              <Item href="/host/dashboard" onClick={() => setOpen(false)} strong>Host dashboard</Item>
+              <a href="/auth/signout" className="block px-4 py-2.5 hover:bg-mist transition text-ink">Log out</a>
+            </>
+          ) : (
+            <>
+              <Item href="/login" onClick={() => setOpen(false)}>Log in</Item>
+              <Item href="/login" onClick={() => setOpen(false)} strong>Sign up</Item>
+            </>
+          )}
         </div>
       )}
     </div>

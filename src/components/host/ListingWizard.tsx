@@ -28,7 +28,7 @@ interface GeoResult {
   lng: number;
 }
 
-export function ListingWizard({ initialTier = "featured", initialBuild = false }: { initialTier?: string; initialBuild?: boolean }) {
+export function ListingWizard({ initialTier = "featured", initialBuild = false, userEmail = "" }: { initialTier?: string; initialBuild?: boolean; userEmail?: string }) {
   const router = useRouter();
   const [step, setStep] = useState(1);
 
@@ -52,8 +52,6 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false }
   const [domain, setDomain] = useState("");
 
   const [tier, setTier] = useState(initialTier);
-  const [hostName, setHostName] = useState("");
-  const [email, setEmail] = useState("");
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -123,10 +121,14 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false }
           amenities, photos,
           bookingUrl: method === "own" ? (/^https?:\/\//.test(bookingUrl.trim()) ? bookingUrl.trim() : `https://${bookingUrl.trim()}`) : undefined,
           hasBookingSite: method === "build", bookingDomain: method === "build" ? domain.trim() : undefined,
-          tier, withSite: method === "build", hostEmail: email, hostName,
+          tier, withSite: method === "build",
         }),
       });
       const data = await res.json();
+      if (res.status === 401 && data.needsAuth) {
+        window.location.href = `/login?next=${encodeURIComponent("/host/new")}`;
+        return;
+      }
       if (!res.ok) throw new Error(data.error);
       if (data.checkoutUrl) {
         window.location.href = data.checkoutUrl; // Stripe configured -> pay for the plan
@@ -147,7 +149,7 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false }
         <h2 className="text-2xl font-display font-bold mt-4">You&apos;re live!</h2>
         <p className="text-muted mt-2">
           {name} is now listed. {method === "build"
-            ? `We'll register ${domain}, build your booking website and email ${email || "you"} when it's ready.`
+            ? `We'll register ${domain}, build your booking website and email ${userEmail || "you"} when it's ready.`
             : "Travellers can now find you and book direct on your own site."}
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
@@ -298,12 +300,10 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false }
               </button>
             ))}
           </div>
-          <Field label="Your name">
-            <input value={hostName} onChange={(e) => setHostName(e.target.value)} placeholder="Maria" className={inputCls} />
-          </Field>
-          <Field label="Email">
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@email.com" className={inputCls} />
-          </Field>
+          <div className="flex items-center gap-2 text-sm bg-mist rounded-xl px-4 py-3 mb-2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-muted shrink-0"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 2c-3.3 0-8 1.7-8 5v1h16v-1c0-3.3-4.7-5-8-5Z" /></svg>
+            <span>Publishing as <b className="font-semibold">{userEmail}</b></span>
+          </div>
 
           <div className="bg-mist rounded-xl p-4 mt-2 text-sm">
             <div className="flex justify-between"><span className="capitalize">{tier} plan</span><span>£{TIER_PRICE[tier]}/yr</span></div>
