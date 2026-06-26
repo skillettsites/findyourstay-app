@@ -1,0 +1,318 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { AMENITIES_OPTIONS } from "@/lib/types";
+import { suggestDomain } from "@/lib/format";
+
+const TYPES = ["apartment", "house", "villa", "cottage", "room", "guest_house", "hostel", "hotel", "chalet"];
+const TYPE_LABEL: Record<string, string> = {
+  apartment: "Apartment", house: "House", villa: "Villa", cottage: "Cottage", room: "Private room",
+  guest_house: "Guesthouse / B&B", hostel: "Hostel", hotel: "Boutique hotel", chalet: "Chalet / cabin",
+};
+const TIER_PRICE: Record<string, number> = { free: 0, standard: 79, featured: 149, pro: 299 };
+const ADDON = 120;
+
+interface City { slug: string; name: string; country: string; }
+
+export function ListingWizard({ initialTier = "featured", initialBuild = false }: { initialTier?: string; initialBuild?: boolean }) {
+  const router = useRouter();
+  const [step, setStep] = useState(1);
+
+  const [name, setName] = useState("");
+  const [type, setType] = useState("guest_house");
+  const [city, setCity] = useState<City | null>(null);
+  const [cityQuery, setCityQuery] = useState("");
+  const [citySug, setCitySug] = useState<City[]>([]);
+  const [cityOpen, setCityOpen] = useState(false);
+  const [neighborhood, setNeighborhood] = useState("");
+
+  const [price, setPrice] = useState("");
+  const [description, setDescription] = useState("");
+  const [amenities, setAmenities] = useState<string[]>(["WiFi"]);
+  const [ownPhotos, setOwnPhotos] = useState(false);
+  const [photoUrls, setPhotoUrls] = useState("");
+
+  const [method, setMethod] = useState<"own" | "build">(initialBuild ? "build" : "own");
+  const [bookingUrl, setBookingUrl] = useState("");
+  const [domain, setDomain] = useState("");
+
+  const [tier, setTier] = useState(initialTier);
+  const [hostName, setHostName] = useState("");
+  const [email, setEmail] = useState("");
+
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [doneSlug, setDoneSlug] = useState<string | null>(null);
+
+  const cityRef = useRef<HTMLDivElement>(null);
+  const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!domain && name) setDomain(suggestDomain(name));
+  }, [name, domain]);
+
+  useEffect(() => {
+    if (!cityOpen) return;
+    if (debounce.current) clearTimeout(debounce.current);
+    debounce.current = setTimeout(async () => {
+      const res = await fetch(`/api/autocomplete?q=${encodeURIComponent(cityQuery)}`);
+      const data = await res.json();
+      setCitySug((data.suggestions ?? []).map((s: { citySlug: string; cityName: string; country: string }) => ({ slug: s.citySlug, name: s.cityName, country: s.country })));
+    }, 160);
+  }, [cityQuery, cityOpen]);
+
+  useEffect(() => {
+    function onDown(e: MouseEvent) {
+      if (cityRef.current && !cityRef.current.contains(e.target as Node)) setCityOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, []);
+
+  function toggleAmenity(a: string) {
+    setAmenities((cur) => (cur.includes(a) ? cur.filter((x) => x !== a) : [...cur, a]));
+  }
+
+  const urlOk = /^(https?:\/\/)?[\w-]+(\.[\w-]+)+.*$/.test(bookingUrl.trim());
+  const canNext =
+    step === 1 ? Boolean(name.trim() && city) :
+    step === 2 ? true :
+    step === 3 ? (method === "own" ? urlOk : Boolean(domain.trim())) :
+    true;
+
+  const total = TIER_PRICE[tier] + (method === "build" ? ADDON : 0);
+
+  async function publish() {
+    setBusy(true);
+    setError("");
+    try {
+      const photos = ownPhotos
+        ? photoUrls.split(/\s+/).map((u) => u.trim()).filter((u) => /^https?:\/\//.test(u))
+        : [];
+      const res = await fetch("/api/host/listing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          propertyName: name, citySlug: city?.slug, cityName: city?.name, country: city?.country,
+          propertyType: type, neighborhood, description, pricePerNight: price ? Number(price) : undefined,
+          amenities, photos,
+          bookingUrl: method === "own" ? (/^https?:\/\//.test(bookingUrl.trim()) ? bookingUrl.trim() : `https://${bookingUrl.trim()}`) : undefined,
+          hasBookingSite: method === "build", bookingDomain: method === "build" ? domain.trim() : undefined,
+          tier, withSite: method === "build", hostEmail: email, hostName,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl; // Stripe configured -> pay for the plan
+        return;
+      }
+      setDoneSlug(data.slug);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (doneSlug) {
+    return (
+      <div className="max-w-xl mx-auto text-center bg-white border border-line rounded-2xl shadow-card p-8">
+        <div className="mx-auto w-14 h-14 rounded-full bg-emerald-100 text-emerald-700 grid place-items-center text-3xl">✓</div>
+        <h2 className="text-2xl font-display font-bold mt-4">You&apos;re live!</h2>
+        <p className="text-muted mt-2">
+          {name} is now listed. {method === "build"
+            ? `We'll register ${domain}, build your booking website and email ${email || "you"} when it's ready.`
+            : "Travellers can now find you and book direct on your own site."}
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
+          <Link href={`/rooms/${doneSlug}`} className="bg-brand-gradient bg-brand-gradient-hover text-white font-semibold px-6 py-3 rounded-full shadow-glow">
+            View your listing
+          </Link>
+          <Link href="/host/dashboard" className="border border-ink font-semibold px-6 py-3 rounded-full hover:bg-mist">
+            Go to dashboard
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto">
+      {/* Progress */}
+      <div className="flex items-center gap-2 mb-8">
+        {[1, 2, 3, 4].map((s) => (
+          <div key={s} className={`h-1.5 flex-1 rounded-full transition ${s <= step ? "bg-brand" : "bg-line"}`} />
+        ))}
+      </div>
+      <p className="text-sm text-muted mb-1">Step {step} of 4</p>
+
+      {step === 1 && (
+        <div>
+          <h2 className="text-2xl font-display font-bold mb-5">Tell us about your stay</h2>
+          <Field label="Property name">
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Sea View Guesthouse" className={inputCls} />
+          </Field>
+          <Field label="Type of place">
+            <select value={type} onChange={(e) => setType(e.target.value)} className={inputCls}>
+              {TYPES.map((t) => <option key={t} value={t}>{TYPE_LABEL[t]}</option>)}
+            </select>
+          </Field>
+          <Field label="City">
+            <div ref={cityRef} className="relative">
+              <input
+                value={city ? `${city.name}, ${city.country}` : cityQuery}
+                onChange={(e) => { setCity(null); setCityQuery(e.target.value); }}
+                onFocus={() => setCityOpen(true)}
+                placeholder="Start typing a city"
+                className={inputCls}
+              />
+              {cityOpen && citySug.length > 0 && (
+                <ul className="absolute z-20 left-0 right-0 mt-1 bg-white border border-line rounded-xl shadow-float max-h-60 overflow-auto">
+                  {citySug.map((c) => (
+                    <li key={c.slug}>
+                      <button type="button" onMouseDown={(e) => { e.preventDefault(); setCity(c); setCityOpen(false); }} className="w-full text-left px-4 py-2.5 hover:bg-mist">
+                        <span className="font-medium">{c.name}</span> <span className="text-muted text-sm">{c.country}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </Field>
+          <Field label="Neighbourhood (optional)">
+            <input value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} placeholder="e.g. Old Town" className={inputCls} />
+          </Field>
+        </div>
+      )}
+
+      {step === 2 && (
+        <div>
+          <h2 className="text-2xl font-display font-bold mb-5">Details &amp; photos</h2>
+          <Field label="Price per night (£)">
+            <input value={price} onChange={(e) => setPrice(e.target.value.replace(/\D/g, ""))} placeholder="95" className={inputCls} />
+          </Field>
+          <Field label="Description">
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="A cosy place a short walk from the centre…" className={inputCls} />
+          </Field>
+          <Field label="Amenities">
+            <div className="flex flex-wrap gap-2">
+              {AMENITIES_OPTIONS.map((a) => (
+                <button key={a} type="button" onClick={() => toggleAmenity(a)} className={`px-3 py-1.5 rounded-full text-sm border transition ${amenities.includes(a) ? "border-ink bg-ink text-white" : "border-line hover:border-ink"}`}>
+                  {a}
+                </button>
+              ))}
+            </div>
+          </Field>
+          <Field label="Photos">
+            {!ownPhotos ? (
+              <div className="flex items-center justify-between bg-mist rounded-xl p-4">
+                <span className="text-sm">We&apos;ll source professional photos of your stay for you.</span>
+                <button type="button" onClick={() => setOwnPhotos(true)} className="text-sm font-semibold text-brand whitespace-nowrap">I&apos;ll add my own</button>
+              </div>
+            ) : (
+              <div>
+                <textarea value={photoUrls} onChange={(e) => setPhotoUrls(e.target.value)} rows={3} placeholder="Paste image links, one per line" className={inputCls} />
+                <button type="button" onClick={() => setOwnPhotos(false)} className="text-xs font-semibold text-muted mt-1">Actually, source them for me</button>
+              </div>
+            )}
+          </Field>
+        </div>
+      )}
+
+      {step === 3 && (
+        <div>
+          <h2 className="text-2xl font-display font-bold mb-2">How do guests book?</h2>
+          <p className="text-muted mb-5">Pick whichever fits you, you can change it later.</p>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <MethodCard active={method === "own"} onClick={() => setMethod("own")} title="I have my own website" desc="Send guests straight to your existing booking page or contact." icon="🔗" />
+            <MethodCard active={method === "build"} onClick={() => setMethod("build")} title="Build me a website" desc="No website? We register a domain & build one for you, hosted on Cloudflare. +£120/yr." icon="✨" />
+          </div>
+
+          {method === "own" ? (
+            <Field label="Your booking link" className="mt-6">
+              <input value={bookingUrl} onChange={(e) => setBookingUrl(e.target.value)} placeholder="https://your-website.com/book" className={inputCls} />
+            </Field>
+          ) : (
+            <div className="mt-6 bg-rose-50 border border-rose-100 rounded-xl p-5">
+              <Field label="Your new website address">
+                <input value={domain} onChange={(e) => setDomain(e.target.value)} className={inputCls} />
+              </Field>
+              <p className="text-sm text-muted mt-2">
+                We&apos;ll check it&apos;s available, register it for you, and build a booking site with online card
+                payments through <span className="font-semibold text-ink">your own Stripe</span>. You keep 100%.
+                Nothing technical for you to do.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {step === 4 && (
+        <div>
+          <h2 className="text-2xl font-display font-bold mb-5">Choose your plan</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-5">
+            {Object.keys(TIER_PRICE).map((t) => (
+              <button key={t} type="button" onClick={() => setTier(t)} className={`rounded-xl border p-3 text-center transition ${tier === t ? "border-brand bg-rose-50" : "border-line hover:border-ink"}`}>
+                <div className="font-semibold capitalize text-sm">{t}</div>
+                <div className="text-xs text-muted">£{TIER_PRICE[t]}/yr</div>
+              </button>
+            ))}
+          </div>
+          <Field label="Your name">
+            <input value={hostName} onChange={(e) => setHostName(e.target.value)} placeholder="Maria" className={inputCls} />
+          </Field>
+          <Field label="Email">
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@email.com" className={inputCls} />
+          </Field>
+
+          <div className="bg-mist rounded-xl p-4 mt-2 text-sm">
+            <div className="flex justify-between"><span className="capitalize">{tier} plan</span><span>£{TIER_PRICE[tier]}/yr</span></div>
+            {method === "build" && <div className="flex justify-between mt-1"><span>Booking website ({domain})</span><span>£{ADDON}/yr</span></div>}
+            <div className="flex justify-between font-semibold pt-2 mt-2 border-t border-line"><span>Total</span><span>£{total}/yr</span></div>
+          </div>
+          {error && <p className="text-brand text-sm mt-3">{error}</p>}
+        </div>
+      )}
+
+      {/* Nav */}
+      <div className="flex justify-between mt-8">
+        <button type="button" onClick={() => (step === 1 ? router.push("/host") : setStep(step - 1))} className="font-semibold px-5 py-3 rounded-full hover:bg-mist">
+          Back
+        </button>
+        {step < 4 ? (
+          <button type="button" disabled={!canNext} onClick={() => setStep(step + 1)} className="bg-brand-gradient bg-brand-gradient-hover disabled:opacity-40 text-white font-semibold px-7 py-3 rounded-full shadow-glow transition-transform active:scale-95">
+            Next
+          </button>
+        ) : (
+          <button type="button" disabled={busy} onClick={publish} className="bg-brand-gradient bg-brand-gradient-hover disabled:opacity-50 text-white font-semibold px-7 py-3 rounded-full shadow-glow transition-transform active:scale-95">
+            {busy ? "Publishing…" : tier === "free" && method === "own" ? "Publish listing" : "Publish & continue to payment"}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const inputCls = "w-full border border-line rounded-xl px-4 py-3 text-sm outline-none focus:border-ink bg-white";
+
+function Field({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) {
+  return (
+    <label className={`block mb-4 ${className}`}>
+      <span className="block text-sm font-semibold mb-1.5">{label}</span>
+      {children}
+    </label>
+  );
+}
+
+function MethodCard({ active, onClick, title, desc, icon }: { active: boolean; onClick: () => void; title: string; desc: string; icon: string }) {
+  return (
+    <button type="button" onClick={onClick} className={`text-left rounded-2xl border-2 p-5 transition ${active ? "border-brand bg-rose-50" : "border-line hover:border-ink"}`}>
+      <span className="text-2xl">{icon}</span>
+      <h3 className="font-semibold mt-2">{title}</h3>
+      <p className="text-sm text-muted mt-1">{desc}</p>
+    </button>
+  );
+}

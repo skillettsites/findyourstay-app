@@ -1,65 +1,128 @@
-import Image from "next/image";
+import Link from "next/link";
+import { Suspense } from "react";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
+import { CategoryRow } from "@/components/CategoryRow";
+import { Hero } from "@/components/Hero";
+import { ListingCard } from "@/components/ListingCard";
+import { Reveal, Stagger, StaggerItem } from "@/components/Motion";
+import { getFeaturedListings, getTopCities, countListings } from "@/lib/db";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const [featured, cities, total] = await Promise.all([
+    getFeaturedListings(12),
+    getTopCities(10),
+    countListings(),
+  ]);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+    <>
+      <Header showSearch={false} />
+      <Hero total={total} />
+
+      <Suspense fallback={<div className="h-16" />}>
+        <CategoryRow />
+      </Suspense>
+
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 w-full">
+        {/* Featured */}
+        <section className="py-12 sm:py-16">
+          <Reveal>
+            <div className="flex items-end justify-between mb-7">
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-display font-bold tracking-tight">Featured stays</h2>
+                <p className="text-muted mt-1">Independent stays, booked direct.</p>
+              </div>
+              <Link href="/s" className="text-sm font-semibold text-brand hover:underline shrink-0">
+                Show all
+              </Link>
+            </div>
+          </Reveal>
+
+          {featured.length === 0 ? (
+            <EmptyState />
+          ) : (
+            <Stagger className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-9">
+              {featured.map((l) => (
+                <StaggerItem key={l.id}>
+                  <ListingCard listing={l} />
+                </StaggerItem>
+              ))}
+            </Stagger>
+          )}
+        </section>
+
+        {/* Popular cities */}
+        {cities.length > 0 && (
+          <section className="py-6 pb-16">
+            <Reveal>
+              <h2 className="text-2xl sm:text-3xl font-display font-bold tracking-tight mb-7">
+                Popular destinations
+              </h2>
+            </Reveal>
+            <Stagger className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+              {cities.map((c) => (
+                <StaggerItem key={c.citySlug}>
+                  <Link
+                    href={`/s?city=${c.citySlug}`}
+                    className="group relative block aspect-[4/3] rounded-2xl overflow-hidden bg-mist shadow-card hover:shadow-float transition-shadow"
+                  >
+                    {c.coverPhoto && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={c.coverPhoto}
+                        alt={c.cityName}
+                        loading="lazy"
+                        className="w-full h-full object-cover group-hover:scale-110 transition duration-500 ease-out"
+                      />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                    <div className="absolute bottom-3 left-3.5 text-white">
+                      <div className="font-semibold text-lg leading-tight">{c.cityName}</div>
+                      <div className="text-xs opacity-90">{c.count} stays</div>
+                    </div>
+                  </Link>
+                </StaggerItem>
+              ))}
+            </Stagger>
+          </section>
+        )}
       </main>
+
+      {/* Host band */}
+      <section className="relative overflow-hidden bg-ink text-white">
+        <div className="aurora opacity-40" />
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 py-16 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <Reveal>
+            <div>
+              <h3 className="text-2xl sm:text-3xl font-display font-bold">Own a stay? Get direct bookings.</h3>
+              <p className="text-white/70 mt-2 text-lg">
+                List once, keep 100% of every booking. From £79/year, no commission ever.
+              </p>
+            </div>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <Link
+              href="/host"
+              className="inline-block bg-white text-ink hover:bg-white/90 px-7 py-3.5 rounded-full font-semibold whitespace-nowrap transition active:scale-95"
+            >
+              List your stay
+            </Link>
+          </Reveal>
+        </div>
+      </section>
+
+      <Footer />
+    </>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className="text-center py-16 border border-dashed border-line rounded-2xl">
+      <p className="text-muted">New stays are being added. Check back soon.</p>
     </div>
   );
 }

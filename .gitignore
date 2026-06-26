@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local db
+/data/*.db
+/data/*.db-*
+
+# seeded photos live in object storage, not the repo
+/public/places/

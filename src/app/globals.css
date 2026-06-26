@@ -1,26 +1,151 @@
 @import "tailwindcss";
 
+@theme {
+  --color-brand: #ff385c;
+  --color-brand-dark: #d81a46;
+  --color-brand-2: #e61e4d;
+  --color-brand-3: #bd1e59;
+  --color-ink: #1c1c1e;
+  --color-muted: #6a6a70;
+  --color-line: #ebebeb;
+  --color-mist: #f7f7f8;
+  --color-paper: #ffffff;
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display), var(--font-geist-sans), sans-serif;
+
+  --shadow-card: 0 6px 16px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow-float: 0 18px 40px -12px rgba(0, 0, 0, 0.18), 0 6px 14px -8px rgba(0, 0, 0, 0.12);
+  --shadow-glow: 0 10px 30px -8px rgba(255, 56, 92, 0.45);
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.22, 1.2, 0.36, 1);
+}
+
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #1c1c1e;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: light;
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: rgba(255, 56, 92, 0.18);
+}
+
+/* ---- Brand utilities ---- */
+.bg-brand-gradient {
+  background-image: linear-gradient(135deg, #ff385c 0%, #e61e4d 45%, #bd1e59 100%);
+}
+.bg-brand-gradient-hover:hover {
+  background-image: linear-gradient(135deg, #ff2e54 0%, #d81a46 45%, #aa1850 100%);
+}
+.text-gradient-brand {
+  background-image: linear-gradient(120deg, #ff385c 0%, #e61e4d 50%, #bd1e59 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.text-gradient-ink {
+  background-image: linear-gradient(180deg, #1c1c1e 0%, #3a3a40 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.shadow-card {
+  box-shadow: var(--shadow-card);
+}
+.shadow-float {
+  box-shadow: var(--shadow-float);
+}
+
+/* Frosted glass header */
+.glass {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: saturate(180%) blur(16px);
+  -webkit-backdrop-filter: saturate(180%) blur(16px);
+}
+
+/* ---- Aurora / mesh hero background ---- */
+.aurora {
+  position: absolute;
+  inset: -20% -10% auto -10%;
+  height: 130%;
+  filter: blur(60px);
+  opacity: 0.55;
+  pointer-events: none;
+  background:
+    radial-gradient(40% 50% at 15% 20%, rgba(255, 56, 92, 0.55), transparent 60%),
+    radial-gradient(35% 45% at 85% 15%, rgba(255, 145, 80, 0.45), transparent 60%),
+    radial-gradient(45% 50% at 70% 80%, rgba(189, 30, 89, 0.45), transparent 60%),
+    radial-gradient(40% 40% at 25% 75%, rgba(120, 80, 255, 0.30), transparent 60%);
+  animation: aurora-drift 18s ease-in-out infinite alternate;
+}
+@keyframes aurora-drift {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(2%, 1.5%, 0) scale(1.06); }
+  100% { transform: translate3d(-2%, -1%, 0) scale(1.03); }
+}
+
+/* Shimmer for skeletons / image loads */
+.shimmer {
+  background: linear-gradient(100deg, #eee 30%, #f6f6f6 50%, #eee 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes float-y {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.float-y { animation: float-y 6s ease-in-out infinite; }
+
+/* Horizontal rails */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ---- Leaflet ---- */
+.leaflet-container {
+  font-family: var(--font-sans);
+  z-index: 0;
+  background: #eaeaea;
+}
+.fys-price-pin {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 9999px;
+  padding: 5px 11px;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--color-ink);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+  white-space: nowrap;
+  transition: transform 0.18s var(--ease-spring), background 0.18s, color 0.18s;
+}
+.fys-price-pin:hover,
+.fys-price-pin.is-active {
+  background: var(--color-ink);
+  color: #fff;
+  transform: scale(1.12);
+  z-index: 500;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora, .float-y, .shimmer { animation: none; }
+  html { scroll-behavior: auto; }
 }
