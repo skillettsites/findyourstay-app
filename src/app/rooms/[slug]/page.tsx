@@ -144,11 +144,14 @@ export default async function RoomPage({ params }: { params: Promise<{ slug: str
             </div>
 
             <h3 className="mt-8 font-semibold text-lg">Where you&apos;ll be</h3>
+            <p className="text-sm text-muted mt-1">{listing.neighborhood ? `${listing.neighborhood}, ` : ""}{listing.cityName}, {listing.country} · approximate location</p>
             <div className="mt-3 h-72 rounded-2xl overflow-hidden border border-line">
               <ResultsMap
+                approxArea
                 points={[{ id: listing.id, slug: listing.slug, name: listing.propertyName, lat: listing.lat, lng: listing.lng, price: listing.pricePerNight, currency: listing.currency }]}
               />
             </div>
+            <p className="text-xs text-muted mt-2">Exact address is shared after booking.</p>
           </div>
 
           {/* Sticky booking box */}

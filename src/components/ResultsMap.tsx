@@ -11,6 +11,6 @@ const Inner = dynamic(() => import("./ResultsMapInner"), {
   loading: () => <div className="w-full h-full bg-mist animate-pulse" />,
 });
 
-export function ResultsMap({ points }: { points: MapPoint[] }) {
-  return <Inner points={points} />;
+export function ResultsMap({ points, approxArea = false }: { points: MapPoint[]; approxArea?: boolean }) {
+  return <Inner points={points} approxArea={approxArea} />;
 }

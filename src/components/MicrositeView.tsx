@@ -80,8 +80,9 @@ export function MicrositeView({
           </div>
 
           <h2 className="font-display font-bold text-2xl mt-8">Where you&apos;ll be</h2>
+          <p className="text-sm text-muted mt-1">{listing.neighborhood ? `${listing.neighborhood}, ` : ""}{listing.cityName} · approximate location</p>
           <div className="mt-3 h-72 rounded-2xl overflow-hidden border border-line">
-            <ResultsMap points={[{ id: listing.id, slug: listing.slug, name: listing.propertyName, lat: listing.lat, lng: listing.lng, price: listing.pricePerNight, currency: listing.currency }]} />
+            <ResultsMap approxArea points={[{ id: listing.id, slug: listing.slug, name: listing.propertyName, lat: listing.lat, lng: listing.lng, price: listing.pricePerNight, currency: listing.currency }]} />
           </div>
         </div>
 

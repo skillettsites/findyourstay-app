@@ -27,6 +27,7 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false }
   const [citySug, setCitySug] = useState<City[]>([]);
   const [cityOpen, setCityOpen] = useState(false);
   const [neighborhood, setNeighborhood] = useState("");
+  const [address, setAddress] = useState("");
 
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
@@ -96,7 +97,8 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false }
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           propertyName: name, citySlug: city?.slug, cityName: city?.name, country: city?.country,
-          propertyType: type, neighborhood, description, pricePerNight: price ? Number(price) : undefined,
+          propertyType: type, neighborhood, address: address.trim() || undefined,
+          description, pricePerNight: price ? Number(price) : undefined,
           amenities, photos,
           bookingUrl: method === "own" ? (/^https?:\/\//.test(bookingUrl.trim()) ? bookingUrl.trim() : `https://${bookingUrl.trim()}`) : undefined,
           hasBookingSite: method === "build", bookingDomain: method === "build" ? domain.trim() : undefined,
@@ -184,6 +186,13 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false }
           </Field>
           <Field label="Neighbourhood (optional)">
             <input value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} placeholder="e.g. Old Town" className={inputCls} />
+          </Field>
+          <Field label="Exact address (private)">
+            <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="e.g. 12 Harbour Street" className={inputCls} />
+            <p className="text-xs text-muted mt-1.5 flex items-start gap-1.5">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-brand mt-0.5 shrink-0"><rect x="4" y="10" width="16" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>
+              Used only to place you in the right area. Guests never see your exact address, just an approximate spot on the map.
+            </p>
           </Field>
         </div>
       )}

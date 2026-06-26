@@ -195,6 +195,25 @@ export async function createEnquiry(input: {
   return id;
 }
 
+async function geocode(address: string): Promise<{ lat: number; lng: number } | null> {
+  const key = (process.env.GOOGLE_PLACES_API_KEY || "").replace(/\\n$/, "").trim();
+  if (!key) return null;
+  try {
+    const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${key}`);
+    const j = await res.json();
+    const loc = j.results?.[0]?.geometry?.location;
+    return loc ? { lat: loc.lat, lng: loc.lng } : null;
+  } catch {
+    return null;
+  }
+}
+
+// Offset by up to ~275m so the public map shows a general area, never the exact spot.
+function fuzz(lat: number, lng: number): { lat: number; lng: number } {
+  const d = 0.0025;
+  return { lat: lat + (Math.random() - 0.5) * 2 * d, lng: lng + (Math.random() - 0.5) * 2 * d };
+}
+
 export interface NewListingInput {
   propertyName: string;
   citySlug?: string;
@@ -202,6 +221,7 @@ export interface NewListingInput {
   country: string;
   propertyType: string;
   neighborhood?: string;
+  address?: string;
   description?: string;
   pricePerNight?: number;
   amenities?: string[];
@@ -215,10 +235,17 @@ export interface NewListingInput {
 
 export async function createListing(input: NewListingInput): Promise<{ id: string; slug: string }> {
   let lat = 0, lng = 0, country = input.country;
-  if (input.citySlug) {
+  // Exact address -> precise coords (geocoded), used only to derive an approximate
+  // public point. The address itself is never stored or shown to guests.
+  if (input.address) {
+    const g = await geocode(`${input.address}, ${input.cityName}, ${input.country}`);
+    if (g) { lat = g.lat; lng = g.lng; }
+  }
+  if (!lat && input.citySlug) {
     const { data: c } = await sb.from(T.citySummary).select("*").eq("city_slug", input.citySlug).maybeSingle();
     if (c) { lat = Number(c.lat ?? 0); lng = Number(c.lng ?? 0); country = country || (c.country as string) || ""; }
   }
+  if (lat || lng) { const f = fuzz(lat, lng); lat = f.lat; lng = f.lng; }
 
   let slug = slugify(`${input.propertyName}-${input.cityName}`);
   while ((await sb.from(T.listings).select("id").eq("slug", slug).maybeSingle()).data) {
