@@ -159,6 +159,62 @@ export default async function HostPage() {
             </div>
           </div>
         </section>
+
+        {/* One-stop shop: SEO + AI discovery */}
+        <section className="bg-ink text-white">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 py-16">
+            <div className="text-center max-w-2xl mx-auto">
+              <span className="inline-block bg-white/10 text-white text-xs font-bold uppercase tracking-wide px-3 py-1 rounded-full">
+                One-stop shop for direct bookings
+              </span>
+              <h2 className="mt-4 text-2xl sm:text-3xl font-display font-bold">
+                We don&apos;t just build your site, we get you found.
+              </h2>
+              <p className="mt-3 text-white/70 text-lg">
+                A beautiful website is no good if no one sees it. So we handle the technical side of getting your
+                B&amp;B discovered on Google, Bing and the new AI assistants people now use to plan trips, all included.
+              </p>
+            </div>
+
+            <div className="mt-12 grid sm:grid-cols-3 gap-6">
+              {[
+                {
+                  t: "Ranked on Google & Bing",
+                  d: "We submit your site to Google and Bing for indexing the day it goes live, generate your sitemap, and ping IndexNow on every change so updates show up fast.",
+                  icon: "M21 21l-4.35-4.35M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z",
+                },
+                {
+                  t: "Found by AI assistants",
+                  d: "More people now ask ChatGPT and Gemini where to stay. We add an llms.txt and clean structured data so the AIs can read and recommend your property.",
+                  icon: "M12 2a5 5 0 0 1 5 5v1a4 4 0 0 1 0 8 5 5 0 0 1-10 0 4 4 0 0 1 0-8V7a5 5 0 0 1 5-5Z",
+                },
+                {
+                  t: "Direct bookings, you keep 100%",
+                  d: "Guests find you, book on your own site and pay into your own Stripe. No commission, no platform fees, no middleman, ever.",
+                  icon: "M20 6L9 17l-5-5",
+                },
+              ].map((c) => (
+                <div key={c.t} className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                  <span className="grid place-items-center w-11 h-11 rounded-full bg-brand-gradient">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={c.icon} /></svg>
+                  </span>
+                  <h3 className="mt-4 font-display font-bold text-lg">{c.t}</h3>
+                  <p className="mt-2 text-sm text-white/70 leading-relaxed">{c.d}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-10 text-center">
+              <p className="text-white/60 text-sm max-w-2xl mx-auto">
+                You fill in one simple form about your place, we turn it into a complete website on your own domain,
+                keep it indexed and discoverable, and you edit it any time from your dashboard. Genuinely hands-off.
+              </p>
+              <Link href="#pricing" className="inline-block mt-6 bg-brand-gradient bg-brand-gradient-hover text-white font-semibold px-7 py-3.5 rounded-full shadow-glow transition-transform active:scale-95">
+                Add a booking website
+              </Link>
+            </div>
+          </div>
+        </section>
       </main>
       <Footer />
     </>

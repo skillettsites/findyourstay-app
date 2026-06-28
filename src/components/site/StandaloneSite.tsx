@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SiteNav, type NavLink } from "./SiteNav";
+import { HeroSearch } from "./HeroSearch";
 import { MicrositeBooking } from "@/components/MicrositeBooking";
 import { ResultsMap } from "@/components/ResultsMap";
 import { prettyType, formatPrice } from "@/lib/format";
@@ -8,66 +9,62 @@ import type { Listing } from "@/lib/types";
 export type SitePage = "home" | "rooms" | "gallery" | "location" | "book";
 export type SiteTheme = "classic" | "modern" | "coastal";
 
-// Three premium, ready-made website templates a host can choose from. Each is a
-// full standalone multi-page site (Home/Rooms/Gallery/Location/Book) with its own
-// nav, booking and footer. The `theme` swaps the entire look and feel.
+// Three original, premium standalone website templates for a host's B&B / rental.
+// Full multi-page sites with their own nav, hero search, gallery and booking.
+// `theme` swaps the entire palette and feel. Original work, luxury-hospitality genre.
 interface Tokens {
   label: string;
-  btn: string; // primary CTA
-  btnGhost: string; // secondary CTA on dark/photo
-  accent: string; // accent text colour
-  eyebrow: string; // hero eyebrow
-  heroH1: string; // hero heading style
-  overlay: string; // hero photo overlay
-  alt: string; // alternating section background
-  dark: string; // dark band background
-  pill: string; // amenity chip
-  radius: string; // card radius
-  check: string; // tick colour
+  btn: string;
+  btnGhost: string;
+  accent: string;
+  eyebrow: string;
+  overlay: string;
+  alt: string;
+  dark: string;
+  pill: string;
+  radius: string;
+  check: string;
 }
 
 const THEMES: Record<SiteTheme, Tokens> = {
   classic: {
     label: "Classic",
-    btn: "bg-brand-gradient text-white rounded-full shadow-glow",
-    btnGhost: "bg-white text-ink rounded-full",
-    accent: "text-brand",
-    eyebrow: "uppercase tracking-[0.25em] text-white/90 text-sm",
-    heroH1: "font-display font-extrabold",
-    overlay: "bg-gradient-to-b from-black/45 via-black/15 to-black/55",
-    alt: "bg-mist border-y border-line",
-    dark: "bg-ink text-white",
-    pill: "border border-line rounded-full",
-    radius: "rounded-3xl",
-    check: "text-brand",
+    btn: "bg-stone-900 text-white rounded-md hover:bg-stone-800",
+    btnGhost: "bg-white text-stone-900 rounded-md",
+    accent: "text-amber-700",
+    eyebrow: "uppercase tracking-[0.3em] text-white/85 text-xs",
+    overlay: "bg-gradient-to-b from-black/35 via-black/15 to-black/60",
+    alt: "bg-stone-50 border-y border-stone-200",
+    dark: "bg-stone-900 text-white",
+    pill: "border border-stone-300 rounded-md text-stone-700",
+    radius: "rounded-lg",
+    check: "text-amber-700",
   },
   modern: {
     label: "Modern",
     btn: "bg-ink text-white rounded-none hover:bg-ink/90",
     btnGhost: "bg-white text-ink rounded-none",
     accent: "text-ink",
-    eyebrow: "uppercase tracking-[0.35em] text-white/80 text-xs",
-    heroH1: "font-display font-bold uppercase tracking-[0.12em]",
-    overlay: "bg-gradient-to-b from-black/55 via-black/30 to-black/65",
+    eyebrow: "uppercase tracking-[0.4em] text-white/80 text-[11px]",
+    overlay: "bg-gradient-to-b from-black/45 via-black/25 to-black/70",
     alt: "bg-white border-y border-ink/10",
     dark: "bg-black text-white",
-    pill: "border border-ink/25 rounded-none",
+    pill: "border border-ink/20 rounded-none",
     radius: "rounded-none",
     check: "text-ink",
   },
   coastal: {
     label: "Coastal",
-    btn: "bg-teal-600 text-white rounded-full hover:bg-teal-700",
-    btnGhost: "bg-white text-teal-700 rounded-full",
-    accent: "text-teal-600",
-    eyebrow: "uppercase tracking-[0.2em] text-white/90 text-sm",
-    heroH1: "font-display font-extrabold",
-    overlay: "bg-gradient-to-b from-sky-950/40 via-sky-900/15 to-sky-950/60",
-    alt: "bg-sky-50 border-y border-sky-100",
-    dark: "bg-slate-800 text-white",
-    pill: "border border-sky-200 rounded-full text-sky-800",
-    radius: "rounded-[1.75rem]",
-    check: "text-teal-600",
+    btn: "bg-emerald-800 text-white rounded-full hover:bg-emerald-900",
+    btnGhost: "bg-white text-emerald-900 rounded-full",
+    accent: "text-emerald-800",
+    eyebrow: "uppercase tracking-[0.25em] text-white/90 text-xs",
+    overlay: "bg-gradient-to-b from-emerald-950/35 via-emerald-950/15 to-emerald-950/65",
+    alt: "bg-emerald-50/60 border-y border-emerald-100",
+    dark: "bg-emerald-950 text-white",
+    pill: "border border-emerald-200 rounded-full text-emerald-900",
+    radius: "rounded-2xl",
+    check: "text-emerald-800",
   },
 };
 
@@ -89,7 +86,6 @@ export function StandaloneSite({
   const t = THEMES[theme];
   const photos = listing.photos.length ? listing.photos : [`https://picsum.photos/seed/${listing.id}/1600/900`];
   const home = base || "/";
-  const q = base ? "" : ""; // theme persists via the example query string (added in href)
   const themeQ = example ? `?t=${theme}` : "";
   const href = (p: string) => `${base}/${p}${themeQ}`;
   const links: NavLink[] = [
@@ -99,10 +95,9 @@ export function StandaloneSite({
     { key: "location", label: "Location", href: href("location") },
     { key: "book", label: "Book", href: href("book") },
   ];
-  void q;
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col font-sans">
       {example && (
         <div className="bg-ink text-white text-xs">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-2 flex items-center justify-between gap-3">
@@ -133,64 +128,70 @@ export function StandaloneSite({
 function Home({ listing, photos, href, t }: { listing: Listing; photos: string[]; href: (p: string) => string; t: Tokens }) {
   return (
     <>
-      <section className="relative h-[80vh] min-h-[540px]">
+      <section className="relative h-[100svh] min-h-[640px]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={photos[0]} alt={listing.propertyName} className="absolute inset-0 w-full h-full object-cover" />
         <div className={`absolute inset-0 ${t.overlay}`} />
-        <div className="relative h-full flex flex-col items-center justify-center text-center text-white px-6">
-          <p className={t.eyebrow}>{prettyType(listing.propertyType)} · {listing.cityName}</p>
-          <h1 className={`${t.heroH1} text-4xl sm:text-6xl mt-4 max-w-3xl`}>{listing.propertyName}</h1>
-          <p className="mt-4 text-lg text-white/90 max-w-xl">A warm, independent stay in {listing.neighborhood || listing.cityName}. Book direct with us, never any platform fees.</p>
-          <Link href={href("book")} className={`mt-8 font-semibold px-8 py-3.5 ${t.btn}`}>Check availability</Link>
+        <div className="relative h-full flex flex-col items-center justify-center text-center text-white px-6 pb-28">
+          <p className={t.eyebrow}>{prettyType(listing.propertyType)} · {listing.cityName}, {listing.country}</p>
+          <h1 className="font-serif font-medium tracking-tight text-5xl sm:text-7xl mt-5 max-w-4xl leading-[1.04]">{listing.propertyName}</h1>
+          <p className="mt-5 text-lg text-white/90 max-w-xl font-light">An independent stay in {listing.neighborhood || listing.cityName}, booked direct with us, never any platform fees.</p>
+        </div>
+        <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 pb-8">
+          <HeroSearch bookHref={href("book")} btnClass={t.btn} />
         </div>
       </section>
 
-      <section className="mx-auto max-w-4xl px-4 sm:px-6 py-16 sm:py-20 text-center">
-        <p className={`text-xs font-bold uppercase tracking-[0.25em] ${t.accent}`}>Welcome</p>
-        <h2 className="font-display font-bold text-3xl sm:text-4xl mt-3">Your home from home in {listing.cityName}</h2>
-        <p className="mt-5 text-lg text-ink/80 leading-relaxed">{listing.description || `A characterful place to stay in ${listing.cityName}, hosted with care.`}</p>
-        <p className="mt-5 text-2xl font-display font-semibold">{formatPrice(listing.pricePerNight, listing.currency)} <span className="text-base font-normal text-muted">per night</span></p>
+      {/* Story */}
+      <section className="mx-auto max-w-3xl px-4 sm:px-6 py-20 sm:py-28 text-center">
+        <p className={`text-xs font-semibold uppercase tracking-[0.3em] ${t.accent}`}>Welcome</p>
+        <h2 className="font-serif font-medium text-4xl sm:text-5xl mt-4 leading-tight">Your home from home in {listing.cityName}</h2>
+        <p className="mt-6 text-lg text-ink/75 leading-relaxed font-light">{listing.description || `A characterful place to stay in ${listing.cityName}, hosted with genuine care.`}</p>
+        <p className="mt-6 font-serif text-3xl">{formatPrice(listing.pricePerNight, listing.currency)} <span className="text-base font-sans text-muted">per night</span></p>
+        <Link href={href("rooms")} className={`inline-block mt-7 font-semibold px-8 py-3.5 ${t.btn}`}>Explore the rooms</Link>
       </section>
 
-      <section className={t.alt}>
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-14 grid sm:grid-cols-3 gap-8 text-center">
+      {/* Feature split */}
+      <section className="mx-auto max-w-6xl px-4 sm:px-6 pb-4 grid md:grid-cols-2 gap-12 items-center">
+        <div className={`overflow-hidden aspect-[4/5] shadow-xl ${t.radius}`}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={photos[1] ?? photos[0]} alt="" className="w-full h-full object-cover" loading="lazy" />
+        </div>
+        <div>
+          <p className={`text-xs font-semibold uppercase tracking-[0.3em] ${t.accent}`}>The space</p>
+          <h2 className="font-serif font-medium text-4xl mt-3">Designed for a restful stay</h2>
+          <p className="mt-4 text-ink/75 leading-relaxed font-light">Thoughtfully kept and full of character, with everything you need close at hand. Book your dates and we&apos;ll take care of the rest.</p>
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            {listing.amenities.slice(0, 6).map((a) => (
+              <span key={a} className="flex items-center gap-2 text-sm"><span className={t.check}>—</span> {a}</span>
+            ))}
+          </div>
+          <Link href={href("rooms")} className={`inline-block mt-7 font-semibold ${t.accent} hover:underline`}>See what&apos;s included →</Link>
+        </div>
+      </section>
+
+      {/* Trust band */}
+      <section className={`${t.alt} mt-20`}>
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-16 grid sm:grid-cols-3 gap-10 text-center">
           {[
-            ["Book direct", "No booking fees and no middleman. You deal straight with us."],
-            ["Truly local", `Genuine, personal hospitality in the heart of ${listing.cityName}.`],
-            ["Best rate, always", "The price here is our lowest, guaranteed, because it's direct."],
+            ["Book direct", "No platform fees, no middleman. You deal straight with us, every time."],
+            ["Truly independent", `Genuine, personal hospitality in the heart of ${listing.cityName}.`],
+            ["Secure & simple", "Pay securely by card, padlock protected, with instant confirmation."],
           ].map(([title, d]) => (
             <div key={title}>
-              <h3 className="font-display font-semibold text-lg">{title}</h3>
-              <p className="text-muted text-sm mt-2">{d}</p>
+              <h3 className="font-serif text-2xl">{title}</h3>
+              <p className="text-muted text-sm mt-2 leading-relaxed">{d}</p>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 sm:px-6 py-16 grid md:grid-cols-2 gap-10 items-center">
-        <div className={`overflow-hidden aspect-[4/3] shadow-card ${t.radius}`}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={photos[1] ?? photos[0]} alt="" className="w-full h-full object-cover" />
-        </div>
-        <div>
-          <h2 className="font-display font-bold text-3xl">The rooms</h2>
-          <p className="mt-3 text-ink/80">Comfortable, well-kept and ready for you. Take a look at the space and everything that&apos;s included.</p>
-          <div className="mt-5 flex flex-wrap gap-2">
-            {listing.amenities.slice(0, 6).map((a) => (
-              <span key={a} className={`text-sm px-3 py-1.5 ${t.pill}`}>{a}</span>
-            ))}
-          </div>
-          <Link href={href("rooms")} className={`inline-block mt-7 font-semibold ${t.accent} hover:underline`}>See the rooms →</Link>
-        </div>
-      </section>
-
+      {/* Location + CTA */}
       <section className={t.dark}>
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-14 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div>
-            <h2 className="font-display font-bold text-2xl">Find us in {listing.cityName}</h2>
-            <p className="opacity-70 mt-1">In the heart of {listing.neighborhood || listing.cityName}. Explore the area.</p>
-          </div>
-          <Link href={href("location")} className={`font-semibold px-6 py-3 whitespace-nowrap ${t.btnGhost}`}>View location</Link>
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-20 text-center">
+          <h2 className="font-serif font-medium text-4xl">Ready when you are</h2>
+          <p className="opacity-70 mt-3 max-w-lg mx-auto font-light">Check availability and book {listing.propertyName} directly, for the best rate, every time.</p>
+          <Link href={href("book")} className={`inline-block mt-8 font-semibold px-9 py-4 ${t.btnGhost}`}>Check availability</Link>
         </div>
       </section>
     </>
@@ -200,13 +201,13 @@ function Home({ listing, photos, href, t }: { listing: Listing; photos: string[]
 /* ---------------- The Rooms ---------------- */
 function Rooms({ listing, photos, href, t }: { listing: Listing; photos: string[]; href: (p: string) => string; t: Tokens }) {
   return (
-    <section className="mx-auto max-w-6xl px-4 sm:px-6 py-14">
-      <h1 className="font-display font-bold text-4xl">The rooms</h1>
-      <p className="text-muted mt-2">{prettyType(listing.propertyType)} · comfortable space for your group</p>
+    <section className="mx-auto max-w-6xl px-4 sm:px-6 py-16">
+      <p className={`text-xs font-semibold uppercase tracking-[0.3em] ${t.accent}`}>Accommodation</p>
+      <h1 className="font-serif font-medium text-5xl mt-3">The rooms</h1>
 
-      <div className="mt-8 grid lg:grid-cols-3 gap-10">
+      <div className="mt-10 grid lg:grid-cols-3 gap-12">
         <div className="lg:col-span-2">
-          <div className={`overflow-hidden aspect-[16/10] shadow-card ${t.radius}`}>
+          <div className={`overflow-hidden aspect-[16/10] shadow-xl ${t.radius}`}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={photos[0]} alt={listing.propertyName} className="w-full h-full object-cover" />
           </div>
@@ -214,26 +215,26 @@ function Rooms({ listing, photos, href, t }: { listing: Listing; photos: string[
             <div className="grid grid-cols-3 gap-3 mt-3">
               {photos.slice(1, 4).map((p, i) => (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img key={i} src={p} alt="" className={`w-full h-24 object-cover ${t.radius}`} />
+                <img key={i} src={p} alt="" loading="lazy" className={`w-full h-28 object-cover ${t.radius}`} />
               ))}
             </div>
           )}
-          <h2 className="font-display font-bold text-2xl mt-8">About the space</h2>
-          <p className="mt-3 text-ink/80 leading-relaxed">{listing.description || `A comfortable ${prettyType(listing.propertyType).toLowerCase()} in ${listing.cityName}.`}</p>
+          <h2 className="font-serif text-3xl mt-10">About the space</h2>
+          <p className="mt-3 text-ink/75 leading-relaxed font-light text-lg">{listing.description || `A comfortable ${prettyType(listing.propertyType).toLowerCase()} in ${listing.cityName}.`}</p>
 
-          <h2 className="font-display font-bold text-2xl mt-8">What&apos;s included</h2>
-          <div className="mt-3 grid grid-cols-2 gap-3">
+          <h2 className="font-serif text-3xl mt-10">What&apos;s included</h2>
+          <div className="mt-4 grid grid-cols-2 gap-3">
             {listing.amenities.map((a) => (
-              <div key={a} className="flex items-center gap-2.5 text-sm"><span className={t.check}>✓</span> {a}</div>
+              <div key={a} className="flex items-center gap-2.5 text-sm"><span className={t.check}>—</span> {a}</div>
             ))}
           </div>
         </div>
 
         <aside className="lg:col-span-1">
-          <div className={`lg:sticky lg:top-24 border border-line p-6 text-center shadow-card ${t.radius}`}>
-            <p className="text-3xl font-display font-bold">{formatPrice(listing.pricePerNight, listing.currency)}</p>
+          <div className={`lg:sticky lg:top-24 border border-line p-7 text-center shadow-lg ${t.radius}`}>
+            <p className="font-serif text-4xl">{formatPrice(listing.pricePerNight, listing.currency)}</p>
             <p className="text-muted text-sm">per night</p>
-            <Link href={href("book")} className={`block mt-5 font-semibold py-3 ${t.btn}`}>Check availability</Link>
+            <Link href={href("book")} className={`block mt-6 font-semibold py-3.5 ${t.btn}`}>Check availability</Link>
             <p className="text-xs text-muted mt-3">Book direct · no platform fees</p>
           </div>
         </aside>
@@ -246,10 +247,10 @@ function Rooms({ listing, photos, href, t }: { listing: Listing; photos: string[
 function Gallery({ listing, photos, t }: { listing: Listing; photos: string[]; t: Tokens }) {
   const imgs = photos.length > 1 ? photos : [...photos, `https://picsum.photos/seed/${listing.id}-a/800/600`, `https://picsum.photos/seed/${listing.id}-b/800/600`];
   return (
-    <section className="mx-auto max-w-6xl px-4 sm:px-6 py-14">
-      <h1 className="font-display font-bold text-4xl">Gallery</h1>
-      <p className="text-muted mt-2">A look around {listing.propertyName}</p>
-      <div className="mt-8 columns-1 sm:columns-2 lg:columns-3 gap-4 [&>*]:mb-4">
+    <section className="mx-auto max-w-6xl px-4 sm:px-6 py-16">
+      <p className={`text-xs font-semibold uppercase tracking-[0.3em] ${t.accent}`}>Gallery</p>
+      <h1 className="font-serif font-medium text-5xl mt-3">A look around</h1>
+      <div className="mt-10 columns-1 sm:columns-2 lg:columns-3 gap-4 [&>*]:mb-4">
         {imgs.map((p, i) => (
           // eslint-disable-next-line @next/next/no-img-element
           <img key={i} src={p} alt="" loading="lazy" decoding="async" className={`w-full object-cover break-inside-avoid ${t.radius}`} />
@@ -262,22 +263,23 @@ function Gallery({ listing, photos, t }: { listing: Listing; photos: string[]; t
 /* ---------------- Location ---------------- */
 function Location({ listing, t }: { listing: Listing; t: Tokens }) {
   return (
-    <section className="mx-auto max-w-6xl px-4 sm:px-6 py-14">
-      <h1 className="font-display font-bold text-4xl">Location</h1>
+    <section className="mx-auto max-w-6xl px-4 sm:px-6 py-16">
+      <p className={`text-xs font-semibold uppercase tracking-[0.3em] ${t.accent}`}>Location</p>
+      <h1 className="font-serif font-medium text-5xl mt-3">Where you&apos;ll be</h1>
       <p className="text-muted mt-2">{listing.neighborhood ? `${listing.neighborhood}, ` : ""}{listing.cityName}, {listing.country} · approximate area</p>
-      <div className={`mt-6 h-[420px] overflow-hidden border border-line ${t.radius}`}>
+      <div className={`mt-6 h-[440px] overflow-hidden border border-line ${t.radius}`}>
         <ResultsMap approxArea points={[{ id: listing.id, slug: listing.slug, name: listing.propertyName, lat: listing.lat, lng: listing.lng, price: listing.pricePerNight, currency: listing.currency }]} />
       </div>
       <p className="text-xs text-muted mt-2">The exact address is shared with you once your booking is confirmed.</p>
 
-      <div className="mt-10 grid sm:grid-cols-2 gap-8">
+      <div className="mt-12 grid sm:grid-cols-2 gap-10">
         <div>
-          <h2 className="font-display font-bold text-2xl">The area</h2>
-          <p className="mt-3 text-ink/80">Set in {listing.neighborhood || listing.cityName}, you&apos;re close to the best of {listing.cityName}, with cafes, restaurants and sights within easy reach.</p>
+          <h2 className="font-serif text-3xl">The area</h2>
+          <p className="mt-3 text-ink/75 leading-relaxed font-light">Set in {listing.neighborhood || listing.cityName}, you&apos;re close to the best of {listing.cityName}, with cafes, restaurants and sights within easy reach.</p>
         </div>
         <div>
-          <h2 className="font-display font-bold text-2xl">Getting here</h2>
-          <p className="mt-3 text-ink/80">Full directions and transport tips are sent with your booking confirmation. We&apos;re always happy to help you plan your arrival.</p>
+          <h2 className="font-serif text-3xl">Getting here</h2>
+          <p className="mt-3 text-ink/75 leading-relaxed font-light">Full directions and transport tips are sent with your booking confirmation. We&apos;re always happy to help you plan your arrival.</p>
         </div>
       </div>
     </section>
@@ -287,18 +289,19 @@ function Location({ listing, t }: { listing: Listing; t: Tokens }) {
 /* ---------------- Book ---------------- */
 function Book({ listing, t }: { listing: Listing; t: Tokens }) {
   return (
-    <section className="mx-auto max-w-6xl px-4 sm:px-6 py-14 grid lg:grid-cols-2 gap-12">
+    <section className="mx-auto max-w-6xl px-4 sm:px-6 py-16 grid lg:grid-cols-2 gap-14">
       <div>
-        <h1 className="font-display font-bold text-4xl">Book your stay</h1>
-        <p className="mt-3 text-ink/80 text-lg">Check your dates and reserve directly with us. You pay securely by card with no platform fees added.</p>
-        <ul className="mt-6 space-y-3 text-sm">
+        <p className={`text-xs font-semibold uppercase tracking-[0.3em] ${t.accent}`}>Reservations</p>
+        <h1 className="font-serif font-medium text-5xl mt-3">Book your stay</h1>
+        <p className="mt-4 text-ink/75 text-lg font-light">Check your dates and reserve directly with us. You pay securely by card, with no platform fees added.</p>
+        <ul className="mt-7 space-y-3.5 text-sm">
           {["Instant request, quick confirmation", "Secure card payment, padlock protected", "Best rate, booked direct", "Personal service from your host"].map((f) => (
             <li key={f} className="flex gap-3"><span className={`grid place-items-center w-6 h-6 rounded-full bg-ink/5 ${t.check} text-xs shrink-0`}>✓</span> {f}</li>
           ))}
         </ul>
-        <div className="mt-8 border-t border-line pt-6 text-sm text-muted">
+        <div className="mt-9 border-t border-line pt-6 text-sm text-muted">
           <p className="font-semibold text-ink">Questions before you book?</p>
-          <p className="mt-1">Use the form to send us a message with your dates, we&apos;ll get straight back to you.</p>
+          <p className="mt-1">Send us a message with your dates and we&apos;ll get straight back to you.</p>
         </div>
       </div>
       <div>
@@ -314,21 +317,21 @@ function Book({ listing, t }: { listing: Listing; t: Tokens }) {
 function Footer({ listing, domain, links, t }: { listing: Listing; domain: string; links: NavLink[]; t: Tokens }) {
   return (
     <footer className={t.dark}>
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-12 grid sm:grid-cols-3 gap-8">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-14 grid sm:grid-cols-3 gap-10">
         <div>
-          <p className="font-display font-bold text-lg">{listing.propertyName}</p>
-          <p className="text-sm mt-1 opacity-80">{listing.neighborhood ? `${listing.neighborhood}, ` : ""}{listing.cityName}, {listing.country}</p>
+          <p className="font-serif text-2xl">{listing.propertyName}</p>
+          <p className="text-sm mt-2 opacity-80">{listing.neighborhood ? `${listing.neighborhood}, ` : ""}{listing.cityName}, {listing.country}</p>
           <p className="text-sm mt-3 opacity-60">{domain}</p>
         </div>
         <div>
-          <p className="font-semibold mb-3">Explore</p>
+          <p className="font-semibold mb-3 text-sm uppercase tracking-wider opacity-70">Explore</p>
           <ul className="space-y-2 text-sm opacity-80">
             {links.map((l) => <li key={l.key}><Link href={l.href} className="hover:opacity-100">{l.label}</Link></li>)}
           </ul>
         </div>
         <div>
-          <p className="font-semibold mb-3">Book direct</p>
-          <p className="text-sm opacity-80">No platform fees. Best rate, every time. Secure payment and genuine, personal service.</p>
+          <p className="font-semibold mb-3 text-sm uppercase tracking-wider opacity-70">Book direct</p>
+          <p className="text-sm opacity-80 leading-relaxed">No platform fees. Best rate, every time. Secure payment and genuine, personal service.</p>
         </div>
       </div>
       <div className="border-t border-white/10">

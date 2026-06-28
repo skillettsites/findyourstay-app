@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Bricolage_Grotesque } from "next/font/google";
+import { Geist, Bricolage_Grotesque, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
 
@@ -8,6 +8,12 @@ const display = Bricolage_Grotesque({
   variable: "--font-display",
   subsets: ["latin"],
   weight: ["500", "600", "700", "800"],
+});
+// Elegant serif used on the host booking-site templates for a luxury feel.
+const serif = Cormorant_Garamond({
+  variable: "--font-serif",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
@@ -30,7 +36,7 @@ const orgLd = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${display.variable} h-full antialiased`}>
+    <html lang="en" className={`${geistSans.variable} ${display.variable} ${serif.variable} h-full antialiased`}>
       <head>
         <link rel="preconnect" href="https://u6tymn7wo0dz2c1b.public.blob.vercel-storage.com" />
         <link rel="dns-prefetch" href="https://picsum.photos" />

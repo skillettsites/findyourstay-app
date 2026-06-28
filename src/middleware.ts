@@ -33,9 +33,18 @@ export async function middleware(req: NextRequest) {
 
   // Custom domain -> serve that host's standalone site (no auth needed).
   if (host && !isAppHost(host)) {
+    const cleanHost = host.split(":")[0];
+    const path = req.nextUrl.pathname;
+    // Per-site SEO + AI-discovery files, generated for the host's own domain.
+    if (path === "/robots.txt" || path === "/sitemap.xml" || path === "/llms.txt") {
+      const url = req.nextUrl.clone();
+      url.pathname = "/api/site-seo";
+      url.search = `?host=${encodeURIComponent(cleanHost)}&file=${path.slice(1)}`;
+      return NextResponse.rewrite(url);
+    }
     const url = req.nextUrl.clone();
-    const sub = req.nextUrl.pathname === "/" ? "" : req.nextUrl.pathname;
-    url.pathname = `/sites/by-domain/${encodeURIComponent(host.split(":")[0])}${sub}`;
+    const sub = path === "/" ? "" : path;
+    url.pathname = `/sites/by-domain/${encodeURIComponent(cleanHost)}${sub}`;
     return NextResponse.rewrite(url);
   }
 
@@ -62,5 +71,8 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|places|robots.txt|sitemap.xml).*)"],
+  // robots.txt / sitemap.xml / llms.txt are intentionally matched so custom-host
+  // requests reach middleware and receive the per-site versions. On the app host
+  // they fall through to the static routes.
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|places).*)"],
 };

@@ -1,13 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import type { Listing } from "@/lib/types";
 import { formatPrice } from "@/lib/format";
 
 export function MicrositeBooking({ listing }: { listing: Listing }) {
-  const [checkIn, setCheckIn] = useState("");
-  const [checkOut, setCheckOut] = useState("");
-  const [guests, setGuests] = useState("2");
+  // Prefill from the hero availability search (?in=&out=&guests=) when present.
+  const sp = useSearchParams();
+  const [checkIn, setCheckIn] = useState(sp.get("in") ?? "");
+  const [checkOut, setCheckOut] = useState(sp.get("out") ?? "");
+  const [guests, setGuests] = useState(sp.get("guests") ?? "2");
   const [email, setEmail] = useState("");
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
