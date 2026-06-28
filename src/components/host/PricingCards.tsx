@@ -67,7 +67,7 @@ function PricingCard({ tier, demoSlug }: { tier: Tier; demoSlug?: string }) {
         ))}
         {withSite && (
           <li className="flex gap-2 font-medium text-ink">
-            <span className="text-brand">✓</span> Hosted booking website + online payments
+            <span className="text-brand">✓</span> We build, host &amp; secure your own business website
           </li>
         )}
       </ul>
@@ -93,7 +93,7 @@ function PricingCard({ tier, demoSlug }: { tier: Tier; demoSlug?: string }) {
           </span>
         </span>
         <span className="block text-xs text-muted mt-1">
-          Your own domain + site, hosted on Cloudflare. +£{ADDON}/yr
+          We design, build &amp; host a secure website for your business, no tech skills needed. +£{ADDON}/yr
         </span>
       </button>
 

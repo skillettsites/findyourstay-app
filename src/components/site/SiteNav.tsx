@@ -15,12 +15,16 @@ export function SiteNav({
   links,
   active,
   bookHref,
+  btn = "bg-brand-gradient text-white rounded-full",
+  activeText = "text-brand",
 }: {
   name: string;
   domain: string;
   links: NavLink[];
   active: string;
   bookHref: string;
+  btn?: string;
+  activeText?: string;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -36,7 +40,7 @@ export function SiteNav({
             <Link
               key={l.key}
               href={l.href}
-              className={`text-sm font-medium transition ${active === l.key ? "text-brand" : "text-ink hover:text-brand"}`}
+              className={`text-sm font-medium transition ${active === l.key ? activeText : "text-ink hover:opacity-70"}`}
             >
               {l.label}
             </Link>
@@ -44,7 +48,7 @@ export function SiteNav({
         </nav>
 
         <div className="flex items-center gap-2">
-          <Link href={bookHref} className="hidden sm:inline-block bg-brand-gradient text-white text-sm font-semibold px-5 py-2.5 rounded-full">
+          <Link href={bookHref} className={`hidden sm:inline-block text-sm font-semibold px-5 py-2.5 ${btn}`}>
             Check availability
           </Link>
           <button onClick={() => setOpen((o) => !o)} className="md:hidden w-10 h-10 grid place-items-center" aria-label="Menu">
@@ -57,11 +61,11 @@ export function SiteNav({
         <div className="md:hidden border-t border-line bg-white">
           <nav className="px-4 py-3 flex flex-col gap-1">
             {links.map((l) => (
-              <Link key={l.key} href={l.href} onClick={() => setOpen(false)} className={`px-2 py-2.5 rounded-lg font-medium ${active === l.key ? "text-brand bg-rose-50" : "hover:bg-mist"}`}>
+              <Link key={l.key} href={l.href} onClick={() => setOpen(false)} className={`px-2 py-2.5 rounded-lg font-medium ${active === l.key ? activeText : "hover:bg-mist"}`}>
                 {l.label}
               </Link>
             ))}
-            <Link href={bookHref} onClick={() => setOpen(false)} className="mt-1 bg-brand-gradient text-white text-center font-semibold px-5 py-2.5 rounded-full">
+            <Link href={bookHref} onClick={() => setOpen(false)} className={`mt-1 text-center font-semibold px-5 py-2.5 ${btn}`}>
               Check availability
             </Link>
           </nav>

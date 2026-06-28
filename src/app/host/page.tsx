@@ -86,18 +86,21 @@ export default async function HostPage() {
                 Your own standalone booking website.
               </h2>
               <p className="mt-3 text-muted text-lg">
-                Not a page on our site, a real website of your own. We register a domain for you, build a
-                beautiful direct-booking site, and host it on Cloudflare. Guests pay by card straight into{" "}
-                <span className="font-semibold text-ink">your own Stripe</span>. You keep 100%, we handle all the tech.
+                You don&apos;t need a website, the skills to build one, or an expensive hosting bill, we do all of it
+                for you. We design and build a professional website for your B&amp;B or rental, put it on your own
+                domain, and host it on Cloudflare so it&apos;s fast and secure. Guests book and pay you by card
+                straight into <span className="font-semibold text-ink">your own Stripe</span>. You keep 100%, and
+                there&apos;s nothing technical for you to ever touch.
               </p>
               <ul className="mt-5 space-y-3">
                 {[
-                  "We register your own domain (e.g. " + demoDomain + ")",
-                  "Fast, secure hosting on Cloudflare, included",
-                  "Your photos, prices and availability calendar",
-                  "Card payments via your own Stripe account",
-                  "Guests pay you directly, never us, no commission",
-                  "Calendar synced with Airbnb and Booking.com",
+                  "Perfect if you have no website, or aren't happy with the one you've got",
+                  "Replaces pricey website-builder and hosting bills, it's all included",
+                  "Choose from 3 professional templates, we build and fill it in for you",
+                  "Your own domain, registered for you (e.g. " + demoDomain + ")",
+                  "Secure HTTPS with the padlock, included as standard",
+                  "Take card payments into your own Stripe, keep 100% of every booking",
+                  "Calendar synced with Airbnb and Booking.com so you never double-book",
                 ].map((f) => (
                   <li key={f} className="flex gap-3">
                     <span className="grid place-items-center w-6 h-6 rounded-full bg-brand-gradient text-white text-xs shrink-0 mt-0.5">✓</span>
@@ -105,13 +108,20 @@ export default async function HostPage() {
                   </li>
                 ))}
               </ul>
-              <div className="mt-7 flex gap-3">
-                {demoSlug && (
-                  <Link href={`/sites/${demoSlug}`} className="bg-brand-gradient bg-brand-gradient-hover text-white font-semibold px-6 py-3 rounded-full shadow-glow transition-transform active:scale-95">
-                    See an example site
-                  </Link>
-                )}
-                <Link href="#pricing" className="border border-ink font-semibold px-6 py-3 rounded-full hover:bg-mist transition">
+              <div className="mt-7">
+                <p className="text-sm font-semibold mb-2.5">See the 3 templates you can choose from:</p>
+                <div className="flex flex-wrap gap-2">
+                  {demoSlug && [
+                    { t: "classic", label: "Classic" },
+                    { t: "modern", label: "Modern" },
+                    { t: "coastal", label: "Coastal" },
+                  ].map((x) => (
+                    <Link key={x.t} href={`/sites/${demoSlug}?t=${x.t}`} className="border border-ink font-semibold px-5 py-2.5 rounded-full hover:bg-mist transition text-sm">
+                      View {x.label} →
+                    </Link>
+                  ))}
+                </div>
+                <Link href="#pricing" className="inline-block mt-4 bg-brand-gradient bg-brand-gradient-hover text-white font-semibold px-6 py-3 rounded-full shadow-glow transition-transform active:scale-95">
                   Add it to any plan
                 </Link>
               </div>
