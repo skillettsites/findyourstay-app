@@ -38,12 +38,13 @@ export const EXAMPLE_STAYS: Record<string, Listing> = {
     propertyType: "villa",
     pricePerNight: 165,
     amenities: ["Beach Access", "Sea View", "WiFi", "Air Conditioning", "Kitchen", "Balcony", "Free Parking", "Garden"],
+    // Coherent set: ocean-view beach house + bright coastal rooms, all with sea.
     photos: [
-      img("1507525428034-b723cf961d3e"),
-      img("1505228395891-9a51e7e86bf6"),
-      img("1506953823976-52e1fdc0149a"),
-      img("1473116763249-2faaef81ccda"),
-      img("1519046904884-53103b34b206"),
+      img("1730005523015-422bd53dda0b"), // ocean view from the beach house
+      img("1770414173168-f6c666501225"), // bright coastal bedroom
+      img("1762529716272-b316f61502e7"), // coastal living room, neutral tones
+      img("1779903726439-5c27e3996c8a"), // dining area with ocean view
+      img("1765421617367-4b6f88423be9"), // reading nook with ocean view
     ],
     siteTheme: "coastal",
   },
@@ -63,12 +64,14 @@ export const EXAMPLE_STAYS: Record<string, Listing> = {
     propertyType: "apartment",
     pricePerNight: 130,
     amenities: ["WiFi", "Air Conditioning", "Kitchen", "Washing Machine", "Heating", "Lift", "City View"],
+    // Coherent set: Lisbon riverside establishing shot + stylish loft interiors.
     photos: [
-      img("1502602898657-3e91760cbb34"),
-      img("1513635269975-59663e0ac1ad"),
-      img("1496442226666-8d4d0e62e6e9"),
-      img("1431274172761-fca41d930114"),
-      img("1480714378408-67cf0d13bc1b"),
+      img("1690585552493-2f4406dae499"), // Lisbon, river and bridge
+      img("1759264244827-1dde5bee00a5"), // loft living room, brick wall
+      img("1718066236069-a4d42a6436a1"), // bright room, floor-to-ceiling windows
+      img("1768413292179-d958b344f1d4"), // modern loft kitchen with staircase
+      img("1592928302636-c83cf1e1c887"), // lounge, parquet floor
+      img("1697748525265-7431cba075b6"), // Lisbon trams (the neighbourhood)
     ],
     siteTheme: "modern",
   },
@@ -88,12 +91,14 @@ export const EXAMPLE_STAYS: Record<string, Listing> = {
     propertyType: "chalet",
     pricePerNight: 140,
     amenities: ["Mountain View", "WiFi", "Heating", "Kitchen", "Free Parking", "Hot Tub", "Garden", "Pet Friendly"],
+    // Coherent set: snowy chalet exterior + warm wood interiors with fireplaces.
     photos: [
-      img("1464822759023-fed622ff2c3b"),
-      img("1454496522488-7a8e488e8606"),
-      img("1506905925346-21bda4d32df4"),
-      img("1483728642387-6c3bdd6c93e5"),
-      img("1480497490787-505ec076689f"),
+      img("1605153123052-528d89be0d4e"), // chalet below a snow-capped mountain
+      img("1645640933655-7f0c401388c7"), // living room, stone fireplace, big windows
+      img("1780391592801-5e8867523492"), // luxurious wooden chalet interior
+      img("1761470484741-badac5364858"), // cosy wood-panelled dining/seating room
+      img("1652400094047-04a7907d798a"), // bedroom
+      img("1673100938846-1d6c184ecb69"), // chalet and snowy mountain (gallery)
     ],
     siteTheme: "classic",
   },
