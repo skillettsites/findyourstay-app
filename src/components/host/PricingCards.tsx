@@ -25,17 +25,48 @@ const TIERS: Tier[] = [
     features: ["Everything in Featured", "Top priority placement", "Dedicated profile page", "Monthly report", "Unlimited properties"] },
 ];
 
-export function PricingCards({ demoSlug }: { demoSlug?: string }) {
+const EXAMPLES = [
+  { theme: "coastal", label: "Coastal", place: "Beach house", slug: "beach-house-algarve", img: "https://images.unsplash.com/photo-1730005523015-422bd53dda0b?auto=format&fit=crop&w=600&q=70" },
+  { theme: "modern", label: "Modern", place: "City loft", slug: "city-loft-lisbon", img: "https://images.unsplash.com/photo-1690585552493-2f4406dae499?auto=format&fit=crop&w=600&q=70" },
+  { theme: "classic", label: "Classic", place: "Mountain chalet", slug: "mountain-chalet-geres", img: "https://images.unsplash.com/photo-1605153123052-528d89be0d4e?auto=format&fit=crop&w=600&q=70" },
+];
+
+export function PricingCards() {
   return (
-    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-      {TIERS.map((t) => (
-        <PricingCard key={t.key} tier={t} demoSlug={demoSlug} />
-      ))}
+    <div>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {TIERS.map((t) => (
+          <PricingCard key={t.key} tier={t} />
+        ))}
+      </div>
+
+      {/* Example websites you could have */}
+      <div className="mt-12">
+        <div className="text-center">
+          <h3 className="text-xl font-display font-bold">See a website you could have</h3>
+          <p className="text-muted mt-1 text-sm">Three real example sites we built and host. Click around any of them.</p>
+        </div>
+        <div className="grid sm:grid-cols-3 gap-4 mt-6">
+          {EXAMPLES.map((e) => (
+            <Link key={e.slug} href={`/sites/${e.slug}?t=${e.theme}`} target="_blank" rel="noreferrer" className="group rounded-2xl border border-line overflow-hidden bg-white hover:shadow-card transition">
+              <div className="relative h-40 overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={e.img} alt={`${e.place} example website`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <span className="absolute top-2.5 left-2.5 bg-white/90 backdrop-blur text-xs font-semibold px-2.5 py-1 rounded-full">{e.label} template</span>
+              </div>
+              <div className="p-4 flex items-center justify-between">
+                <span className="font-semibold">{e.place}</span>
+                <span className="text-sm font-semibold text-brand group-hover:underline">Preview site →</span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
 
-function PricingCard({ tier, demoSlug }: { tier: Tier; demoSlug?: string }) {
+function PricingCard({ tier }: { tier: Tier }) {
   const [withSite, setWithSite] = useState(false);
   const total = tier.price + (withSite ? ADDON : 0);
 
@@ -108,8 +139,8 @@ function PricingCard({ tier, demoSlug }: { tier: Tier; demoSlug?: string }) {
         {tier.key === "free" && !withSite ? "Start free" : `Choose ${tier.name}${withSite ? " + Website" : ""}`}
       </Link>
 
-      {withSite && demoSlug && (
-        <Link href={`/sites/${demoSlug}`} className="mt-2 text-center text-xs font-semibold text-brand hover:underline">
+      {withSite && (
+        <Link href="/sites/beach-house-algarve?t=coastal" target="_blank" rel="noreferrer" className="mt-2 text-center text-xs font-semibold text-brand hover:underline">
           See an example booking website →
         </Link>
       )}

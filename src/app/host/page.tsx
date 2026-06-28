@@ -75,7 +75,7 @@ export default async function HostPage() {
               <h2 className="text-2xl sm:text-3xl font-display font-bold">Simple yearly pricing</h2>
               <p className="text-muted mt-2">Billed yearly. Cancel anytime. No commission on any booking.</p>
             </div>
-            <PricingCards demoSlug={demoSlug} />
+            <PricingCards />
           </div>
         </section>
 
