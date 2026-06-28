@@ -36,6 +36,7 @@ function rowToListing(r: Row): Listing {
     rating: r.rating == null ? null : Number(r.rating),
     reviewCount: Number(r.review_count ?? 0),
     attribution: (r.attribution as string) ?? null,
+    siteTheme: (["classic", "modern", "coastal"].includes(r.site_theme as string) ? r.site_theme : "classic") as Listing["siteTheme"],
     createdAt: r.created_at as string,
   };
 }
@@ -233,6 +234,7 @@ export interface NewListingInput {
   bookingUrl?: string;
   hasBookingSite?: boolean;
   tier?: string;
+  siteTheme?: string;
   hostEmail?: string;
   hostName?: string;
 }
@@ -271,7 +273,42 @@ export async function createListing(input: NewListingInput): Promise<{ id: strin
     booking_url: input.bookingUrl ?? null, has_booking_site: !!input.hasBookingSite, verified: false,
     tier, tier_rank: TIER_RANK[tier] ?? 3,
   });
+  // Persist the chosen template separately so a missing column (pre-migration)
+  // can't break listing creation. Silently ignored until the column exists.
+  if (input.siteTheme && input.siteTheme !== "classic") {
+    await sb.from(T.listings).update({ site_theme: input.siteTheme }).eq("id", id);
+  }
   return { id, slug };
+}
+
+export interface UpdateListingInput {
+  propertyName?: string;
+  description?: string | null;
+  pricePerNight?: number | null;
+  amenities?: string[];
+  photos?: string[];
+  siteTheme?: string;
+}
+
+// Edit a listing the host owns (dashboard). Returns false if not theirs.
+export async function updateListingForHost(id: string, hostId: string, patch: UpdateListingInput): Promise<boolean> {
+  const { data: l } = await sb.from(T.listings).select("host_id").eq("id", id).maybeSingle();
+  if (!l || l.host_id !== hostId) return false;
+
+  const upd: Row = {};
+  if (patch.propertyName !== undefined && patch.propertyName.trim()) upd.property_name = patch.propertyName.trim();
+  if (patch.description !== undefined) upd.description = patch.description;
+  if (patch.amenities !== undefined) upd.amenities = patch.amenities;
+  if (patch.photos !== undefined) upd.photos = patch.photos;
+  if (patch.pricePerNight !== undefined) {
+    const p = patch.pricePerNight;
+    upd.price_per_night = p;
+    upd.price_range = p == null ? "mid" : p < 70 ? "budget" : p < 160 ? "mid" : "luxury";
+  }
+  if (Object.keys(upd).length) await sb.from(T.listings).update(upd).eq("id", id);
+  // Theme update kept separate so a pre-migration column absence is tolerated.
+  if (patch.siteTheme !== undefined) await sb.from(T.listings).update({ site_theme: patch.siteTheme }).eq("id", id);
+  return true;
 }
 
 // A homely B&B/apartment (not a hotel) with real photos, for the example site.

@@ -14,6 +14,12 @@ const TYPE_LABEL: Record<string, string> = {
 const TIER_PRICE: Record<string, number> = { free: 0, standard: 79, featured: 149, pro: 299 };
 const ADDON = 120;
 
+const TEMPLATES = [
+  { key: "classic" as const, label: "Classic", blurb: "Elegant & timeless", swatch: "bg-gradient-to-br from-stone-700 to-stone-900" },
+  { key: "modern" as const, label: "Modern", blurb: "Bold & editorial", swatch: "bg-gradient-to-br from-zinc-900 to-zinc-600" },
+  { key: "coastal" as const, label: "Coastal", blurb: "Airy & relaxed", swatch: "bg-gradient-to-br from-emerald-700 to-emerald-900" },
+];
+
 const slugify = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 60);
 
@@ -28,7 +34,7 @@ interface GeoResult {
   lng: number;
 }
 
-export function ListingWizard({ initialTier = "featured", initialBuild = false, userEmail = "" }: { initialTier?: string; initialBuild?: boolean; userEmail?: string }) {
+export function ListingWizard({ initialTier = "featured", initialBuild = false, userEmail = "", exampleSlug }: { initialTier?: string; initialBuild?: boolean; userEmail?: string; exampleSlug?: string }) {
   const router = useRouter();
   const [step, setStep] = useState(1);
 
@@ -44,14 +50,17 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false, 
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
   const [amenities, setAmenities] = useState<string[]>(["WiFi"]);
-  const [ownPhotos, setOwnPhotos] = useState(false);
-  const [photoUrls, setPhotoUrls] = useState("");
+  const [uploaded, setUploaded] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadErr, setUploadErr] = useState("");
 
   const [method, setMethod] = useState<"own" | "build">(initialBuild ? "build" : "own");
   const [bookingUrl, setBookingUrl] = useState("");
   const [domain, setDomain] = useState("");
+  const [siteTheme, setSiteTheme] = useState<"classic" | "modern" | "coastal">("classic");
 
   const [tier, setTier] = useState(initialTier);
+  const maxPhotos = tier === "free" ? 1 : 12;
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -92,6 +101,31 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false, 
     setAmenities((cur) => (cur.includes(a) ? cur.filter((x) => x !== a) : [...cur, a]));
   }
 
+  async function onUpload(files: FileList | null) {
+    if (!files?.length) return;
+    setUploadErr("");
+    const room = maxPhotos - uploaded.length;
+    if (room <= 0) {
+      setUploadErr(tier === "free" ? "The free plan includes 1 photo. Upgrade to add more." : `Up to ${maxPhotos} photos.`);
+      return;
+    }
+    setUploading(true);
+    try {
+      for (const file of Array.from(files).slice(0, room)) {
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await fetch("/api/host/upload", { method: "POST", body: fd });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        setUploaded((cur) => [...cur, data.url]);
+      }
+    } catch (e) {
+      setUploadErr(e instanceof Error ? e.message : "Upload failed.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
   const urlOk = /^(https?:\/\/)?[\w-]+(\.[\w-]+)+.*$/.test(bookingUrl.trim());
   const canNext =
     step === 1 ? Boolean(name.trim() && place) :
@@ -105,9 +139,7 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false, 
     setBusy(true);
     setError("");
     try {
-      const photos = ownPhotos
-        ? photoUrls.split(/\s+/).map((u) => u.trim()).filter((u) => /^https?:\/\//.test(u))
-        : [];
+      const photos = uploaded.slice(0, maxPhotos);
       const res = await fetch("/api/host/listing", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -121,6 +153,7 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false, 
           amenities, photos,
           bookingUrl: method === "own" ? (/^https?:\/\//.test(bookingUrl.trim()) ? bookingUrl.trim() : `https://${bookingUrl.trim()}`) : undefined,
           hasBookingSite: method === "build", bookingDomain: method === "build" ? domain.trim() : undefined,
+          siteTheme: method === "build" ? siteTheme : undefined,
           tier, withSite: method === "build",
         }),
       });
@@ -246,17 +279,27 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false, 
             </div>
           </Field>
           <Field label="Photos">
-            {!ownPhotos ? (
-              <div className="flex items-center justify-between bg-mist rounded-xl p-4">
-                <span className="text-sm">We&apos;ll source professional photos of your stay for you.</span>
-                <button type="button" onClick={() => setOwnPhotos(true)} className="text-sm font-semibold text-brand whitespace-nowrap">I&apos;ll add my own</button>
-              </div>
-            ) : (
-              <div>
-                <textarea value={photoUrls} onChange={(e) => setPhotoUrls(e.target.value)} rows={3} placeholder="Paste image links, one per line" className={inputCls} />
-                <button type="button" onClick={() => setOwnPhotos(false)} className="text-xs font-semibold text-muted mt-1">Actually, source them for me</button>
-              </div>
-            )}
+            <div className="flex flex-wrap gap-3">
+              {uploaded.map((u, i) => (
+                <div key={u} className="relative w-24 h-24 rounded-xl overflow-hidden border border-line">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={u} alt="" className="w-full h-full object-cover" />
+                  <button type="button" onClick={() => setUploaded((c) => c.filter((_, j) => j !== i))} className="absolute top-1 right-1 w-5 h-5 grid place-items-center rounded-full bg-black/60 text-white text-xs">×</button>
+                </div>
+              ))}
+              {uploaded.length < maxPhotos && (
+                <label className={`w-24 h-24 rounded-xl border-2 border-dashed border-line grid place-items-center cursor-pointer hover:border-ink transition ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
+                  <input type="file" accept="image/*" multiple={maxPhotos > 1} className="hidden" onChange={(e) => onUpload(e.target.files)} />
+                  <span className="text-center text-xs text-muted">{uploading ? "Uploading…" : "+ Add photo"}</span>
+                </label>
+              )}
+            </div>
+            <p className="text-xs text-muted mt-2">
+              {tier === "free"
+                ? "The free plan includes 1 photo. Upgrade for more, or we'll source professional photos for you."
+                : `Add up to ${maxPhotos} photos. Leave empty and we'll source professional photos of your stay for you.`}
+            </p>
+            {uploadErr && <p className="text-xs text-brand mt-1">{uploadErr}</p>}
           </Field>
         </div>
       )}
@@ -284,6 +327,37 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false, 
                 payments through <span className="font-semibold text-ink">your own Stripe</span>. You keep 100%.
                 Nothing technical for you to do.
               </p>
+
+              <div className="mt-5">
+                <p className="text-sm font-semibold mb-1">Choose your template</p>
+                <p className="text-xs text-muted mb-3">We fill it in from your details. You can change it any time from your dashboard.</p>
+                <div className="grid grid-cols-3 gap-2.5">
+                  {TEMPLATES.map((tpl) => (
+                    <button
+                      key={tpl.key}
+                      type="button"
+                      onClick={() => setSiteTheme(tpl.key)}
+                      className={`text-left rounded-xl border-2 p-2.5 transition bg-white ${siteTheme === tpl.key ? "border-brand" : "border-line hover:border-ink"}`}
+                    >
+                      <div className={`h-14 rounded-md ${tpl.swatch} mb-2`} />
+                      <div className="text-sm font-semibold">{tpl.label}</div>
+                      <div className="text-[11px] text-muted leading-tight">{tpl.blurb}</div>
+                    </button>
+                  ))}
+                </div>
+                <a
+                  href={`/sites/${exampleSlug ?? ""}?t=${siteTheme}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`inline-flex items-center gap-1 mt-3 text-sm font-semibold text-brand ${exampleSlug ? "" : "pointer-events-none opacity-40"}`}
+                >
+                  Preview the {TEMPLATES.find((x) => x.key === siteTheme)?.label} template ↗
+                </a>
+                <div className="mt-4 flex items-start gap-2 bg-white border border-rose-100 rounded-lg p-3 text-xs text-muted">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-brand mt-0.5 shrink-0"><path d="M21 21l-4.35-4.35M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z" /></svg>
+                  <span>We get your site found: submitted to Google &amp; Bing for indexing, with a sitemap and an llms.txt so AI assistants can recommend you too.</span>
+                </div>
+              </div>
             </div>
           )}
         </div>

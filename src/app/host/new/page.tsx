@@ -3,6 +3,7 @@ import { Header } from "@/components/Header";
 import { BackButton } from "@/components/BackButton";
 import { ListingWizard } from "@/components/host/ListingWizard";
 import { getUser } from "@/lib/auth";
+import { getDemoListing } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,9 @@ export default async function NewListingPage({ searchParams }: { searchParams: S
     redirect(`/login?next=${encodeURIComponent(`/host/new?${qs.toString()}`)}`);
   }
 
+  const demo = await getDemoListing();
+  const demoSlug = demo?.slug;
+
   return (
     <>
       <Header />
@@ -29,7 +33,7 @@ export default async function NewListingPage({ searchParams }: { searchParams: S
         <div className="mb-6">
           <BackButton fallback="/host" />
         </div>
-        <ListingWizard initialTier={tier} initialBuild={build} userEmail={user!.email} />
+        <ListingWizard initialTier={tier} initialBuild={build} userEmail={user!.email} exampleSlug={demoSlug} />
       </main>
     </>
   );

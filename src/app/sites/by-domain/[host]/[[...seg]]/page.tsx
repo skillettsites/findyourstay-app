@@ -16,5 +16,5 @@ export default async function ByDomainSitePage({ params }: { params: Promise<{ h
   const domain = decodeURIComponent(host);
   const listing = await getListingByDomain(domain);
   if (!listing) notFound();
-  return <StandaloneSite listing={listing} base="" domain={domain} page={toPage(seg)} />;
+  return <StandaloneSite listing={listing} base="" domain={domain} page={toPage(seg)} theme={listing.siteTheme} />;
 }

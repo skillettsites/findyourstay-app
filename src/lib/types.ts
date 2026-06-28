@@ -4,6 +4,7 @@
 
 export type ListingTier = "free" | "standard" | "featured" | "pro";
 export type ListingStatus = "unclaimed" | "pending" | "active" | "suspended";
+export type SiteTheme = "classic" | "modern" | "coastal";
 export type PriceRange = "budget" | "mid" | "luxury";
 export type PropertyType =
   | "apartment"
@@ -43,6 +44,7 @@ export interface Listing {
   rating: number | null;
   reviewCount: number;
   attribution: string | null; // e.g. "© OpenStreetMap contributors"
+  siteTheme: SiteTheme; // chosen booking-site template
   createdAt: string;
 }
 

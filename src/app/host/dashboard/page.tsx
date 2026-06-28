@@ -95,6 +95,9 @@ export default async function Dashboard() {
                     <p className="text-xs text-muted mt-0.5">{views} views · {ec} enquiries</p>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+                    <Link href={`/host/listing/${l.slug}/edit`} className="text-sm font-semibold border border-line rounded-full px-4 py-2 hover:bg-mist text-center">
+                      Edit
+                    </Link>
                     <Link href={`/host/calendar/${l.slug}`} className="text-sm font-semibold border border-line rounded-full px-4 py-2 hover:bg-mist text-center">
                       Calendar
                     </Link>
