@@ -8,6 +8,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE}/`, changeFrequency: "daily", priority: 1 },
     { url: `${SITE}/s`, changeFrequency: "daily", priority: 0.6 },
     { url: `${SITE}/host`, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${SITE}/what-we-do`, changeFrequency: "monthly", priority: 0.6 },
   ];
 
   const [cityRows, slugRows] = await Promise.all([getTopCities(200), getAllListingSlugs(5000)]);
