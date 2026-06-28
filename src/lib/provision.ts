@@ -4,6 +4,7 @@
 // /sites/by-domain) works in production once a real domain points at the app.
 import "server-only";
 import { mapDomain } from "./db";
+import { submitToIndexNow } from "./indexnow";
 
 const CF_TOKEN = (process.env.CLOUDFLARE_API_TOKEN || "").replace(/\\n$/, "").trim();
 const CF_ACCOUNT = process.env.CLOUDFLARE_ACCOUNT_ID ?? "";
@@ -58,9 +59,11 @@ export async function provisionSite(listingId: string, domain: string): Promise<
         body: JSON.stringify({ type: "CNAME", name: "www", content: PAGES_CNAME, proxied: true, ttl: 1 }),
       });
     }
-    // 3. Record the mapping live.
+    // 3. Record the mapping live, then submit the new site to IndexNow so Bing
+    //    and Yandex crawl it straight away (Google picks it up via the sitemap).
     await mapDomain(clean, listingId, "active", "cloudflare");
-    return { status: "active", note: "Domain zoned and pointed at the booking-site app." };
+    void submitToIndexNow(clean);
+    return { status: "active", note: "Domain zoned, pointed at the booking-site app, and submitted for indexing." };
   } catch {
     await mapDomain(clean, listingId, "error", "cloudflare");
     return { status: "error", note: "Provisioning call failed; recorded for retry." };

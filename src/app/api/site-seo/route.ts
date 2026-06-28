@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getListingByDomain } from "@/lib/db";
 import { prettyType, formatPrice } from "@/lib/format";
+import { INDEXNOW_KEY } from "@/lib/indexnow";
 
 // Serves robots.txt, sitemap.xml and llms.txt for a host's own booking domain.
 // Middleware rewrites <hostdomain>/robots.txt -> /api/site-seo?host=...&file=robots.txt
@@ -17,6 +18,11 @@ export async function GET(req: NextRequest) {
   if (file === "robots.txt") {
     const body = `User-agent: *\nAllow: /\n\nSitemap: ${origin}/sitemap.xml\n`;
     return new NextResponse(body, { headers: { "content-type": "text/plain; charset=utf-8" } });
+  }
+
+  // IndexNow ownership key file (served at /<key>.txt on the host's domain).
+  if (file === "indexnow") {
+    return new NextResponse(INDEXNOW_KEY, { headers: { "content-type": "text/plain; charset=utf-8" } });
   }
 
   const listing = host ? await getListingByDomain(host) : null;

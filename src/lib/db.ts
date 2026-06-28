@@ -2,6 +2,7 @@
 // Mirrors the previous local API so callers just add `await`.
 import "server-only";
 import { sb, T } from "./sb";
+import { submitToIndexNow } from "./indexnow";
 import type { CitySummary, Listing, ListingQuery, ListingTier } from "./types";
 
 type Row = Record<string, unknown>;
@@ -308,6 +309,11 @@ export async function updateListingForHost(id: string, hostId: string, patch: Up
   if (Object.keys(upd).length) await sb.from(T.listings).update(upd).eq("id", id);
   // Theme update kept separate so a pre-migration column absence is tolerated.
   if (patch.siteTheme !== undefined) await sb.from(T.listings).update({ site_theme: patch.siteTheme }).eq("id", id);
+
+  // If this listing has a live booking site, re-submit it to IndexNow so the
+  // edits are re-crawled quickly by Bing/Yandex.
+  const { data: dom } = await sb.from(T.domains).select("domain").eq("listing_id", id).eq("status", "active").maybeSingle();
+  if (dom?.domain) void submitToIndexNow(dom.domain as string);
   return true;
 }
 

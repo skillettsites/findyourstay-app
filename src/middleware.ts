@@ -17,6 +17,10 @@ const SITE_HOST = (() => {
 const SB_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL || "").trim();
 const SB_ANON = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "").trim();
 
+// Mirror of lib/indexnow.ts INDEXNOW_KEY (kept inline so the edge middleware
+// doesn't import the server-only module).
+const INDEXNOW_KEY = (process.env.INDEXNOW_KEY || "fysindexnow7c1b4a9e2d").replace(/[^a-z0-9]/gi, "");
+
 function isAppHost(host: string): boolean {
   const h = host.split(":")[0];
   return (
@@ -40,6 +44,14 @@ export async function middleware(req: NextRequest) {
       const url = req.nextUrl.clone();
       url.pathname = "/api/site-seo";
       url.search = `?host=${encodeURIComponent(cleanHost)}&file=${path.slice(1)}`;
+      return NextResponse.rewrite(url);
+    }
+    // IndexNow ownership key file: /<key>.txt -> serve the key so Bing/Yandex
+    // accept our instant-indexing submissions for this host's site.
+    if (path === `/${INDEXNOW_KEY}.txt`) {
+      const url = req.nextUrl.clone();
+      url.pathname = "/api/site-seo";
+      url.search = `?host=${encodeURIComponent(cleanHost)}&file=indexnow`;
       return NextResponse.rewrite(url);
     }
     const url = req.nextUrl.clone();
