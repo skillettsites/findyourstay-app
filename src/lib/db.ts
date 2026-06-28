@@ -185,53 +185,84 @@ export async function recordImpressions(listingIds: string[]) {
   }
 }
 
+interface MetricTotals { impressions: number; views: number; siteViews: number; enquiries: number; bookings: number }
 export interface HostAnalytics {
-  totals: { impressions: number; views: number; siteViews: number; enquiries: number; bookings: number };
+  totals: MetricTotals;
+  prev: MetricTotals; // the previous equal-length window, for deltas
   series: { date: string; views: number; impressions: number }[];
   perListing: { id: string; impressions: number; views: number; enquiries: number }[];
   enquiryRate: number; // enquiries / views, %
 }
+
+const zero = (): MetricTotals => ({ impressions: 0, views: 0, siteViews: 0, enquiries: 0, bookings: 0 });
 
 function emptyAnalytics(days: number): HostAnalytics {
   const series = Array.from({ length: days }, (_, i) => {
     const d = new Date(Date.now() - (days - 1 - i) * 86400000);
     return { date: d.toISOString().slice(0, 10), views: 0, impressions: 0 };
   });
-  return { totals: { impressions: 0, views: 0, siteViews: 0, enquiries: 0, bookings: 0 }, series, perListing: [], enquiryRate: 0 };
+  return { totals: zero(), prev: zero(), series, perListing: [], enquiryRate: 0 };
 }
 
-// Aggregate a host's events into headline metrics + a daily trend, last `days`.
+// Aggregate a host's events into headline metrics + a daily trend, last `days`,
+// plus the previous equal window so the dashboard can show growth deltas.
 export async function getHostAnalytics(listings: Listing[], days = 30): Promise<HostAnalytics> {
   const ids = listings.map((l) => l.id);
   const base = emptyAnalytics(days);
   if (!ids.length) return base;
 
-  const since = new Date(Date.now() - days * 86400000).toISOString();
+  const now = Date.now();
+  const midMs = now - days * 86400000;
+  const since2 = new Date(now - 2 * days * 86400000).toISOString();
   const { data } = await sb
     .from(T.events)
     .select("listing_id,type,created_at")
     .in("listing_id", ids)
-    .gte("created_at", since)
-    .limit(50000);
+    .gte("created_at", since2)
+    .limit(80000);
 
   const byDate = new Map(base.series.map((s) => [s.date, s]));
   const per = new Map(ids.map((id) => [id, { id, impressions: 0, views: 0, enquiries: 0 }]));
-  const rows = (data ?? []) as Row[];
-  for (const r of rows) {
+  for (const r of (data ?? []) as Row[]) {
     const type = r.type as string;
-    const day = String(r.created_at).slice(0, 10);
+    const created = String(r.created_at);
+    const isCurrent = new Date(created).getTime() >= midMs;
+    const bucket = isCurrent ? base.totals : base.prev;
+    if (type === "impression") bucket.impressions++;
+    else if (type === "view") bucket.views++;
+    else if (type === "site_view") bucket.siteViews++;
+    else if (type === "enquiry") bucket.enquiries++;
+    if (!isCurrent) continue;
+    const day = created.slice(0, 10);
     const lid = r.listing_id as string;
-    if (type === "impression") { base.totals.impressions++; const b = byDate.get(day); if (b) b.impressions++; const p = per.get(lid); if (p) p.impressions++; }
-    else if (type === "view") { base.totals.views++; const b = byDate.get(day); if (b) b.views++; const p = per.get(lid); if (p) p.views++; }
-    else if (type === "site_view") { base.totals.siteViews++; }
-    else if (type === "enquiry") { base.totals.enquiries++; const p = per.get(lid); if (p) p.enquiries++; }
+    if (type === "impression") { const b = byDate.get(day); if (b) b.impressions++; const p = per.get(lid); if (p) p.impressions++; }
+    else if (type === "view") { const b = byDate.get(day); if (b) b.views++; const p = per.get(lid); if (p) p.views++; }
+    else if (type === "enquiry") { const p = per.get(lid); if (p) p.enquiries++; }
   }
 
-  const { count } = await sb.from(T.bookings).select("*", { count: "exact", head: true }).in("listing_id", ids).gte("created_at", since);
-  base.totals.bookings = count ?? 0;
+  const midIso = new Date(midMs).toISOString();
+  const [cur, prev] = await Promise.all([
+    sb.from(T.bookings).select("*", { count: "exact", head: true }).in("listing_id", ids).gte("created_at", midIso),
+    sb.from(T.bookings).select("*", { count: "exact", head: true }).in("listing_id", ids).gte("created_at", since2).lt("created_at", midIso),
+  ]);
+  base.totals.bookings = cur.count ?? 0;
+  base.prev.bookings = prev.count ?? 0;
   base.perListing = [...per.values()];
   base.enquiryRate = base.totals.views ? Math.round((base.totals.enquiries / base.totals.views) * 1000) / 10 : 0;
   return base;
+}
+
+// Map of listingId -> live booking-site domain, for the dashboard Website tab.
+export async function getDomainsForListings(listings: Listing[]): Promise<Record<string, string>> {
+  const ids = listings.map((l) => l.id);
+  if (!ids.length) return {};
+  const { data } = await sb.from(T.domains).select("domain,listing_id").in("listing_id", ids);
+  const out: Record<string, string> = {};
+  for (const r of (data ?? []) as Row[]) {
+    const lid = r.listing_id as string;
+    if (!out[lid]) out[lid] = r.domain as string;
+  }
+  return out;
 }
 
 export async function createEnquiry(input: {
