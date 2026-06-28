@@ -14,6 +14,7 @@ export interface MapPoint {
   lng: number;
   price: number | null;
   currency: string;
+  photo?: string;
 }
 
 export default function ResultsMapInner({ points, approxArea = false }: { points: MapPoint[]; approxArea?: boolean }) {
@@ -41,10 +42,14 @@ export default function ResultsMapInner({ points, approxArea = false }: { points
       {points.map((p) => (
         <Marker key={p.id} position={[p.lat, p.lng]} icon={priceIcon(p.price, p.currency)}>
           <Popup>
-            <Link href={`/rooms/${p.slug}`} className="font-semibold text-brand">
-              {p.name}
+            <Link href={`/rooms/${p.slug}`} className="block w-44">
+              {p.photo && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={p.photo} alt={p.name} loading="lazy" decoding="async" className="w-full h-28 object-cover rounded-lg mb-1.5" />
+              )}
+              <span className="block font-semibold text-ink leading-snug">{p.name}</span>
+              <span className="block text-xs text-muted mt-0.5">{formatPrice(p.price, p.currency)} / night</span>
             </Link>
-            <div className="text-xs text-muted">{formatPrice(p.price, p.currency)} / night</div>
           </Popup>
         </Marker>
       ))}

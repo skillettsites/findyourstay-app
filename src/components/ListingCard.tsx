@@ -2,14 +2,13 @@
 
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { motion } from "motion/react";
 import type { Listing } from "@/lib/types";
 import { formatPrice, prettyType } from "@/lib/format";
 import { TIER_CONFIG } from "@/lib/types";
 
 export function ListingCard({ listing, hrefSuffix = "" }: { listing: Listing; hrefSuffix?: string }) {
   const [i, setI] = useState(0);
-  const [dir, setDir] = useState(1);
   const [saved, setSaved] = useState(false);
   const photos = listing.photos;
   const hasPhotos = photos.length > 0;
@@ -17,9 +16,14 @@ export function ListingCard({ listing, hrefSuffix = "" }: { listing: Listing; hr
 
   const touchX = useRef<number | null>(null);
   const swiped = useRef(false);
+  const preloaded = useRef(false);
+  function preloadAll() {
+    if (preloaded.current || photos.length < 2) return;
+    preloaded.current = true;
+    photos.forEach((p) => { const im = new window.Image(); im.src = p; });
+  }
 
   function step(d: number) {
-    setDir(d);
     setI((p) => (p + d + photos.length) % photos.length);
   }
   function go(d: number, e: React.MouseEvent) {
@@ -49,25 +53,20 @@ export function ListingCard({ listing, hrefSuffix = "" }: { listing: Listing; hr
       <motion.div
         whileHover={{ y: -6 }}
         transition={{ type: "spring", stiffness: 320, damping: 26 }}
+        onMouseEnter={preloadAll}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
         className="relative aspect-square rounded-2xl overflow-hidden bg-mist shadow-card group-hover:shadow-float transition-shadow duration-300 touch-pan-y"
       >
         {hasPhotos ? (
-          <AnimatePresence initial={false} custom={dir} mode="popLayout">
-            <motion.img
-              key={i}
-              src={photos[i]}
-              alt={listing.propertyName}
-              custom={dir}
-              initial={{ opacity: 0, scale: 1.04 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-              loading="lazy"
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-          </AnimatePresence>
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={photos[i]}
+            alt={listing.propertyName}
+            loading="lazy"
+            decoding="async"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
         ) : (
           <PhotoPlaceholder />
         )}

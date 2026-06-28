@@ -96,7 +96,7 @@ function Menu() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-60 bg-white border border-line rounded-2xl shadow-float py-2 text-sm overflow-hidden">
+        <div className="absolute right-0 top-full mt-2 w-60 bg-white border border-line rounded-2xl shadow-float py-2 text-sm overflow-y-auto max-h-[calc(100vh-6rem)] z-50">
           {email && (
             <p className="px-4 pt-1.5 pb-2 text-xs text-muted truncate border-b border-line mb-1">
               Signed in as <span className="font-semibold text-ink">{email}</span>

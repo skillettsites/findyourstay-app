@@ -53,12 +53,8 @@ export async function POST(req: Request) {
       });
     }
 
-    const claimed = Boolean(hostEmail);
-    const reply = claimed
-      ? `Enquiry sent to ${listing.propertyName}. They'll reply to ${guestEmail}.`
-      : `Thanks, we've noted your interest in ${listing.propertyName}. It isn't claimed by its owner yet, so we'll alert you at ${guestEmail} if they join. Meanwhile you can book direct on the venue's own website.`;
-
-    return NextResponse.json({ ok: true, id, message: reply, claimed });
+    const reply = `Enquiry sent to ${listing.propertyName}. They'll reply to ${guestEmail}.`;
+    return NextResponse.json({ ok: true, id, message: reply });
   } catch {
     return NextResponse.json({ error: "Something went wrong." }, { status: 500 });
   }

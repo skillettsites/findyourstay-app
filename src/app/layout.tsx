@@ -31,6 +31,11 @@ const orgLd = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${geistSans.variable} ${display.variable} h-full antialiased`}>
+      <head>
+        <link rel="preconnect" href="https://u6tymn7wo0dz2c1b.public.blob.vercel-storage.com" />
+        <link rel="dns-prefetch" href="https://picsum.photos" />
+        <link rel="dns-prefetch" href="https://a.tile.openstreetmap.org" />
+      </head>
       <body className="min-h-full flex flex-col bg-white text-ink">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgLd) }} />
         {children}

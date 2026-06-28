@@ -34,7 +34,7 @@ export default async function SearchPage({ searchParams }: { searchParams: SP })
   const { items, total } = await searchListings(query);
   const points: MapPoint[] = items
     .filter((l) => Number.isFinite(l.lat) && Number.isFinite(l.lng))
-    .map((l) => ({ id: l.id, slug: l.slug, name: l.propertyName, lat: l.lat, lng: l.lng, price: l.pricePerNight, currency: l.currency }));
+    .map((l) => ({ id: l.id, slug: l.slug, name: l.propertyName, lat: l.lat, lng: l.lng, price: l.pricePerNight, currency: l.currency, photo: l.photos[0] }));
 
   const heading = query.q
     ? `Stays matching "${query.q}"`
