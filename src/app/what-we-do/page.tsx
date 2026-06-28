@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Reveal, Stagger, StaggerItem } from "@/components/Motion";
+import { ExplainerFilm } from "@/components/ExplainerFilm";
 
 export const metadata = {
   title: "What we do - FindYourStay for hosts",
@@ -126,33 +127,41 @@ export default function WhatWeDoPage() {
         {/* Hero */}
         <section className="relative overflow-hidden bg-gradient-to-b from-rose-50 to-white border-b border-line">
           <div className="aurora" aria-hidden />
-          <div className="relative mx-auto max-w-4xl px-4 sm:px-6 py-20 sm:py-28 text-center">
-            <Reveal>
-              <span className="inline-block bg-white text-brand text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow-card">
-                The one-stop shop for direct bookings
-              </span>
-            </Reveal>
-            <Reveal delay={0.05}>
-              <h1 className="mt-5 text-4xl sm:text-6xl font-display font-bold tracking-tight leading-[1.05]">
-                Everything you need to get<br className="hidden sm:block" /> booked direct.
-              </h1>
-            </Reveal>
+          <div className="relative mx-auto max-w-6xl px-4 sm:px-6 py-16 sm:py-20 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Left: copy */}
+            <div className="text-center lg:text-left">
+              <Reveal>
+                <span className="inline-block bg-white text-brand text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow-card">
+                  The one-stop shop for direct bookings
+                </span>
+              </Reveal>
+              <Reveal delay={0.05}>
+                <h1 className="mt-5 text-4xl sm:text-5xl xl:text-6xl font-display font-bold tracking-tight leading-[1.05]">
+                  Everything you need to get booked direct.
+                </h1>
+              </Reveal>
+              <Reveal delay={0.1}>
+                <p className="mt-5 text-lg text-muted max-w-xl mx-auto lg:mx-0">
+                  We help independent hosts win bookings without the commission. Drive guests to the site you already
+                  have, or let us build, host and secure a brand-new one, then get you found on Google, Bing and the
+                  AI assistants travellers are starting to plan with. You keep 100% of every booking.
+                </p>
+              </Reveal>
+              <Reveal delay={0.15}>
+                <div className="mt-8 flex flex-wrap justify-center lg:justify-start gap-3">
+                  <Link href="/host/new" className="bg-brand-gradient bg-brand-gradient-hover text-white font-semibold px-6 py-3 rounded-full shadow-glow transition-transform active:scale-95">
+                    List your stay
+                  </Link>
+                  <Link href="/host#pricing" className="border border-ink font-semibold px-6 py-3 rounded-full hover:bg-mist transition">
+                    See pricing
+                  </Link>
+                </div>
+              </Reveal>
+            </div>
+
+            {/* Right: animated explainer film */}
             <Reveal delay={0.1}>
-              <p className="mt-5 text-lg text-muted max-w-2xl mx-auto">
-                We help independent hosts win bookings without the commission. Drive guests to the site you already
-                have, or let us build, host and secure a brand-new one, then get you found on Google, Bing and the
-                AI assistants travellers are starting to plan with. You keep 100% of every booking.
-              </p>
-            </Reveal>
-            <Reveal delay={0.15}>
-              <div className="mt-8 flex flex-wrap justify-center gap-3">
-                <Link href="/host/new" className="bg-brand-gradient bg-brand-gradient-hover text-white font-semibold px-6 py-3 rounded-full shadow-glow transition-transform active:scale-95">
-                  List your stay
-                </Link>
-                <Link href="/host#pricing" className="border border-ink font-semibold px-6 py-3 rounded-full hover:bg-mist transition">
-                  See pricing
-                </Link>
-              </div>
+              <ExplainerFilm />
             </Reveal>
           </div>
         </section>
