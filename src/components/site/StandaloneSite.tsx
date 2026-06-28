@@ -126,7 +126,7 @@ export function StandaloneSite({
         {page === "rooms" && <Rooms listing={listing} photos={photos} href={href} t={t} />}
         {page === "gallery" && <Gallery listing={listing} photos={photos} t={t} />}
         {page === "location" && <Location listing={listing} t={t} />}
-        {page === "book" && <Book listing={listing} t={t} />}
+        {page === "book" && <Book listing={listing} t={t} demo={example} />}
       </main>
 
       <Footer listing={listing} domain={domain} links={links} t={t} />
@@ -479,7 +479,7 @@ function Location({ listing, t }: { listing: Listing; t: Tokens }) {
 }
 
 /* ---------------- Book ---------------- */
-function Book({ listing, t }: { listing: Listing; t: Tokens }) {
+function Book({ listing, t, demo = false }: { listing: Listing; t: Tokens; demo?: boolean }) {
   return (
     <section className="mx-auto max-w-6xl px-4 sm:px-6 py-16 grid lg:grid-cols-2 gap-14">
       <FadeUp>
@@ -498,7 +498,7 @@ function Book({ listing, t }: { listing: Listing; t: Tokens }) {
       </FadeUp>
       <FadeUp delay={0.1}>
         <div className="lg:sticky lg:top-24">
-          <MicrositeBooking listing={listing} />
+          <MicrositeBooking listing={listing} demo={demo} />
         </div>
       </FadeUp>
     </section>

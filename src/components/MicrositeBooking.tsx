@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import type { Listing } from "@/lib/types";
 import { formatPrice } from "@/lib/format";
 
-export function MicrositeBooking({ listing }: { listing: Listing }) {
+export function MicrositeBooking({ listing, demo = false }: { listing: Listing; demo?: boolean }) {
   // Prefill from the hero availability search (?in=&out=&guests=) when present.
   const sp = useSearchParams();
   const [checkIn, setCheckIn] = useState(sp.get("in") ?? "");
@@ -20,6 +20,9 @@ export function MicrositeBooking({ listing }: { listing: Listing }) {
     setError("");
     if (!checkIn || !checkOut || nights <= 0) { setError("Choose your dates."); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError("Enter a valid email."); return; }
+    // Example/preview sites have no real listing to book against; show the
+    // explainer message instead of hitting the API.
+    if (demo) { setDone(true); return; }
     setBusy(true);
     try {
       const res = await fetch("/api/booking/request", {
@@ -48,12 +51,23 @@ export function MicrositeBooking({ listing }: { listing: Listing }) {
     return (
       <div className="border border-line rounded-2xl shadow-float p-6 bg-white text-center">
         <div className="mx-auto w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 grid place-items-center text-2xl">✓</div>
-        <h3 className="font-semibold text-lg mt-3">Reservation started</h3>
-        <p className="text-sm text-muted mt-1">
-          In the live site, the guest now pays {total ? formatPrice(total, listing.currency) : "the deposit"} securely by
-          card. The money goes straight to <span className="font-semibold text-ink">your own Stripe account</span>. FindYourStay
-          never touches it.
-        </p>
+        {demo ? (
+          <>
+            <h3 className="font-semibold text-lg mt-3">You&apos;re looking at a preview</h3>
+            <p className="text-sm text-muted mt-1">
+              On your own live site, the guest would now pay {total ? formatPrice(total, listing.currency) : "the amount due"} securely
+              by card, straight into <span className="font-semibold text-ink">your own Stripe account</span>. FindYourStay never touches
+              the money, and there are no commissions or platform fees.
+            </p>
+          </>
+        ) : (
+          <>
+            <h3 className="font-semibold text-lg mt-3">Request sent</h3>
+            <p className="text-sm text-muted mt-1">
+              Thanks, your dates have been sent to the host. They&apos;ll confirm with you by email very soon.
+            </p>
+          </>
+        )}
         <button onClick={() => setDone(false)} className="mt-4 text-sm font-semibold text-brand hover:underline">
           Back
         </button>
@@ -110,7 +124,9 @@ export function MicrositeBooking({ listing }: { listing: Listing }) {
         {busy ? "Checking availability…" : "Reserve & pay"}
       </button>
       {error && <p className="text-sm text-brand text-center mt-2">{error}</p>}
-      <p className="text-xs text-muted text-center mt-3">Secure card payment via the owner&apos;s Stripe. No platform fees.</p>
+      <p className="text-xs text-muted text-center mt-3">
+        {demo ? "This is a preview, no payment is taken." : "Secure card payment via the owner’s Stripe. No platform fees."}
+      </p>
     </div>
   );
 }
