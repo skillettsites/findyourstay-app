@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SiteNav, type NavLink } from "./SiteNav";
 import { HeroSearch } from "./HeroSearch";
+import { ScrollProgress, FadeUp, HeroStage, HeroItem, ParallaxImage, Stagger, Item } from "./SiteMotion";
 import { MicrositeBooking } from "@/components/MicrositeBooking";
 import { ResultsMap } from "@/components/ResultsMap";
 import { prettyType, formatPrice } from "@/lib/format";
@@ -10,8 +11,8 @@ export type SitePage = "home" | "rooms" | "gallery" | "location" | "book";
 export type SiteTheme = "classic" | "modern" | "coastal";
 
 // Three original, premium standalone website templates for a host's B&B / rental.
-// Full multi-page sites with their own nav, hero search, gallery and booking.
-// `theme` swaps the entire palette and feel. Original work, luxury-hospitality genre.
+// Cinematic, animated, multi-page sites with their own nav, hero search, gallery
+// and booking. `theme` swaps the whole palette and feel. Luxury-hospitality genre.
 interface Tokens {
   label: string;
   btn: string;
@@ -24,7 +25,12 @@ interface Tokens {
   pill: string;
   radius: string;
   check: string;
+  bar: string;
 }
+
+// Shared micro-interaction for primary call-to-action buttons.
+const CTA = "transition-all duration-300 active:scale-[0.97] motion-safe:hover:-translate-y-0.5 hover:shadow-xl";
+const ZOOM = "transition-transform duration-[900ms] ease-out group-hover:scale-[1.06] will-change-transform";
 
 const THEMES: Record<SiteTheme, Tokens> = {
   classic: {
@@ -39,6 +45,7 @@ const THEMES: Record<SiteTheme, Tokens> = {
     pill: "border border-stone-300 rounded-md text-stone-700",
     radius: "rounded-lg",
     check: "text-amber-700",
+    bar: "bg-amber-600",
   },
   modern: {
     label: "Modern",
@@ -52,6 +59,7 @@ const THEMES: Record<SiteTheme, Tokens> = {
     pill: "border border-ink/20 rounded-none",
     radius: "rounded-none",
     check: "text-ink",
+    bar: "bg-ink",
   },
   coastal: {
     label: "Coastal",
@@ -65,6 +73,7 @@ const THEMES: Record<SiteTheme, Tokens> = {
     pill: "border border-emerald-200 rounded-full text-emerald-900",
     radius: "rounded-2xl",
     check: "text-emerald-800",
+    bar: "bg-emerald-600",
   },
 };
 
@@ -97,7 +106,8 @@ export function StandaloneSite({
   ];
 
   return (
-    <div className="min-h-screen bg-white flex flex-col font-sans">
+    <div className="min-h-screen bg-white flex flex-col font-sans overflow-x-hidden">
+      <ScrollProgress className={t.bar} />
       {example && (
         <div className="bg-ink text-white text-xs">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-2 flex items-center justify-between gap-3">
@@ -109,7 +119,7 @@ export function StandaloneSite({
         </div>
       )}
 
-      <SiteNav name={listing.propertyName} domain={domain} links={links} active={page} bookHref={href("book")} btn={t.btn} activeText={t.accent} />
+      <SiteNav name={listing.propertyName} domain={domain} links={links} active={page} bookHref={href("book")} btn={`${t.btn} ${CTA}`} activeText={t.accent} />
 
       <main className="flex-1">
         {page === "home" && <Home listing={listing} photos={photos} href={href} t={t} theme={theme} />}
@@ -137,35 +147,34 @@ function HomeClassic({ listing, photos, href, t }: HomeProps) {
   return (
     <>
       <section className="relative h-[100svh] min-h-[640px]">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={photos[0]} alt={listing.propertyName} className="absolute inset-0 w-full h-full object-cover" />
+        <ParallaxImage src={photos[0]} alt={listing.propertyName} priority />
         <div className={`absolute inset-0 ${t.overlay}`} />
-        <div className="relative h-full flex flex-col items-center justify-center text-center text-white px-6 pb-28 [text-shadow:0_2px_22px_rgba(0,0,0,0.6)]">
-          <p className={t.eyebrow}>{prettyType(listing.propertyType)} · {listing.cityName}, {listing.country}</p>
-          <h1 className="font-serif font-medium tracking-tight text-5xl sm:text-7xl mt-5 max-w-4xl leading-[1.04]">{listing.propertyName}</h1>
-          <p className="mt-5 text-lg text-white/90 max-w-xl font-light">An independent stay in {listing.neighborhood || listing.cityName}, booked direct with us, never any platform fees.</p>
-        </div>
-        <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 pb-8">
-          <HeroSearch bookHref={href("book")} btnClass={t.btn} />
-        </div>
+        <HeroStage className="relative h-full flex flex-col items-center justify-center text-center text-white px-6 pb-28 [text-shadow:0_2px_22px_rgba(0,0,0,0.6)]">
+          <HeroItem><p className={t.eyebrow}>{prettyType(listing.propertyType)} · {listing.cityName}, {listing.country}</p></HeroItem>
+          <HeroItem><h1 className="font-serif font-medium tracking-tight text-5xl sm:text-7xl mt-5 max-w-4xl leading-[1.04]">{listing.propertyName}</h1></HeroItem>
+          <HeroItem><p className="mt-5 text-lg text-white/90 max-w-xl font-light">An independent stay in {listing.neighborhood || listing.cityName}, booked direct with us, never any platform fees.</p></HeroItem>
+        </HeroStage>
+        <FadeUp delay={0.6} className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 pb-8">
+          <HeroSearch bookHref={href("book")} btnClass={`${t.btn} ${CTA}`} />
+        </FadeUp>
       </section>
 
       {/* Story */}
-      <section className="mx-auto max-w-3xl px-4 sm:px-6 py-20 sm:py-28 text-center">
+      <FadeUp className="mx-auto max-w-3xl px-4 sm:px-6 py-20 sm:py-28 text-center">
         <p className={`text-xs font-semibold uppercase tracking-[0.3em] ${t.accent}`}>Welcome</p>
         <h2 className="font-serif font-medium text-4xl sm:text-5xl mt-4 leading-tight">Your home from home in {listing.cityName}</h2>
         <p className="mt-6 text-lg text-ink/75 leading-relaxed font-light">{listing.description || `A characterful place to stay in ${listing.cityName}, hosted with genuine care.`}</p>
         <p className="mt-6 font-serif text-3xl">{formatPrice(listing.pricePerNight, listing.currency)} <span className="text-base font-sans text-muted">per night</span></p>
-        <Link href={href("rooms")} className={`inline-block mt-7 font-semibold px-8 py-3.5 ${t.btn}`}>Explore the rooms</Link>
-      </section>
+        <Link href={href("rooms")} className={`inline-block mt-7 font-semibold px-8 py-3.5 ${t.btn} ${CTA}`}>Explore the rooms</Link>
+      </FadeUp>
 
       {/* Feature split */}
       <section className="mx-auto max-w-6xl px-4 sm:px-6 pb-4 grid md:grid-cols-2 gap-12 items-center">
-        <div className={`overflow-hidden aspect-[4/5] shadow-xl ${t.radius}`}>
+        <FadeUp className={`group overflow-hidden aspect-[4/5] shadow-xl ${t.radius}`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={photos[1] ?? photos[0]} alt="" className="w-full h-full object-cover" loading="lazy" />
-        </div>
-        <div>
+          <img src={photos[1] ?? photos[0]} alt="" className={`w-full h-full object-cover ${ZOOM}`} loading="lazy" />
+        </FadeUp>
+        <FadeUp delay={0.1}>
           <p className={`text-xs font-semibold uppercase tracking-[0.3em] ${t.accent}`}>The space</p>
           <h2 className="font-serif font-medium text-4xl mt-3">Designed for a restful stay</h2>
           <p className="mt-4 text-ink/75 leading-relaxed font-light">Thoughtfully kept and full of character, with everything you need close at hand. Book your dates and we&apos;ll take care of the rest.</p>
@@ -175,32 +184,32 @@ function HomeClassic({ listing, photos, href, t }: HomeProps) {
             ))}
           </div>
           <Link href={href("rooms")} className={`inline-block mt-7 font-semibold ${t.accent} hover:underline`}>See what&apos;s included →</Link>
-        </div>
+        </FadeUp>
       </section>
 
       {/* Trust band */}
       <section className={`${t.alt} mt-20`}>
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-16 grid sm:grid-cols-3 gap-10 text-center">
+        <Stagger className="mx-auto max-w-6xl px-4 sm:px-6 py-16 grid sm:grid-cols-3 gap-10 text-center">
           {[
             ["Book direct", "No platform fees, no middleman. You deal straight with us, every time."],
             ["Truly independent", `Genuine, personal hospitality in the heart of ${listing.cityName}.`],
             ["Secure & simple", "Pay securely by card, padlock protected, with instant confirmation."],
           ].map(([title, d]) => (
-            <div key={title}>
+            <Item key={title}>
               <h3 className="font-serif text-2xl">{title}</h3>
               <p className="text-muted text-sm mt-2 leading-relaxed">{d}</p>
-            </div>
+            </Item>
           ))}
-        </div>
+        </Stagger>
       </section>
 
-      {/* Location + CTA */}
+      {/* CTA */}
       <section className={t.dark}>
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-20 text-center">
+        <FadeUp className="mx-auto max-w-6xl px-4 sm:px-6 py-20 text-center">
           <h2 className="font-serif font-medium text-4xl">Ready when you are</h2>
           <p className="opacity-70 mt-3 max-w-lg mx-auto font-light">Check availability and book {listing.propertyName} directly, for the best rate, every time.</p>
-          <Link href={href("book")} className={`inline-block mt-8 font-semibold px-9 py-4 ${t.btnGhost}`}>Check availability</Link>
-        </div>
+          <Link href={href("book")} className={`inline-block mt-8 font-semibold px-9 py-4 ${t.btnGhost} ${CTA}`}>Check availability</Link>
+        </FadeUp>
       </section>
     </>
   );
@@ -211,80 +220,85 @@ function HomeModern({ listing, photos, href, t }: HomeProps) {
   const gal = photos.length > 2 ? photos : [...photos, `https://picsum.photos/seed/${listing.id}-m1/900/600`, `https://picsum.photos/seed/${listing.id}-m2/900/600`];
   return (
     <>
-      {/* Split hero: text panel + image */}
+      {/* Split hero: text panel + parallax image */}
       <section className="grid md:grid-cols-2 md:min-h-[88vh]">
-        <div className="bg-ink text-white flex flex-col justify-center px-6 sm:px-12 lg:px-16 py-16 order-2 md:order-1">
-          <p className="text-[11px] uppercase tracking-[0.45em] text-white/55">{prettyType(listing.propertyType)} · {listing.cityName}, {listing.country}</p>
-          <h1 className="font-serif text-5xl lg:text-7xl mt-6 leading-[1.02]">{listing.propertyName}</h1>
-          <div className="w-16 h-px bg-white/40 my-8" />
-          <p className="text-white/70 max-w-md font-light text-lg leading-relaxed">{(listing.description || `An independent stay in ${listing.cityName}, booked direct, never any platform fees.`).slice(0, 180)}</p>
-          <div className="mt-10 flex flex-wrap items-center gap-7">
-            <Link href={href("book")} className="bg-white text-ink px-8 py-4 font-semibold text-xs uppercase tracking-[0.2em] hover:bg-white/90 transition">Reserve</Link>
-            <span className="text-sm text-white/60"><span className="font-serif text-2xl text-white">{formatPrice(listing.pricePerNight, listing.currency)}</span> / night</span>
-          </div>
-        </div>
+        <HeroStage className="bg-ink text-white flex flex-col justify-center px-6 sm:px-12 lg:px-16 py-16 order-2 md:order-1">
+          <HeroItem><p className="text-[11px] uppercase tracking-[0.45em] text-white/55">{prettyType(listing.propertyType)} · {listing.cityName}, {listing.country}</p></HeroItem>
+          <HeroItem><h1 className="font-serif text-5xl lg:text-7xl mt-6 leading-[1.02]">{listing.propertyName}</h1></HeroItem>
+          <HeroItem><div className="w-16 h-px bg-white/40 my-8" /></HeroItem>
+          <HeroItem><p className="text-white/70 max-w-md font-light text-lg leading-relaxed">{(listing.description || `An independent stay in ${listing.cityName}, booked direct, never any platform fees.`).slice(0, 180)}</p></HeroItem>
+          <HeroItem>
+            <div className="mt-10 flex flex-wrap items-center gap-7">
+              <Link href={href("book")} className={`bg-white text-ink px-8 py-4 font-semibold text-xs uppercase tracking-[0.2em] hover:bg-white/90 ${CTA}`}>Reserve</Link>
+              <span className="text-sm text-white/60"><span className="font-serif text-2xl text-white">{formatPrice(listing.pricePerNight, listing.currency)}</span> / night</span>
+            </div>
+          </HeroItem>
+        </HeroStage>
         <div className="relative order-1 md:order-2 min-h-[42vh]">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={photos[0]} alt={listing.propertyName} className="absolute inset-0 w-full h-full object-cover" />
+          <ParallaxImage src={photos[0]} alt={listing.propertyName} priority />
         </div>
       </section>
 
       {/* Availability strip */}
       <section className="border-b border-ink/10 bg-mist">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 py-7">
-          <HeroSearch bookHref={href("book")} btnClass={t.btn} />
-        </div>
+        <FadeUp className="mx-auto max-w-5xl px-4 sm:px-6 py-7">
+          <HeroSearch bookHref={href("book")} btnClass={`${t.btn} ${CTA}`} />
+        </FadeUp>
       </section>
 
-      {/* 01 — The space (editorial, offset) */}
+      {/* 01 — The space */}
       <section className="mx-auto max-w-6xl px-4 sm:px-6 py-24 grid lg:grid-cols-12 gap-10 items-center">
-        <div className="lg:col-span-5">
+        <FadeUp className="lg:col-span-5">
           <p className="font-serif text-7xl text-ink/10 leading-none">01</p>
           <h2 className="font-serif text-4xl -mt-4">The space</h2>
           <p className="mt-5 text-ink/70 font-light leading-relaxed">{listing.description || `A characterful place to stay in the heart of ${listing.cityName}, kept with care and ready for your arrival.`}</p>
-          <Link href={href("rooms")} className="inline-block mt-7 text-xs font-semibold uppercase tracking-[0.2em] border-b-2 border-ink pb-1">Explore the rooms</Link>
-        </div>
-        <div className="lg:col-span-7">
+          <Link href={href("rooms")} className="inline-block mt-7 text-xs font-semibold uppercase tracking-[0.2em] border-b-2 border-ink pb-1 hover:opacity-60 transition">Explore the rooms</Link>
+        </FadeUp>
+        <FadeUp delay={0.1} className="lg:col-span-7 group overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={photos[1] ?? photos[0]} alt="" loading="lazy" className="w-full aspect-[16/10] object-cover" />
-        </div>
+          <img src={photos[1] ?? photos[0]} alt="" loading="lazy" className={`w-full aspect-[16/10] object-cover ${ZOOM}`} />
+        </FadeUp>
       </section>
 
-      {/* 02 — Comforts (ruled list) */}
+      {/* 02 — Comforts */}
       <section className="border-y border-ink/10 bg-mist">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-16">
-          <p className="text-[11px] uppercase tracking-[0.45em] text-muted">02 — Comforts</p>
-          <h2 className="font-serif text-4xl mt-3">Everything included</h2>
-          <div className="mt-7 grid sm:grid-cols-2 lg:grid-cols-3 gap-x-12">
+          <FadeUp>
+            <p className="text-[11px] uppercase tracking-[0.45em] text-muted">02 — Comforts</p>
+            <h2 className="font-serif text-4xl mt-3">Everything included</h2>
+          </FadeUp>
+          <Stagger className="mt-7 grid sm:grid-cols-2 lg:grid-cols-3 gap-x-12">
             {(listing.amenities.length ? listing.amenities : ["WiFi", "Kitchen", "Heating"]).map((a) => (
-              <div key={a} className="flex items-center justify-between border-b border-ink/10 py-3.5 text-sm">
+              <Item key={a} className="flex items-center justify-between border-b border-ink/10 py-3.5 text-sm">
                 <span>{a}</span><span className="text-ink/25 text-xs uppercase tracking-wider">incl.</span>
-              </div>
+              </Item>
             ))}
-          </div>
+          </Stagger>
         </div>
       </section>
 
       {/* 03 — Gallery filmstrip */}
       <section className="py-20">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 flex items-end justify-between mb-7">
+        <FadeUp className="mx-auto max-w-6xl px-4 sm:px-6 flex items-end justify-between mb-7">
           <h2 className="font-serif text-4xl">A look around</h2>
-          <Link href={href("gallery")} className="text-xs font-semibold uppercase tracking-[0.2em] border-b-2 border-ink pb-1">View gallery</Link>
-        </div>
+          <Link href={href("gallery")} className="text-xs font-semibold uppercase tracking-[0.2em] border-b-2 border-ink pb-1 hover:opacity-60 transition">View gallery</Link>
+        </FadeUp>
         <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 sm:px-6 snap-x">
           {gal.slice(0, 7).map((p, i) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img key={i} src={p} alt="" loading="lazy" className="h-72 w-[26rem] max-w-[82vw] object-cover shrink-0 snap-start" />
+            <div key={i} className="group overflow-hidden shrink-0 snap-start">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={p} alt="" loading="lazy" className={`h-72 w-[26rem] max-w-[82vw] object-cover ${ZOOM}`} />
+            </div>
           ))}
         </div>
       </section>
 
       {/* CTA */}
       <section className="bg-ink text-white">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-24 flex flex-col md:flex-row md:items-end md:justify-between gap-8">
+        <FadeUp className="mx-auto max-w-6xl px-4 sm:px-6 py-24 flex flex-col md:flex-row md:items-end md:justify-between gap-8">
           <h2 className="font-serif text-5xl lg:text-6xl max-w-xl leading-[1.05]">Stay with us in {listing.cityName}.</h2>
-          <Link href={href("book")} className="self-start bg-white text-ink px-9 py-4 text-xs font-semibold uppercase tracking-[0.2em] hover:bg-white/90 transition">Check availability</Link>
-        </div>
+          <Link href={href("book")} className={`self-start bg-white text-ink px-9 py-4 text-xs font-semibold uppercase tracking-[0.2em] hover:bg-white/90 ${CTA}`}>Check availability</Link>
+        </FadeUp>
       </section>
     </>
   );
@@ -296,70 +310,69 @@ function HomeCoastal({ listing, photos, href, t }: HomeProps) {
     <>
       <section className="px-3 pt-3">
         <div className="relative rounded-[2rem] overflow-hidden h-[80vh] min-h-[560px]">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={photos[0]} alt={listing.propertyName} className="absolute inset-0 w-full h-full object-cover" />
+          <ParallaxImage src={photos[0]} alt={listing.propertyName} priority />
           <div className="absolute inset-0 bg-emerald-950/35" />
           <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/75 via-emerald-950/35 to-emerald-950/45" />
-          <div className="relative h-full flex flex-col items-center justify-center text-center text-white px-6 [text-shadow:0_2px_22px_rgba(0,0,0,0.55)]">
-            <p className="uppercase tracking-[0.3em] text-white/90 text-xs">{prettyType(listing.propertyType)} · {listing.cityName}</p>
-            <h1 className="font-serif text-5xl sm:text-7xl mt-5 max-w-3xl leading-[1.05]">{listing.propertyName}</h1>
-            <p className="mt-5 text-white/90 font-light max-w-md text-lg">A breath of fresh air in {listing.neighborhood || listing.cityName}. Book direct, no fees.</p>
-          </div>
+          <HeroStage className="relative h-full flex flex-col items-center justify-center text-center text-white px-6 [text-shadow:0_2px_22px_rgba(0,0,0,0.55)]">
+            <HeroItem><p className="uppercase tracking-[0.3em] text-white/90 text-xs">{prettyType(listing.propertyType)} · {listing.cityName}</p></HeroItem>
+            <HeroItem><h1 className="font-serif text-5xl sm:text-7xl mt-5 max-w-3xl leading-[1.05]">{listing.propertyName}</h1></HeroItem>
+            <HeroItem><p className="mt-5 text-white/90 font-light max-w-md text-lg">A breath of fresh air in {listing.neighborhood || listing.cityName}. Book direct, no fees.</p></HeroItem>
+          </HeroStage>
         </div>
       </section>
 
       {/* Floating availability card overlapping the hero */}
-      <div className="px-4 sm:px-6 -mt-10 relative z-10">
-        <HeroSearch bookHref={href("book")} btnClass={t.btn} />
-      </div>
+      <FadeUp delay={0.5} className="px-4 sm:px-6 -mt-10 relative z-10">
+        <HeroSearch bookHref={href("book")} btnClass={`${t.btn} ${CTA}`} />
+      </FadeUp>
 
       {/* Welcome */}
-      <section className="mx-auto max-w-3xl px-4 sm:px-6 py-20 text-center">
+      <FadeUp className="mx-auto max-w-3xl px-4 sm:px-6 py-20 text-center">
         <p className="uppercase tracking-[0.25em] text-emerald-800 text-xs font-semibold">Welcome</p>
         <h2 className="font-serif text-4xl sm:text-5xl mt-4 leading-tight">Your home from home in {listing.cityName}</h2>
         <p className="mt-6 text-lg text-ink/70 leading-relaxed font-light">{listing.description || `A relaxed, characterful place to stay, hosted with genuine care in ${listing.cityName}.`}</p>
         <p className="mt-6 font-serif text-3xl text-emerald-900">{formatPrice(listing.pricePerNight, listing.currency)} <span className="text-base font-sans text-muted">per night</span></p>
-      </section>
+      </FadeUp>
 
       {/* Feature — rounded offset */}
       <section className="mx-auto max-w-6xl px-4 sm:px-6 grid md:grid-cols-2 gap-10 items-center">
-        <div className="overflow-hidden rounded-[2rem] aspect-[4/5] shadow-xl">
+        <FadeUp className="group overflow-hidden rounded-[2rem] aspect-[4/5] shadow-xl">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={photos[1] ?? photos[0]} alt="" loading="lazy" className="w-full h-full object-cover" />
-        </div>
-        <div className="bg-emerald-50/60 rounded-[2rem] p-8 sm:p-10">
+          <img src={photos[1] ?? photos[0]} alt="" loading="lazy" className={`w-full h-full object-cover ${ZOOM}`} />
+        </FadeUp>
+        <FadeUp delay={0.1} className="bg-emerald-50/60 rounded-[2rem] p-8 sm:p-10">
           <h2 className="font-serif text-3xl text-emerald-950">Made for slow mornings</h2>
           <p className="mt-3 text-ink/70 font-light leading-relaxed">Everything you need for an easy, restful stay, close to the best of {listing.cityName}.</p>
           <div className="mt-6 flex flex-wrap gap-2">
             {(listing.amenities.length ? listing.amenities : ["WiFi", "Kitchen", "Heating"]).map((a) => (
-              <span key={a} className="bg-white border border-emerald-100 text-emerald-900 text-sm rounded-full px-4 py-1.5">{a}</span>
+              <span key={a} className="bg-white border border-emerald-100 text-emerald-900 text-sm rounded-full px-4 py-1.5 transition hover:border-emerald-300">{a}</span>
             ))}
           </div>
           <Link href={href("rooms")} className="inline-block mt-7 font-semibold text-emerald-800 hover:underline">See what&apos;s included →</Link>
-        </div>
+        </FadeUp>
       </section>
 
       {/* Soft trust cards */}
-      <section className="mx-auto max-w-6xl px-4 sm:px-6 py-20 grid sm:grid-cols-3 gap-6">
+      <Stagger className="mx-auto max-w-6xl px-4 sm:px-6 py-20 grid sm:grid-cols-3 gap-6">
         {[
           ["Book direct", "No platform fees, no middleman, ever."],
           ["Truly independent", `Personal hospitality in ${listing.cityName}.`],
           ["Secure & simple", "Pay safely by card, padlock protected."],
         ].map(([title, d]) => (
-          <div key={title} className="bg-emerald-50/60 rounded-[2rem] p-8 text-center">
+          <Item key={title} className="bg-emerald-50/60 rounded-[2rem] p-8 text-center transition hover:bg-emerald-50 hover:shadow-lg">
             <h3 className="font-serif text-2xl text-emerald-950">{title}</h3>
             <p className="text-muted text-sm mt-2 leading-relaxed">{d}</p>
-          </div>
+          </Item>
         ))}
-      </section>
+      </Stagger>
 
       {/* CTA — rounded emerald slab */}
       <section className="px-3 pb-3">
-        <div className="rounded-[2rem] bg-emerald-950 text-white text-center py-20 px-6">
+        <FadeUp className="rounded-[2rem] bg-emerald-950 text-white text-center py-20 px-6">
           <h2 className="font-serif text-4xl sm:text-5xl">Ready when you are</h2>
           <p className="opacity-70 mt-3 max-w-lg mx-auto font-light">Check availability and book {listing.propertyName} directly, for the best rate, every time.</p>
-          <Link href={href("book")} className="inline-block mt-8 font-semibold px-9 py-4 bg-white text-emerald-900 rounded-full">Check availability</Link>
-        </div>
+          <Link href={href("book")} className={`inline-block mt-8 font-semibold px-9 py-4 bg-white text-emerald-900 rounded-full ${CTA}`}>Check availability</Link>
+        </FadeUp>
       </section>
     </>
   );
@@ -369,39 +382,45 @@ function HomeCoastal({ listing, photos, href, t }: HomeProps) {
 function Rooms({ listing, photos, href, t }: { listing: Listing; photos: string[]; href: (p: string) => string; t: Tokens }) {
   return (
     <section className="mx-auto max-w-6xl px-4 sm:px-6 py-16">
-      <p className={`text-xs font-semibold uppercase tracking-[0.3em] ${t.accent}`}>Accommodation</p>
-      <h1 className="font-serif font-medium text-5xl mt-3">The rooms</h1>
+      <FadeUp>
+        <p className={`text-xs font-semibold uppercase tracking-[0.3em] ${t.accent}`}>Accommodation</p>
+        <h1 className="font-serif font-medium text-5xl mt-3">The rooms</h1>
+      </FadeUp>
 
       <div className="mt-10 grid lg:grid-cols-3 gap-12">
         <div className="lg:col-span-2">
-          <div className={`overflow-hidden aspect-[16/10] shadow-xl ${t.radius}`}>
+          <FadeUp className={`group overflow-hidden aspect-[16/10] shadow-xl ${t.radius}`}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={photos[0]} alt={listing.propertyName} className="w-full h-full object-cover" />
-          </div>
+            <img src={photos[0]} alt={listing.propertyName} className={`w-full h-full object-cover ${ZOOM}`} />
+          </FadeUp>
           {photos.length > 1 && (
-            <div className="grid grid-cols-3 gap-3 mt-3">
+            <Stagger className="grid grid-cols-3 gap-3 mt-3">
               {photos.slice(1, 4).map((p, i) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img key={i} src={p} alt="" loading="lazy" className={`w-full h-28 object-cover ${t.radius}`} />
+                <Item key={i} className={`group overflow-hidden ${t.radius}`}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={p} alt="" loading="lazy" className={`w-full h-28 object-cover ${ZOOM}`} />
+                </Item>
+              ))}
+            </Stagger>
+          )}
+          <FadeUp>
+            <h2 className="font-serif text-3xl mt-10">About the space</h2>
+            <p className="mt-3 text-ink/75 leading-relaxed font-light text-lg">{listing.description || `A comfortable ${prettyType(listing.propertyType).toLowerCase()} in ${listing.cityName}.`}</p>
+
+            <h2 className="font-serif text-3xl mt-10">What&apos;s included</h2>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              {listing.amenities.map((a) => (
+                <div key={a} className="flex items-center gap-2.5 text-sm"><span className={t.check}>—</span> {a}</div>
               ))}
             </div>
-          )}
-          <h2 className="font-serif text-3xl mt-10">About the space</h2>
-          <p className="mt-3 text-ink/75 leading-relaxed font-light text-lg">{listing.description || `A comfortable ${prettyType(listing.propertyType).toLowerCase()} in ${listing.cityName}.`}</p>
-
-          <h2 className="font-serif text-3xl mt-10">What&apos;s included</h2>
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            {listing.amenities.map((a) => (
-              <div key={a} className="flex items-center gap-2.5 text-sm"><span className={t.check}>—</span> {a}</div>
-            ))}
-          </div>
+          </FadeUp>
         </div>
 
         <aside className="lg:col-span-1">
           <div className={`lg:sticky lg:top-24 border border-line p-7 text-center shadow-lg ${t.radius}`}>
             <p className="font-serif text-4xl">{formatPrice(listing.pricePerNight, listing.currency)}</p>
             <p className="text-muted text-sm">per night</p>
-            <Link href={href("book")} className={`block mt-6 font-semibold py-3.5 ${t.btn}`}>Check availability</Link>
+            <Link href={href("book")} className={`block mt-6 font-semibold py-3.5 ${t.btn} ${CTA}`}>Check availability</Link>
             <p className="text-xs text-muted mt-3">Book direct · no platform fees</p>
           </div>
         </aside>
@@ -415,14 +434,18 @@ function Gallery({ listing, photos, t }: { listing: Listing; photos: string[]; t
   const imgs = photos.length > 1 ? photos : [...photos, `https://picsum.photos/seed/${listing.id}-a/800/600`, `https://picsum.photos/seed/${listing.id}-b/800/600`];
   return (
     <section className="mx-auto max-w-6xl px-4 sm:px-6 py-16">
-      <p className={`text-xs font-semibold uppercase tracking-[0.3em] ${t.accent}`}>Gallery</p>
-      <h1 className="font-serif font-medium text-5xl mt-3">A look around</h1>
-      <div className="mt-10 columns-1 sm:columns-2 lg:columns-3 gap-4 [&>*]:mb-4">
+      <FadeUp>
+        <p className={`text-xs font-semibold uppercase tracking-[0.3em] ${t.accent}`}>Gallery</p>
+        <h1 className="font-serif font-medium text-5xl mt-3">A look around</h1>
+      </FadeUp>
+      <Stagger className="mt-10 columns-1 sm:columns-2 lg:columns-3 gap-4 [&>*]:mb-4">
         {imgs.map((p, i) => (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img key={i} src={p} alt="" loading="lazy" decoding="async" className={`w-full object-cover break-inside-avoid ${t.radius}`} />
+          <Item key={i} className={`group overflow-hidden break-inside-avoid ${t.radius}`}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={p} alt="" loading="lazy" decoding="async" className={`w-full object-cover ${ZOOM}`} />
+          </Item>
         ))}
-      </div>
+      </Stagger>
     </section>
   );
 }
@@ -431,23 +454,25 @@ function Gallery({ listing, photos, t }: { listing: Listing; photos: string[]; t
 function Location({ listing, t }: { listing: Listing; t: Tokens }) {
   return (
     <section className="mx-auto max-w-6xl px-4 sm:px-6 py-16">
-      <p className={`text-xs font-semibold uppercase tracking-[0.3em] ${t.accent}`}>Location</p>
-      <h1 className="font-serif font-medium text-5xl mt-3">Where you&apos;ll be</h1>
-      <p className="text-muted mt-2">{listing.neighborhood ? `${listing.neighborhood}, ` : ""}{listing.cityName}, {listing.country} · approximate area</p>
-      <div className={`mt-6 h-[440px] overflow-hidden border border-line ${t.radius}`}>
+      <FadeUp>
+        <p className={`text-xs font-semibold uppercase tracking-[0.3em] ${t.accent}`}>Location</p>
+        <h1 className="font-serif font-medium text-5xl mt-3">Where you&apos;ll be</h1>
+        <p className="text-muted mt-2">{listing.neighborhood ? `${listing.neighborhood}, ` : ""}{listing.cityName}, {listing.country} · approximate area</p>
+      </FadeUp>
+      <FadeUp delay={0.1} className={`mt-6 h-[440px] overflow-hidden border border-line ${t.radius}`}>
         <ResultsMap approxArea points={[{ id: listing.id, slug: listing.slug, name: listing.propertyName, lat: listing.lat, lng: listing.lng, price: listing.pricePerNight, currency: listing.currency }]} />
-      </div>
+      </FadeUp>
       <p className="text-xs text-muted mt-2">The exact address is shared with you once your booking is confirmed.</p>
 
       <div className="mt-12 grid sm:grid-cols-2 gap-10">
-        <div>
+        <FadeUp>
           <h2 className="font-serif text-3xl">The area</h2>
           <p className="mt-3 text-ink/75 leading-relaxed font-light">Set in {listing.neighborhood || listing.cityName}, you&apos;re close to the best of {listing.cityName}, with cafes, restaurants and sights within easy reach.</p>
-        </div>
-        <div>
+        </FadeUp>
+        <FadeUp delay={0.1}>
           <h2 className="font-serif text-3xl">Getting here</h2>
           <p className="mt-3 text-ink/75 leading-relaxed font-light">Full directions and transport tips are sent with your booking confirmation. We&apos;re always happy to help you plan your arrival.</p>
-        </div>
+        </FadeUp>
       </div>
     </section>
   );
@@ -457,7 +482,7 @@ function Location({ listing, t }: { listing: Listing; t: Tokens }) {
 function Book({ listing, t }: { listing: Listing; t: Tokens }) {
   return (
     <section className="mx-auto max-w-6xl px-4 sm:px-6 py-16 grid lg:grid-cols-2 gap-14">
-      <div>
+      <FadeUp>
         <p className={`text-xs font-semibold uppercase tracking-[0.3em] ${t.accent}`}>Reservations</p>
         <h1 className="font-serif font-medium text-5xl mt-3">Book your stay</h1>
         <p className="mt-4 text-ink/75 text-lg font-light">Check your dates and reserve directly with us. You pay securely by card, with no platform fees added.</p>
@@ -470,12 +495,12 @@ function Book({ listing, t }: { listing: Listing; t: Tokens }) {
           <p className="font-semibold text-ink">Questions before you book?</p>
           <p className="mt-1">Send us a message with your dates and we&apos;ll get straight back to you.</p>
         </div>
-      </div>
-      <div>
+      </FadeUp>
+      <FadeUp delay={0.1}>
         <div className="lg:sticky lg:top-24">
           <MicrositeBooking listing={listing} />
         </div>
-      </div>
+      </FadeUp>
     </section>
   );
 }
@@ -493,7 +518,7 @@ function Footer({ listing, domain, links, t }: { listing: Listing; domain: strin
         <div>
           <p className="font-semibold mb-3 text-sm uppercase tracking-wider opacity-70">Explore</p>
           <ul className="space-y-2 text-sm opacity-80">
-            {links.map((l) => <li key={l.key}><Link href={l.href} className="hover:opacity-100">{l.label}</Link></li>)}
+            {links.map((l) => <li key={l.key}><Link href={l.href} className="hover:opacity-100 transition">{l.label}</Link></li>)}
           </ul>
         </div>
         <div>
