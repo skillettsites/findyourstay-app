@@ -33,7 +33,7 @@ const THEMES: Record<SiteTheme, Tokens> = {
     btnGhost: "bg-white text-stone-900 rounded-md",
     accent: "text-amber-700",
     eyebrow: "uppercase tracking-[0.3em] text-white/85 text-xs",
-    overlay: "bg-gradient-to-b from-black/35 via-black/15 to-black/60",
+    overlay: "bg-gradient-to-b from-black/45 via-black/30 to-black/65",
     alt: "bg-stone-50 border-y border-stone-200",
     dark: "bg-stone-900 text-white",
     pill: "border border-stone-300 rounded-md text-stone-700",
@@ -140,7 +140,7 @@ function HomeClassic({ listing, photos, href, t }: HomeProps) {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={photos[0]} alt={listing.propertyName} className="absolute inset-0 w-full h-full object-cover" />
         <div className={`absolute inset-0 ${t.overlay}`} />
-        <div className="relative h-full flex flex-col items-center justify-center text-center text-white px-6 pb-28">
+        <div className="relative h-full flex flex-col items-center justify-center text-center text-white px-6 pb-28 [text-shadow:0_2px_22px_rgba(0,0,0,0.6)]">
           <p className={t.eyebrow}>{prettyType(listing.propertyType)} · {listing.cityName}, {listing.country}</p>
           <h1 className="font-serif font-medium tracking-tight text-5xl sm:text-7xl mt-5 max-w-4xl leading-[1.04]">{listing.propertyName}</h1>
           <p className="mt-5 text-lg text-white/90 max-w-xl font-light">An independent stay in {listing.neighborhood || listing.cityName}, booked direct with us, never any platform fees.</p>
@@ -298,8 +298,9 @@ function HomeCoastal({ listing, photos, href, t }: HomeProps) {
         <div className="relative rounded-[2rem] overflow-hidden h-[80vh] min-h-[560px]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={photos[0]} alt={listing.propertyName} className="absolute inset-0 w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/65 via-emerald-950/10 to-emerald-950/25" />
-          <div className="relative h-full flex flex-col items-center justify-center text-center text-white px-6">
+          <div className="absolute inset-0 bg-emerald-950/35" />
+          <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/75 via-emerald-950/35 to-emerald-950/45" />
+          <div className="relative h-full flex flex-col items-center justify-center text-center text-white px-6 [text-shadow:0_2px_22px_rgba(0,0,0,0.55)]">
             <p className="uppercase tracking-[0.3em] text-white/90 text-xs">{prettyType(listing.propertyType)} · {listing.cityName}</p>
             <h1 className="font-serif text-5xl sm:text-7xl mt-5 max-w-3xl leading-[1.05]">{listing.propertyName}</h1>
             <p className="mt-5 text-white/90 font-light max-w-md text-lg">A breath of fresh air in {listing.neighborhood || listing.cityName}. Book direct, no fees.</p>
