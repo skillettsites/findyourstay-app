@@ -5,7 +5,6 @@ import { useEffect, useRef, useState } from "react";
 import { motion, useMotionValueEvent, useScroll } from "motion/react";
 import { Brand } from "./Brand";
 import { SearchBar } from "./SearchBar";
-import { Magnetic } from "./Motion";
 import { supabaseBrowser } from "@/lib/supabase-browser";
 
 export function Header({ showSearch = true }: { showSearch?: boolean }) {
@@ -38,9 +37,7 @@ export function Header({ showSearch = true }: { showSearch?: boolean }) {
           >
             List your stay
           </Link>
-          <Magnetic>
-            <Menu />
-          </Magnetic>
+          <Menu />
         </nav>
       </div>
     </motion.header>

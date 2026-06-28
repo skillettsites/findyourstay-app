@@ -112,7 +112,7 @@ export function StandaloneSite({
       <SiteNav name={listing.propertyName} domain={domain} links={links} active={page} bookHref={href("book")} btn={t.btn} activeText={t.accent} />
 
       <main className="flex-1">
-        {page === "home" && <Home listing={listing} photos={photos} href={href} t={t} />}
+        {page === "home" && <Home listing={listing} photos={photos} href={href} t={t} theme={theme} />}
         {page === "rooms" && <Rooms listing={listing} photos={photos} href={href} t={t} />}
         {page === "gallery" && <Gallery listing={listing} photos={photos} t={t} />}
         {page === "location" && <Location listing={listing} t={t} />}
@@ -124,8 +124,16 @@ export function StandaloneSite({
   );
 }
 
-/* ---------------- Home ---------------- */
-function Home({ listing, photos, href, t }: { listing: Listing; photos: string[]; href: (p: string) => string; t: Tokens }) {
+/* ---------------- Home (dispatches to one of three distinct layouts) ---------------- */
+type HomeProps = { listing: Listing; photos: string[]; href: (p: string) => string; t: Tokens };
+function Home(p: HomeProps & { theme: SiteTheme }) {
+  if (p.theme === "modern") return <HomeModern listing={p.listing} photos={p.photos} href={p.href} t={p.t} />;
+  if (p.theme === "coastal") return <HomeCoastal listing={p.listing} photos={p.photos} href={p.href} t={p.t} />;
+  return <HomeClassic listing={p.listing} photos={p.photos} href={p.href} t={p.t} />;
+}
+
+/* Classic — symmetrical, centred, full-bleed cinematic hero. Traditional luxe. */
+function HomeClassic({ listing, photos, href, t }: HomeProps) {
   return (
     <>
       <section className="relative h-[100svh] min-h-[640px]">
@@ -192,6 +200,164 @@ function Home({ listing, photos, href, t }: { listing: Listing; photos: string[]
           <h2 className="font-serif font-medium text-4xl">Ready when you are</h2>
           <p className="opacity-70 mt-3 max-w-lg mx-auto font-light">Check availability and book {listing.propertyName} directly, for the best rate, every time.</p>
           <Link href={href("book")} className={`inline-block mt-8 font-semibold px-9 py-4 ${t.btnGhost}`}>Check availability</Link>
+        </div>
+      </section>
+    </>
+  );
+}
+
+/* Modern — asymmetric split-screen editorial. Monochrome, square, magazine feel. */
+function HomeModern({ listing, photos, href, t }: HomeProps) {
+  const gal = photos.length > 2 ? photos : [...photos, `https://picsum.photos/seed/${listing.id}-m1/900/600`, `https://picsum.photos/seed/${listing.id}-m2/900/600`];
+  return (
+    <>
+      {/* Split hero: text panel + image */}
+      <section className="grid md:grid-cols-2 md:min-h-[88vh]">
+        <div className="bg-ink text-white flex flex-col justify-center px-6 sm:px-12 lg:px-16 py-16 order-2 md:order-1">
+          <p className="text-[11px] uppercase tracking-[0.45em] text-white/55">{prettyType(listing.propertyType)} · {listing.cityName}, {listing.country}</p>
+          <h1 className="font-serif text-5xl lg:text-7xl mt-6 leading-[1.02]">{listing.propertyName}</h1>
+          <div className="w-16 h-px bg-white/40 my-8" />
+          <p className="text-white/70 max-w-md font-light text-lg leading-relaxed">{(listing.description || `An independent stay in ${listing.cityName}, booked direct, never any platform fees.`).slice(0, 180)}</p>
+          <div className="mt-10 flex flex-wrap items-center gap-7">
+            <Link href={href("book")} className="bg-white text-ink px-8 py-4 font-semibold text-xs uppercase tracking-[0.2em] hover:bg-white/90 transition">Reserve</Link>
+            <span className="text-sm text-white/60"><span className="font-serif text-2xl text-white">{formatPrice(listing.pricePerNight, listing.currency)}</span> / night</span>
+          </div>
+        </div>
+        <div className="relative order-1 md:order-2 min-h-[42vh]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={photos[0]} alt={listing.propertyName} className="absolute inset-0 w-full h-full object-cover" />
+        </div>
+      </section>
+
+      {/* Availability strip */}
+      <section className="border-b border-ink/10 bg-mist">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 py-7">
+          <HeroSearch bookHref={href("book")} btnClass={t.btn} />
+        </div>
+      </section>
+
+      {/* 01 — The space (editorial, offset) */}
+      <section className="mx-auto max-w-6xl px-4 sm:px-6 py-24 grid lg:grid-cols-12 gap-10 items-center">
+        <div className="lg:col-span-5">
+          <p className="font-serif text-7xl text-ink/10 leading-none">01</p>
+          <h2 className="font-serif text-4xl -mt-4">The space</h2>
+          <p className="mt-5 text-ink/70 font-light leading-relaxed">{listing.description || `A characterful place to stay in the heart of ${listing.cityName}, kept with care and ready for your arrival.`}</p>
+          <Link href={href("rooms")} className="inline-block mt-7 text-xs font-semibold uppercase tracking-[0.2em] border-b-2 border-ink pb-1">Explore the rooms</Link>
+        </div>
+        <div className="lg:col-span-7">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={photos[1] ?? photos[0]} alt="" loading="lazy" className="w-full aspect-[16/10] object-cover" />
+        </div>
+      </section>
+
+      {/* 02 — Comforts (ruled list) */}
+      <section className="border-y border-ink/10 bg-mist">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-16">
+          <p className="text-[11px] uppercase tracking-[0.45em] text-muted">02 — Comforts</p>
+          <h2 className="font-serif text-4xl mt-3">Everything included</h2>
+          <div className="mt-7 grid sm:grid-cols-2 lg:grid-cols-3 gap-x-12">
+            {(listing.amenities.length ? listing.amenities : ["WiFi", "Kitchen", "Heating"]).map((a) => (
+              <div key={a} className="flex items-center justify-between border-b border-ink/10 py-3.5 text-sm">
+                <span>{a}</span><span className="text-ink/25 text-xs uppercase tracking-wider">incl.</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 03 — Gallery filmstrip */}
+      <section className="py-20">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 flex items-end justify-between mb-7">
+          <h2 className="font-serif text-4xl">A look around</h2>
+          <Link href={href("gallery")} className="text-xs font-semibold uppercase tracking-[0.2em] border-b-2 border-ink pb-1">View gallery</Link>
+        </div>
+        <div className="flex gap-3 overflow-x-auto no-scrollbar px-4 sm:px-6 snap-x">
+          {gal.slice(0, 7).map((p, i) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img key={i} src={p} alt="" loading="lazy" className="h-72 w-[26rem] max-w-[82vw] object-cover shrink-0 snap-start" />
+          ))}
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="bg-ink text-white">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-24 flex flex-col md:flex-row md:items-end md:justify-between gap-8">
+          <h2 className="font-serif text-5xl lg:text-6xl max-w-xl leading-[1.05]">Stay with us in {listing.cityName}.</h2>
+          <Link href={href("book")} className="self-start bg-white text-ink px-9 py-4 text-xs font-semibold uppercase tracking-[0.2em] hover:bg-white/90 transition">Check availability</Link>
+        </div>
+      </section>
+    </>
+  );
+}
+
+/* Coastal — airy, rounded, lots of whitespace. Inset hero with a floating search card. */
+function HomeCoastal({ listing, photos, href, t }: HomeProps) {
+  return (
+    <>
+      <section className="px-3 pt-3">
+        <div className="relative rounded-[2rem] overflow-hidden h-[80vh] min-h-[560px]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={photos[0]} alt={listing.propertyName} className="absolute inset-0 w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/65 via-emerald-950/10 to-emerald-950/25" />
+          <div className="relative h-full flex flex-col items-center justify-center text-center text-white px-6">
+            <p className="uppercase tracking-[0.3em] text-white/90 text-xs">{prettyType(listing.propertyType)} · {listing.cityName}</p>
+            <h1 className="font-serif text-5xl sm:text-7xl mt-5 max-w-3xl leading-[1.05]">{listing.propertyName}</h1>
+            <p className="mt-5 text-white/90 font-light max-w-md text-lg">A breath of fresh air in {listing.neighborhood || listing.cityName}. Book direct, no fees.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Floating availability card overlapping the hero */}
+      <div className="px-4 sm:px-6 -mt-10 relative z-10">
+        <HeroSearch bookHref={href("book")} btnClass={t.btn} />
+      </div>
+
+      {/* Welcome */}
+      <section className="mx-auto max-w-3xl px-4 sm:px-6 py-20 text-center">
+        <p className="uppercase tracking-[0.25em] text-emerald-800 text-xs font-semibold">Welcome</p>
+        <h2 className="font-serif text-4xl sm:text-5xl mt-4 leading-tight">Your home from home in {listing.cityName}</h2>
+        <p className="mt-6 text-lg text-ink/70 leading-relaxed font-light">{listing.description || `A relaxed, characterful place to stay, hosted with genuine care in ${listing.cityName}.`}</p>
+        <p className="mt-6 font-serif text-3xl text-emerald-900">{formatPrice(listing.pricePerNight, listing.currency)} <span className="text-base font-sans text-muted">per night</span></p>
+      </section>
+
+      {/* Feature — rounded offset */}
+      <section className="mx-auto max-w-6xl px-4 sm:px-6 grid md:grid-cols-2 gap-10 items-center">
+        <div className="overflow-hidden rounded-[2rem] aspect-[4/5] shadow-xl">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={photos[1] ?? photos[0]} alt="" loading="lazy" className="w-full h-full object-cover" />
+        </div>
+        <div className="bg-emerald-50/60 rounded-[2rem] p-8 sm:p-10">
+          <h2 className="font-serif text-3xl text-emerald-950">Made for slow mornings</h2>
+          <p className="mt-3 text-ink/70 font-light leading-relaxed">Everything you need for an easy, restful stay, close to the best of {listing.cityName}.</p>
+          <div className="mt-6 flex flex-wrap gap-2">
+            {(listing.amenities.length ? listing.amenities : ["WiFi", "Kitchen", "Heating"]).map((a) => (
+              <span key={a} className="bg-white border border-emerald-100 text-emerald-900 text-sm rounded-full px-4 py-1.5">{a}</span>
+            ))}
+          </div>
+          <Link href={href("rooms")} className="inline-block mt-7 font-semibold text-emerald-800 hover:underline">See what&apos;s included →</Link>
+        </div>
+      </section>
+
+      {/* Soft trust cards */}
+      <section className="mx-auto max-w-6xl px-4 sm:px-6 py-20 grid sm:grid-cols-3 gap-6">
+        {[
+          ["Book direct", "No platform fees, no middleman, ever."],
+          ["Truly independent", `Personal hospitality in ${listing.cityName}.`],
+          ["Secure & simple", "Pay safely by card, padlock protected."],
+        ].map(([title, d]) => (
+          <div key={title} className="bg-emerald-50/60 rounded-[2rem] p-8 text-center">
+            <h3 className="font-serif text-2xl text-emerald-950">{title}</h3>
+            <p className="text-muted text-sm mt-2 leading-relaxed">{d}</p>
+          </div>
+        ))}
+      </section>
+
+      {/* CTA — rounded emerald slab */}
+      <section className="px-3 pb-3">
+        <div className="rounded-[2rem] bg-emerald-950 text-white text-center py-20 px-6">
+          <h2 className="font-serif text-4xl sm:text-5xl">Ready when you are</h2>
+          <p className="opacity-70 mt-3 max-w-lg mx-auto font-light">Check availability and book {listing.propertyName} directly, for the best rate, every time.</p>
+          <Link href={href("book")} className="inline-block mt-8 font-semibold px-9 py-4 bg-white text-emerald-900 rounded-full">Check availability</Link>
         </div>
       </section>
     </>
