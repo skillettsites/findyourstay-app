@@ -15,9 +15,9 @@ const TIER_PRICE: Record<string, number> = { free: 0, standard: 79, featured: 14
 const ADDON = 120;
 
 const TEMPLATES = [
-  { key: "classic" as const, label: "Classic", blurb: "Elegant & timeless", swatch: "bg-gradient-to-br from-stone-700 to-stone-900" },
-  { key: "modern" as const, label: "Modern", blurb: "Bold & editorial", swatch: "bg-gradient-to-br from-zinc-900 to-zinc-600" },
-  { key: "coastal" as const, label: "Coastal", blurb: "Airy & relaxed", swatch: "bg-gradient-to-br from-emerald-700 to-emerald-900" },
+  { key: "classic" as const, label: "Classic", blurb: "Elegant & timeless", swatch: "bg-gradient-to-br from-stone-700 to-stone-900", slug: "mountain-chalet-geres" },
+  { key: "modern" as const, label: "Modern", blurb: "Bold & editorial", swatch: "bg-gradient-to-br from-zinc-900 to-zinc-600", slug: "city-loft-lisbon" },
+  { key: "coastal" as const, label: "Coastal", blurb: "Airy & relaxed", swatch: "bg-gradient-to-br from-emerald-700 to-emerald-900", slug: "beach-house-algarve" },
 ];
 
 const slugify = (s: string) =>
@@ -34,7 +34,7 @@ interface GeoResult {
   lng: number;
 }
 
-export function ListingWizard({ initialTier = "featured", initialBuild = false, userEmail = "", exampleSlug }: { initialTier?: string; initialBuild?: boolean; userEmail?: string; exampleSlug?: string }) {
+export function ListingWizard({ initialTier = "featured", initialBuild = false, userEmail = "" }: { initialTier?: string; initialBuild?: boolean; userEmail?: string }) {
   const router = useRouter();
   const [step, setStep] = useState(1);
 
@@ -346,10 +346,10 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false, 
                   ))}
                 </div>
                 <a
-                  href={`/sites/${exampleSlug ?? ""}?t=${siteTheme}`}
+                  href={`/sites/${TEMPLATES.find((x) => x.key === siteTheme)?.slug}?t=${siteTheme}`}
                   target="_blank"
                   rel="noreferrer"
-                  className={`inline-flex items-center gap-1 mt-3 text-sm font-semibold text-brand ${exampleSlug ? "" : "pointer-events-none opacity-40"}`}
+                  className="inline-flex items-center gap-1 mt-3 text-sm font-semibold text-brand"
                 >
                   Preview the {TEMPLATES.find((x) => x.key === siteTheme)?.label} template ↗
                 </a>

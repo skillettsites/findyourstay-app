@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { StandaloneSite, type SitePage, type SiteTheme } from "@/components/site/StandaloneSite";
 import { getListingBySlug } from "@/lib/db";
+import { EXAMPLE_STAYS } from "@/lib/exampleStays";
 import { suggestDomain } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -18,9 +19,10 @@ type SP = Promise<Record<string, string | string[] | undefined>>;
 export default async function ExampleSitePage({ params, searchParams }: { params: Promise<{ slug: string; seg?: string[] }>; searchParams: SP }) {
   const { slug, seg } = await params;
   const tRaw = (await searchParams).t;
-  const theme = (THEMES.includes(tRaw as string) ? tRaw : "classic") as SiteTheme;
-  const listing = await getListingBySlug(slug);
+  const listing = EXAMPLE_STAYS[slug] ?? (await getListingBySlug(slug));
   if (!listing) notFound();
+  // Honour ?t=, else fall back to the stay's own template.
+  const theme = (THEMES.includes(tRaw as string) ? tRaw : listing.siteTheme ?? "classic") as SiteTheme;
   return (
     <StandaloneSite
       listing={listing}

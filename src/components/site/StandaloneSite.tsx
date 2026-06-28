@@ -146,7 +146,7 @@ function Home(p: HomeProps & { theme: SiteTheme }) {
 function HomeClassic({ listing, photos, href, t }: HomeProps) {
   return (
     <>
-      <section className="relative h-[100svh] min-h-[640px]">
+      <section className="relative h-[68svh] min-h-[440px] max-h-[720px]">
         <ParallaxImage src={photos[0]} alt={listing.propertyName} priority />
         <div className={`absolute inset-0 ${t.overlay}`} />
         <HeroStage className="relative h-full flex flex-col items-center justify-center text-center text-white px-6 pb-28 [text-shadow:0_2px_22px_rgba(0,0,0,0.6)]">
@@ -221,7 +221,7 @@ function HomeModern({ listing, photos, href, t }: HomeProps) {
   return (
     <>
       {/* Split hero: text panel + parallax image */}
-      <section className="grid md:grid-cols-2 md:min-h-[88vh]">
+      <section className="grid md:grid-cols-2 md:min-h-[60vh]">
         <HeroStage className="bg-ink text-white flex flex-col justify-center px-6 sm:px-12 lg:px-16 py-16 order-2 md:order-1">
           <HeroItem><p className="text-[11px] uppercase tracking-[0.45em] text-white/55">{prettyType(listing.propertyType)} · {listing.cityName}, {listing.country}</p></HeroItem>
           <HeroItem><h1 className="font-serif text-5xl lg:text-7xl mt-6 leading-[1.02]">{listing.propertyName}</h1></HeroItem>
@@ -234,7 +234,7 @@ function HomeModern({ listing, photos, href, t }: HomeProps) {
             </div>
           </HeroItem>
         </HeroStage>
-        <div className="relative order-1 md:order-2 min-h-[42vh]">
+        <div className="relative order-1 md:order-2 min-h-[34vh]">
           <ParallaxImage src={photos[0]} alt={listing.propertyName} priority />
         </div>
       </section>
@@ -309,7 +309,7 @@ function HomeCoastal({ listing, photos, href, t }: HomeProps) {
   return (
     <>
       <section className="px-3 pt-3">
-        <div className="relative rounded-[2rem] overflow-hidden h-[80vh] min-h-[560px]">
+        <div className="relative rounded-[2rem] overflow-hidden h-[62vh] min-h-[420px] max-h-[680px]">
           <ParallaxImage src={photos[0]} alt={listing.propertyName} priority />
           <div className="absolute inset-0 bg-emerald-950/35" />
           <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/75 via-emerald-950/35 to-emerald-950/45" />

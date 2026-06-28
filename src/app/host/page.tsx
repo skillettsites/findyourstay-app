@@ -4,6 +4,7 @@ import { Footer } from "@/components/Footer";
 import { PricingCards } from "@/components/host/PricingCards";
 import { BackButton } from "@/components/BackButton";
 import { getFeaturedListings, getDemoListing } from "@/lib/db";
+import { EXAMPLE_TEMPLATES } from "@/lib/exampleStays";
 import { suggestDomain } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -112,15 +113,11 @@ export default async function HostPage() {
                 ))}
               </ul>
               <div className="mt-7">
-                <p className="text-sm font-semibold mb-2.5">See the 3 templates you can choose from:</p>
+                <p className="text-sm font-semibold mb-2.5">See the 3 templates, each on a real example site:</p>
                 <div className="flex flex-wrap gap-2">
-                  {demoSlug && [
-                    { t: "classic", label: "Classic" },
-                    { t: "modern", label: "Modern" },
-                    { t: "coastal", label: "Coastal" },
-                  ].map((x) => (
-                    <Link key={x.t} href={`/sites/${demoSlug}?t=${x.t}`} className="border border-ink font-semibold px-5 py-2.5 rounded-full hover:bg-mist transition text-sm">
-                      View {x.label} →
+                  {EXAMPLE_TEMPLATES.map((x) => (
+                    <Link key={x.theme} href={`/sites/${x.slug}?t=${x.theme}`} className="border border-ink font-semibold px-5 py-2.5 rounded-full hover:bg-mist transition text-sm">
+                      {x.label} <span className="text-muted font-normal">· {x.place}</span> →
                     </Link>
                   ))}
                 </div>
