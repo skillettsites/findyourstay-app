@@ -105,6 +105,7 @@ function Menu() {
           ))}
           <Divider />
           <Item href="/what-we-do" onClick={() => setOpen(false)}>What we do</Item>
+          <Item href="/host/demo" onClick={() => setOpen(false)}>Dashboard preview</Item>
           <Item href="/host#pricing" onClick={() => setOpen(false)}>Pricing</Item>
           <Item href="/host" onClick={() => setOpen(false)}>List your stay</Item>
           <Divider />

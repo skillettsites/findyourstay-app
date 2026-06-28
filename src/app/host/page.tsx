@@ -43,6 +43,9 @@ export default async function HostPage() {
               <Link href="#pricing" className="border border-ink font-semibold px-6 py-3 rounded-full hover:bg-mist transition">
                 See pricing
               </Link>
+              <Link href="/host/demo" className="border border-ink font-semibold px-6 py-3 rounded-full hover:bg-mist transition">
+                See a demo dashboard
+              </Link>
             </div>
           </div>
         </section>

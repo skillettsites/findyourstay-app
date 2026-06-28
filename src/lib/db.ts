@@ -175,6 +175,65 @@ export async function recordEvent(listingId: string, type: string, meta?: unknow
   }
 }
 
+// Batch-record search impressions (one row per listing shown). Best-effort.
+export async function recordImpressions(listingIds: string[]) {
+  if (!listingIds.length) return;
+  try {
+    await sb.from(T.events).insert(listingIds.map((id) => ({ listing_id: id, type: "impression", meta: null })));
+  } catch {
+    /* analytics must not break a render */
+  }
+}
+
+export interface HostAnalytics {
+  totals: { impressions: number; views: number; siteViews: number; enquiries: number; bookings: number };
+  series: { date: string; views: number; impressions: number }[];
+  perListing: { id: string; impressions: number; views: number; enquiries: number }[];
+  enquiryRate: number; // enquiries / views, %
+}
+
+function emptyAnalytics(days: number): HostAnalytics {
+  const series = Array.from({ length: days }, (_, i) => {
+    const d = new Date(Date.now() - (days - 1 - i) * 86400000);
+    return { date: d.toISOString().slice(0, 10), views: 0, impressions: 0 };
+  });
+  return { totals: { impressions: 0, views: 0, siteViews: 0, enquiries: 0, bookings: 0 }, series, perListing: [], enquiryRate: 0 };
+}
+
+// Aggregate a host's events into headline metrics + a daily trend, last `days`.
+export async function getHostAnalytics(listings: Listing[], days = 30): Promise<HostAnalytics> {
+  const ids = listings.map((l) => l.id);
+  const base = emptyAnalytics(days);
+  if (!ids.length) return base;
+
+  const since = new Date(Date.now() - days * 86400000).toISOString();
+  const { data } = await sb
+    .from(T.events)
+    .select("listing_id,type,created_at")
+    .in("listing_id", ids)
+    .gte("created_at", since)
+    .limit(50000);
+
+  const byDate = new Map(base.series.map((s) => [s.date, s]));
+  const per = new Map(ids.map((id) => [id, { id, impressions: 0, views: 0, enquiries: 0 }]));
+  const rows = (data ?? []) as Row[];
+  for (const r of rows) {
+    const type = r.type as string;
+    const day = String(r.created_at).slice(0, 10);
+    const lid = r.listing_id as string;
+    if (type === "impression") { base.totals.impressions++; const b = byDate.get(day); if (b) b.impressions++; const p = per.get(lid); if (p) p.impressions++; }
+    else if (type === "view") { base.totals.views++; const b = byDate.get(day); if (b) b.views++; const p = per.get(lid); if (p) p.views++; }
+    else if (type === "site_view") { base.totals.siteViews++; }
+    else if (type === "enquiry") { base.totals.enquiries++; const p = per.get(lid); if (p) p.enquiries++; }
+  }
+
+  const { count } = await sb.from(T.bookings).select("*", { count: "exact", head: true }).in("listing_id", ids).gte("created_at", since);
+  base.totals.bookings = count ?? 0;
+  base.perListing = [...per.values()];
+  base.enquiryRate = base.totals.views ? Math.round((base.totals.enquiries / base.totals.views) * 1000) / 10 : 0;
+  return base;
+}
+
 export async function createEnquiry(input: {
   listingId: string;
   guestEmail: string;

@@ -6,7 +6,7 @@ import { ResultsMap, type MapPoint } from "@/components/ResultsMap";
 import { SortSelect } from "@/components/SortSelect";
 import { BackButton } from "@/components/BackButton";
 import { Stagger, StaggerItem } from "@/components/Motion";
-import { searchListings } from "@/lib/db";
+import { searchListings, recordImpressions } from "@/lib/db";
 import type { ListingQuery, PropertyType } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -32,6 +32,8 @@ export default async function SearchPage({ searchParams }: { searchParams: SP })
   };
 
   const { items, total } = await searchListings(query);
+  // Record one search impression per listing shown (host analytics). Best-effort.
+  void recordImpressions(items.map((l) => l.id));
   const points: MapPoint[] = items
     .filter((l) => Number.isFinite(l.lat) && Number.isFinite(l.lng))
     .map((l) => ({ id: l.id, slug: l.slug, name: l.propertyName, lat: l.lat, lng: l.lng, price: l.pricePerNight, currency: l.currency, photo: l.photos[0] }));
