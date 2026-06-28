@@ -3,7 +3,7 @@ import { Header } from "@/components/Header";
 import { BackButton } from "@/components/BackButton";
 import { DashboardView, type DashboardListing } from "@/components/host/DashboardView";
 import { getUser, ensureHost } from "@/lib/auth";
-import { getListingsByHost, getHostAnalytics, getEnquiriesForListings, getBookingsForListings, getDomainsForListings } from "@/lib/db";
+import { getListingsByHost, getHostAnalytics, getSiteAnalytics, getEnquiriesForListings, getBookingsForListings, getDomainsForListings } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -13,8 +13,9 @@ export default async function Dashboard() {
   await ensureHost(user!);
 
   const myListings = await getListingsByHost(user!.id, 50);
-  const [analytics, enquiries, bookings, domains] = await Promise.all([
+  const [analytics, siteAnalytics, enquiries, bookings, domains] = await Promise.all([
     getHostAnalytics(myListings, 30),
+    getSiteAnalytics(myListings, 30),
     getEnquiriesForListings(myListings, 30),
     getBookingsForListings(myListings, 30),
     getDomainsForListings(myListings),
@@ -32,7 +33,7 @@ export default async function Dashboard() {
       <div className="mx-auto max-w-5xl w-full px-4 sm:px-6 pt-6">
         <BackButton fallback="/" />
       </div>
-      <DashboardView data={{ email: user!.email, analytics, listings, enquiries, bookings }} />
+      <DashboardView data={{ email: user!.email, analytics, siteAnalytics, listings, enquiries, bookings }} />
     </>
   );
 }

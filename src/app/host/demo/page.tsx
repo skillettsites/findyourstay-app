@@ -34,8 +34,47 @@ function sampleData(): DashboardData {
     bookings: Math.round(bookings * 0.65),
   };
 
+  // Pro website analytics, modelled off the booking-site visits.
+  const part = (frac: number) => Math.round(siteViews * frac);
+  const siteAnalytics = {
+    visits: siteViews,
+    prevVisits: Math.round(siteViews * 0.69),
+    series: series.map((s) => ({ date: s.date, visits: Math.max(3, Math.round(s.views * 0.62)) })),
+    sources: [
+      { label: "Google", visits: part(0.36) },
+      { label: "Direct", visits: part(0.23) },
+      { label: "ChatGPT", visits: part(0.14) },
+      { label: "Social", visits: part(0.11) },
+      { label: "Bing", visits: part(0.08) },
+      { label: "Referral", visits: part(0.08) },
+    ],
+    countries: [
+      { code: "GB", visits: part(0.39) },
+      { code: "US", visits: part(0.18) },
+      { code: "FR", visits: part(0.09) },
+      { code: "DE", visits: part(0.08) },
+      { code: "PT", visits: part(0.07) },
+      { code: "ES", visits: part(0.06) },
+      { code: "NL", visits: part(0.05) },
+      { code: "IE", visits: part(0.04) },
+    ],
+    devices: [
+      { label: "Mobile", visits: part(0.62) },
+      { label: "Desktop", visits: part(0.33) },
+      { label: "Tablet", visits: part(0.05) },
+    ],
+    pages: [
+      { path: "home", visits: part(0.42) },
+      { path: "rooms", visits: part(0.22) },
+      { path: "book", visits: part(0.17) },
+      { path: "gallery", visits: part(0.12) },
+      { path: "location", visits: part(0.07) },
+    ],
+  };
+
   return {
     email: "you@example.com",
+    siteAnalytics,
     analytics: {
       totals: { impressions, views, siteViews, enquiries, bookings },
       prev,

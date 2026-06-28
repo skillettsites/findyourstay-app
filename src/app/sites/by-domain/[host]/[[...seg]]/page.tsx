@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import { StandaloneSite, type SitePage } from "@/components/site/StandaloneSite";
-import { getListingByDomain, recordEvent } from "@/lib/db";
+import { getListingByDomain, recordEvent, classifySource, deviceFromUA } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,14 @@ export default async function ByDomainSitePage({ params }: { params: Promise<{ h
   const domain = decodeURIComponent(host);
   const listing = await getListingByDomain(domain);
   if (!listing) notFound();
-  // Count a visit to the host's own booking website (host analytics).
-  void recordEvent(listing.id, "site_view");
+  // Count a visit to the host's own booking website, with source/country/device
+  // for the Pro stats tab.
+  const hdrs = await headers();
+  void recordEvent(listing.id, "site_view", {
+    src: classifySource(hdrs.get("referer"), domain),
+    country: hdrs.get("x-vercel-ip-country") || "",
+    device: deviceFromUA(hdrs.get("user-agent") || ""),
+    page: seg?.[0] || "home",
+  });
   return <StandaloneSite listing={listing} base="" domain={domain} page={toPage(seg)} theme={listing.siteTheme} />;
 }

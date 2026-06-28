@@ -265,6 +265,80 @@ export async function getDomainsForListings(listings: Listing[]): Promise<Record
   return out;
 }
 
+// ---- Pro website analytics (for the host's own booking site) ----
+
+export interface SiteAnalytics {
+  visits: number;
+  prevVisits: number;
+  series: { date: string; visits: number }[];
+  sources: { label: string; visits: number }[];
+  countries: { code: string; visits: number }[];
+  devices: { label: string; visits: number }[];
+  pages: { path: string; visits: number }[];
+}
+
+// Bucket a referer into a human traffic source (recorded with each site_view).
+export function classifySource(referer: string | null, host?: string): string {
+  if (!referer) return "Direct";
+  let h = "";
+  try { h = new URL(referer).hostname.toLowerCase(); } catch { return "Direct"; }
+  if (host && h.includes(host.toLowerCase())) return "Direct";
+  if (h.includes("google")) return "Google";
+  if (h.includes("bing")) return "Bing";
+  if (h.includes("duckduckgo")) return "DuckDuckGo";
+  if (h.includes("openai") || h.includes("chatgpt")) return "ChatGPT";
+  if (h.includes("gemini") || h.includes("bard")) return "Gemini";
+  if (h.includes("perplexity")) return "Perplexity";
+  if (/instagram|facebook|fb\.com|t\.co|twitter|x\.com|tiktok|pinterest|reddit|youtube|linkedin|whatsapp/.test(h)) return "Social";
+  return "Referral";
+}
+
+export function deviceFromUA(ua: string): string {
+  if (/iPad|Tablet/i.test(ua)) return "Tablet";
+  if (/Mobi|Android|iPhone|iPod/i.test(ua)) return "Mobile";
+  return "Desktop";
+}
+
+function emptySite(days: number): SiteAnalytics {
+  const series = Array.from({ length: days }, (_, i) => ({ date: new Date(Date.now() - (days - 1 - i) * 86400000).toISOString().slice(0, 10), visits: 0 }));
+  return { visits: 0, prevVisits: 0, series, sources: [], countries: [], devices: [], pages: [] };
+}
+
+// Aggregate site_view events into visitor sources / countries / devices / pages.
+export async function getSiteAnalytics(listings: Listing[], days = 30): Promise<SiteAnalytics> {
+  const ids = listings.map((l) => l.id);
+  const base = emptySite(days);
+  if (!ids.length) return base;
+
+  const now = Date.now();
+  const midMs = now - days * 86400000;
+  const since2 = new Date(now - 2 * days * 86400000).toISOString();
+  const { data } = await sb.from(T.events).select("created_at,meta").in("listing_id", ids).eq("type", "site_view").gte("created_at", since2).limit(80000);
+
+  const byDate = new Map(base.series.map((s) => [s.date, s]));
+  const src = new Map<string, number>(), cty = new Map<string, number>(), dev = new Map<string, number>(), pg = new Map<string, number>();
+  const bump = (m: Map<string, number>, k: string) => m.set(k, (m.get(k) ?? 0) + 1);
+
+  for (const r of (data ?? []) as Row[]) {
+    const created = String(r.created_at);
+    if (new Date(created).getTime() < midMs) { base.prevVisits++; continue; }
+    base.visits++;
+    const d = byDate.get(created.slice(0, 10)); if (d) d.visits++;
+    let meta: Record<string, string> = {};
+    try { meta = r.meta ? (JSON.parse(String(r.meta)) as Record<string, string>) : {}; } catch { /* ignore */ }
+    bump(src, meta.src || "Direct");
+    if (meta.country) bump(cty, meta.country);
+    bump(dev, meta.device || "Desktop");
+    bump(pg, meta.page || "home");
+  }
+
+  base.sources = [...src.entries()].map(([label, visits]) => ({ label, visits })).sort((a, b) => b.visits - a.visits);
+  base.countries = [...cty.entries()].map(([code, visits]) => ({ code, visits })).sort((a, b) => b.visits - a.visits);
+  base.devices = [...dev.entries()].map(([label, visits]) => ({ label, visits })).sort((a, b) => b.visits - a.visits);
+  base.pages = [...pg.entries()].map(([path, visits]) => ({ path, visits })).sort((a, b) => b.visits - a.visits);
+  return base;
+}
+
 export async function createEnquiry(input: {
   listingId: string;
   guestEmail: string;

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { BookingActions } from "./BookingActions";
 import { formatPrice } from "@/lib/format";
-import type { HostAnalytics, EnquiryRow, BookingRow } from "@/lib/db";
+import type { HostAnalytics, SiteAnalytics, EnquiryRow, BookingRow } from "@/lib/db";
 
 export interface DashboardListing {
   id: string;
@@ -23,16 +23,18 @@ export interface DashboardListing {
 export interface DashboardData {
   email: string;
   analytics: HostAnalytics;
+  siteAnalytics?: SiteAnalytics;
   listings: DashboardListing[];
   enquiries: EnquiryRow[];
   bookings: BookingRow[];
 }
 
-type Tab = "overview" | "stays" | "website" | "bookings" | "enquiries";
-const TABS: { key: Tab; label: string }[] = [
+type Tab = "overview" | "stays" | "website" | "prostats" | "bookings" | "enquiries";
+const TABS: { key: Tab; label: string; pro?: boolean }[] = [
   { key: "overview", label: "Overview" },
   { key: "stays", label: "Your stays" },
   { key: "website", label: "Website" },
+  { key: "prostats", label: "Pro stats", pro: true },
   { key: "bookings", label: "Bookings" },
   { key: "enquiries", label: "Enquiries" },
 ];
@@ -222,6 +224,7 @@ export function DashboardView({ data, demo = false }: { data: DashboardData; dem
               className={`relative px-4 py-2.5 text-sm font-semibold whitespace-nowrap border-b-2 -mb-px transition ${tab === t.key ? "border-brand text-brand" : "border-transparent text-muted hover:text-ink"}`}
             >
               {t.label}
+              {t.pro && <span className="ml-1.5 inline-block bg-brand-gradient text-white text-[9px] font-bold px-1.5 py-0.5 rounded align-middle">PRO</span>}
               {badge > 0 && <span className="ml-1.5 inline-grid place-items-center min-w-5 h-5 px-1 rounded-full bg-brand text-white text-[10px] align-middle">{badge}</span>}
             </button>
           );
@@ -347,6 +350,22 @@ export function DashboardView({ data, demo = false }: { data: DashboardData; dem
         </div>
       )}
 
+      {/* ---- Pro stats ---- */}
+      {tab === "prostats" && (
+        sites.length === 0 ? (
+          <div className="border border-dashed border-line rounded-2xl p-8 text-center">
+            <span className="inline-block bg-brand-gradient text-white text-[10px] font-bold px-2 py-0.5 rounded mb-3">PRO</span>
+            <h3 className="font-semibold text-lg">Full website analytics</h3>
+            <p className="text-muted mt-1 max-w-md mx-auto">Add a booking website and unlock Pro stats: who&apos;s visiting, where from, what device, which pages, and how many turn into bookings.</p>
+            <Link href="/host/new" className="inline-block mt-4 bg-brand-gradient text-white font-semibold px-6 py-3 rounded-full shadow-glow">Add a booking website</Link>
+          </div>
+        ) : !data.siteAnalytics || data.siteAnalytics.visits === 0 ? (
+          <Empty>Your website analytics will appear here as visitors arrive, traffic sources, countries, devices and pages, all in one place.</Empty>
+        ) : (
+          <ProStats sa={data.siteAnalytics} enquiries={a.totals.enquiries} bookings={a.totals.bookings} />
+        )
+      )}
+
       {/* ---- Bookings ---- */}
       {tab === "bookings" && (
         bookings.length === 0 ? (
@@ -388,6 +407,111 @@ export function DashboardView({ data, demo = false }: { data: DashboardData; dem
           </div>
         )
       )}
+    </div>
+  );
+}
+
+/* ---------------- Pro website analytics ---------------- */
+
+const COUNTRY: Record<string, string> = {
+  GB: "United Kingdom", US: "United States", FR: "France", DE: "Germany", PT: "Portugal", ES: "Spain",
+  NL: "Netherlands", IE: "Ireland", IT: "Italy", BE: "Belgium", CH: "Switzerland", SE: "Sweden", NO: "Norway",
+  DK: "Denmark", CA: "Canada", AU: "Australia", BR: "Brazil", PL: "Poland", AT: "Austria", FI: "Finland",
+};
+const PAGE: Record<string, string> = { home: "Home", rooms: "The Rooms", gallery: "Gallery", location: "Location", book: "Book" };
+const SOURCE_DOT: Record<string, string> = {
+  Google: "bg-blue-500", Bing: "bg-teal-500", DuckDuckGo: "bg-orange-500", Direct: "bg-stone-400",
+  ChatGPT: "bg-emerald-500", Gemini: "bg-indigo-500", Perplexity: "bg-purple-500", Social: "bg-pink-500", Referral: "bg-amber-500",
+};
+const flag = (cc: string) => (cc && cc.length === 2 ? cc.toUpperCase().replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt(0))) : "🌍");
+
+function BarList({ title, subtitle, items, total }: { title: string; subtitle?: string; items: { label: string; value: number; lead?: ReactNode }[]; total: number }) {
+  const max = Math.max(1, ...items.map((i) => i.value));
+  return (
+    <div className="border border-line rounded-2xl p-5">
+      <h3 className="font-semibold">{title}</h3>
+      {subtitle && <p className="text-xs text-muted">{subtitle}</p>}
+      <div className="space-y-3 mt-4">
+        {items.map((it) => (
+          <div key={it.label}>
+            <div className="flex justify-between text-sm mb-1 gap-2">
+              <span className="flex items-center gap-1.5 min-w-0">{it.lead}<span className="truncate">{it.label}</span></span>
+              <span className="text-muted whitespace-nowrap">{it.value.toLocaleString()} · {Math.round((it.value / total) * 100)}%</span>
+            </div>
+            <div className="h-2 rounded-full bg-mist overflow-hidden"><div className="h-full bg-brand rounded-full" style={{ width: `${(it.value / max) * 100}%` }} /></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function VisitsChart({ series }: { series: { date: string; visits: number }[] }) {
+  const [hover, setHover] = useState<number | null>(null);
+  const max = Math.max(1, ...series.map((s) => s.visits));
+  const h = hover !== null ? series[hover] : null;
+  return (
+    <div className="border border-line rounded-2xl p-5">
+      <h3 className="font-semibold mb-4">Website visitors, last 30 days</h3>
+      <div className="relative">
+        {h && hover !== null && (
+          <div className="absolute -top-1 z-10 -translate-x-1/2 -translate-y-full pointer-events-none" style={{ left: `${((hover + 0.5) / series.length) * 100}%` }}>
+            <div className="bg-ink text-white rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
+              <p className="font-semibold mb-0.5">{dayLabel(h.date)}</p>
+              <p>{h.visits.toLocaleString()} visits</p>
+            </div>
+          </div>
+        )}
+        <div className="flex items-end gap-[3px] h-32" onMouseLeave={() => setHover(null)}>
+          {series.map((s, i) => (
+            <div key={s.date} onMouseEnter={() => setHover(i)} className="relative flex-1 h-full flex items-end cursor-pointer">
+              <div className={`absolute inset-x-0 bottom-0 rounded-t-sm transition-colors ${hover === i ? "bg-brand-dark" : "bg-brand"}`} style={{ height: `${(s.visits / max) * 100}%` }} />
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="flex justify-between text-[11px] text-muted mt-2"><span>{dayLabel(series[0]?.date ?? "")}</span><span>Today</span></div>
+    </div>
+  );
+}
+
+function ProStats({ sa, enquiries, bookings }: { sa: SiteAnalytics; enquiries: number; bookings: number }) {
+  const avgDay = Math.round(sa.visits / 30);
+  const bookingRate = sa.visits ? Math.round((bookings / sa.visits) * 1000) / 10 : 0;
+  const totalCountries = sa.countries.reduce((s, c) => s + c.visits, 0) || 1;
+  const totalDevices = sa.devices.reduce((s, d) => s + d.visits, 0) || 1;
+  const totalPages = sa.pages.reduce((s, p) => s + p.visits, 0) || 1;
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="border border-line rounded-xl p-4"><p className="text-xs text-muted">Website visits</p><p className="text-2xl font-semibold mt-1">{sa.visits.toLocaleString()}</p><div className="mt-1"><Delta cur={sa.visits} prev={sa.prevVisits} /></div></div>
+        <div className="border border-line rounded-xl p-4"><p className="text-xs text-muted">Avg per day</p><p className="text-2xl font-semibold mt-1">{avgDay.toLocaleString()}</p><p className="text-xs text-muted mt-1">over 30 days</p></div>
+        <div className="border border-line rounded-xl p-4"><p className="text-xs text-muted">Countries reached</p><p className="text-2xl font-semibold mt-1">{sa.countries.length.toLocaleString()}</p><p className="text-xs text-muted mt-1">worldwide</p></div>
+        <div className="border border-line rounded-xl p-4"><p className="text-xs text-muted">Visit → booking</p><p className="text-2xl font-semibold mt-1">{bookingRate}%</p><p className="text-xs text-muted mt-1">conversion</p></div>
+      </div>
+
+      <VisitsChart series={sa.series} />
+
+      <div className="grid md:grid-cols-2 gap-4">
+        <BarList title="Where visitors come from" subtitle="Traffic sources" total={sa.visits} items={sa.sources.slice(0, 7).map((s) => ({ label: s.label, value: s.visits, lead: <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${SOURCE_DOT[s.label] ?? "bg-stone-400"}`} /> }))} />
+        <BarList title="Top countries" subtitle="Where in the world" total={totalCountries} items={sa.countries.slice(0, 8).map((c) => ({ label: COUNTRY[c.code] ?? c.code, value: c.visits, lead: <span className="text-base leading-none">{flag(c.code)}</span> }))} />
+      </div>
+      <div className="grid md:grid-cols-2 gap-4">
+        <BarList title="Devices" subtitle="What they browse on" total={totalDevices} items={sa.devices.map((d) => ({ label: d.label, value: d.visits }))} />
+        <BarList title="Most-visited pages" subtitle="On your site" total={totalPages} items={sa.pages.slice(0, 6).map((p) => ({ label: PAGE[p.path] ?? p.path, value: p.visits }))} />
+      </div>
+
+      <div className="border border-line rounded-2xl p-5">
+        <h3 className="font-semibold mb-4">From visit to booking</h3>
+        <div className="space-y-3">
+          {([["Website visits", sa.visits], ["Enquiries", enquiries], ["Booking requests", bookings]] as [string, number][]).map(([label, val], idx) => (
+            <div key={label}>
+              <div className="flex justify-between text-sm mb-1"><span>{label}</span><span className="font-semibold">{val.toLocaleString()}</span></div>
+              <div className="h-3 rounded-full bg-mist overflow-hidden"><div className={`h-full rounded-full ${idx === 0 ? "bg-brand" : idx === 1 ? "bg-brand/70" : "bg-brand/50"}`} style={{ width: `${sa.visits ? Math.max(4, (val / sa.visits) * 100) : 0}%` }} /></div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
