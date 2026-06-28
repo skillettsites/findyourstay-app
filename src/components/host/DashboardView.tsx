@@ -57,21 +57,28 @@ function Delta({ cur, prev }: { cur: number; prev: number }) {
   );
 }
 
-function Stat({ label, value, sub, cur, prev }: { label: string; value: string; sub?: string; cur?: number; prev?: number }) {
+function Stat({ label, value, sub, cur, prev, active = false, onClick }: { label: string; value: string; sub?: string; cur?: number; prev?: number; active?: boolean; onClick?: () => void }) {
   return (
-    <div className="border border-line rounded-xl p-4">
-      <p className="text-xs text-muted">{label}</p>
+    <button type="button" onClick={onClick} className={`text-left w-full border rounded-xl p-4 transition group cursor-pointer ${active ? "border-brand ring-1 ring-brand/40 bg-rose-50/40" : "border-line hover:border-ink hover:shadow-sm"}`}>
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-xs text-muted">{label}</p>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={`shrink-0 transition-transform ${active ? "rotate-180 text-brand" : "text-muted/50 group-hover:text-ink"}`}><path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+      </div>
       <p className="text-2xl font-semibold mt-1">{value}</p>
       <div className="mt-1 flex items-center justify-between">
         {sub && <span className="text-xs text-muted">{sub}</span>}
         {cur !== undefined && prev !== undefined && <Delta cur={cur} prev={prev} />}
       </div>
-    </div>
+    </button>
   );
 }
 
+const dayLabel = (d: string) => { const dt = new Date(d); return Number.isNaN(dt.getTime()) ? d : dt.toLocaleDateString("en-GB", { day: "numeric", month: "short" }); };
+
 function TrendChart({ series }: { series: HostAnalytics["series"] }) {
+  const [hover, setHover] = useState<number | null>(null);
   const max = Math.max(1, ...series.map((s) => s.impressions), ...series.map((s) => s.views));
+  const h = hover !== null ? series[hover] : null;
   return (
     <div className="border border-line rounded-2xl p-5">
       <div className="flex items-center justify-between mb-4">
@@ -81,14 +88,78 @@ function TrendChart({ series }: { series: HostAnalytics["series"] }) {
           <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-brand" /> Views</span>
         </div>
       </div>
-      <div className="flex items-end gap-[3px] h-32">
-        {series.map((s) => (
-          <div key={s.date} className="relative flex-1 h-full flex items-end group" title={`${s.date} · ${s.impressions} impressions · ${s.views} views`}>
-            <div className="absolute inset-x-0 bottom-0 bg-line rounded-t-sm transition-all group-hover:bg-line/70" style={{ height: `${(s.impressions / max) * 100}%` }} />
-            <div className="absolute inset-x-0 bottom-0 bg-brand rounded-t-sm" style={{ height: `${(s.views / max) * 100}%` }} />
+      <div className="relative">
+        {h && hover !== null && (
+          <div className="absolute -top-1 z-10 -translate-x-1/2 -translate-y-full pointer-events-none" style={{ left: `${((hover + 0.5) / series.length) * 100}%` }}>
+            <div className="bg-ink text-white rounded-lg px-3 py-2 text-xs whitespace-nowrap shadow-lg">
+              <p className="font-semibold mb-1">{dayLabel(h.date)}</p>
+              <p className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm bg-white/40" /> {h.impressions.toLocaleString()} impressions</p>
+              <p className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm bg-brand" /> {h.views.toLocaleString()} views</p>
+            </div>
           </div>
-        ))}
+        )}
+        <div className="flex items-end gap-[3px] h-36" onMouseLeave={() => setHover(null)}>
+          {series.map((s, i) => (
+            <div key={s.date} onMouseEnter={() => setHover(i)} className="relative flex-1 h-full flex items-end cursor-pointer">
+              <div className={`absolute inset-x-0 bottom-0 rounded-t-sm transition-colors ${hover === i ? "bg-line/90" : "bg-line"}`} style={{ height: `${(s.impressions / max) * 100}%` }} />
+              <div className={`absolute inset-x-0 bottom-0 rounded-t-sm transition-colors ${hover === i ? "bg-brand-dark" : "bg-brand"}`} style={{ height: `${(s.views / max) * 100}%` }} />
+            </div>
+          ))}
+        </div>
       </div>
+      <div className="flex justify-between text-[11px] text-muted mt-2"><span>{dayLabel(series[0]?.date ?? "")}</span><span>Today</span></div>
+    </div>
+  );
+}
+
+function StatDetailPanel({ metric, a, listings, onClose }: { metric: string; a: HostAnalytics; listings: DashboardListing[]; onClose: () => void }) {
+  const nameById = new Map(listings.map((l) => [l.id, l.propertyName]));
+  const avg = listings.length ? Math.round(listings.reduce((s, l) => s + (l.pricePerNight ?? 0), 0) / listings.length) : 0;
+  const META: Record<string, { title: string; explain: string; cur?: number; prev?: number; per?: "impressions" | "views" | "enquiries"; value?: string }> = {
+    impressions: { title: "Search impressions", explain: "Every time one of your stays appears in a search or city page. More impressions means more chances to be discovered.", cur: a.totals.impressions, prev: a.prev.impressions, per: "impressions" },
+    views: { title: "Listing views", explain: "Travellers who clicked through and opened your listing to read more.", cur: a.totals.views, prev: a.prev.views, per: "views" },
+    siteViews: { title: "Website visits", explain: "Visits to your own booking website, where guests book and pay you direct.", cur: a.totals.siteViews, prev: a.prev.siteViews },
+    bookings: { title: "Booking requests", explain: "Guests who requested specific dates. Confirm or decline them from the Bookings tab.", cur: a.totals.bookings, prev: a.prev.bookings },
+    enquiries: { title: "Enquiries", explain: "Messages from travellers asking about your stay before they book.", cur: a.totals.enquiries, prev: a.prev.enquiries, per: "enquiries" },
+    enquiryRate: { title: "Enquiry rate", explain: "The share of listing views that become an enquiry. Higher means your listing is turning browsers into interested guests.", value: `${a.enquiryRate}%` },
+    listings: { title: "Active listings", explain: "The stays you have published and live on FindYourStay.", value: String(listings.length) },
+    avgRate: { title: "Average nightly rate", explain: "The average price per night across your published stays.", value: avg ? formatPrice(avg, listings[0]?.currency ?? "gbp") : "—" },
+  };
+  const m = META[metric];
+  if (!m) return null;
+  const rows = m.per ? a.perListing.map((p) => ({ name: nameById.get(p.id) ?? "Listing", val: p[m.per!] })).sort((x, y) => y.val - x.val) : [];
+  const max = Math.max(1, ...rows.map((r) => r.val));
+  return (
+    <div className="mt-3 border border-brand/30 bg-rose-50/30 rounded-2xl p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="font-semibold">{m.title}</h3>
+          <p className="text-sm text-muted mt-1 max-w-xl">{m.explain}</p>
+        </div>
+        <button onClick={onClose} aria-label="Close" className="text-muted hover:text-ink text-lg leading-none">✕</button>
+      </div>
+      {m.cur !== undefined && m.prev !== undefined ? (
+        <div className="mt-4 flex flex-wrap items-end gap-x-6 gap-y-2">
+          <div><p className="text-xs text-muted">This 30 days</p><p className="text-2xl font-bold">{fmt(m.cur)}</p></div>
+          <div><p className="text-xs text-muted">Previous 30 days</p><p className="text-2xl font-bold text-muted">{fmt(m.prev)}</p></div>
+          <Delta cur={m.cur} prev={m.prev} />
+        </div>
+      ) : m.value ? (
+        <p className="mt-4 text-3xl font-bold">{m.value}</p>
+      ) : null}
+      {m.per && rows.length > 0 && (
+        <div className="mt-5">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted mb-2">By listing</p>
+          <div className="space-y-2.5">
+            {rows.map((r) => (
+              <div key={r.name}>
+                <div className="flex justify-between text-sm mb-1"><span className="truncate pr-2">{r.name}</span><span className="font-semibold">{fmt(r.val)}</span></div>
+                <div className="h-2 rounded-full bg-white overflow-hidden"><div className="h-full bg-brand rounded-full" style={{ width: `${(r.val / max) * 100}%` }} /></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -100,6 +171,7 @@ const Empty = ({ children }: { children: React.ReactNode }) => (
 export function DashboardView({ data, demo = false }: { data: DashboardData; demo?: boolean }) {
   const { analytics: a, listings, enquiries, bookings } = data;
   const [tab, setTab] = useState<Tab>("overview");
+  const [openStat, setOpenStat] = useState<string | null>(null);
   const perById = new Map(a.perListing.map((p) => [p.id, p]));
   const pendingBookings = bookings.filter((b) => b.status === "requested").length;
   const sites = listings.filter((l) => l.hasBookingSite);
@@ -109,6 +181,16 @@ export function DashboardView({ data, demo = false }: { data: DashboardData; dem
   const avgRate = listings.length
     ? Math.round(listings.reduce((s, l) => s + (l.pricePerNight ?? 0), 0) / listings.length)
     : 0;
+  const statCards = [
+    { id: "impressions", label: "Search impressions", value: fmt(a.totals.impressions), sub: "shown in search", cur: a.totals.impressions, prev: a.prev.impressions },
+    { id: "views", label: "Listing views", value: fmt(a.totals.views), sub: "opened your listing", cur: a.totals.views, prev: a.prev.views },
+    { id: "siteViews", label: "Website visits", value: fmt(a.totals.siteViews), sub: "your booking site", cur: a.totals.siteViews, prev: a.prev.siteViews },
+    { id: "bookings", label: "Booking requests", value: fmt(a.totals.bookings), sub: "last 30 days", cur: a.totals.bookings, prev: a.prev.bookings },
+    { id: "enquiries", label: "Enquiries", value: fmt(a.totals.enquiries), sub: "last 30 days", cur: a.totals.enquiries, prev: a.prev.enquiries },
+    { id: "enquiryRate", label: "Enquiry rate", value: `${a.enquiryRate}%`, sub: "per listing view", cur: undefined as number | undefined, prev: undefined as number | undefined },
+    { id: "listings", label: "Active listings", value: fmt(listings.length), sub: "published", cur: undefined as number | undefined, prev: undefined as number | undefined },
+    { id: "avgRate", label: "Avg nightly rate", value: avgRate ? formatPrice(avgRate, listings[0]?.currency ?? "gbp") : "—", sub: "across your stays", cur: undefined as number | undefined, prev: undefined as number | undefined },
+  ];
 
   return (
     <div className="mx-auto max-w-5xl w-full px-4 sm:px-6 py-6">
@@ -149,18 +231,17 @@ export function DashboardView({ data, demo = false }: { data: DashboardData; dem
       {/* ---- Overview ---- */}
       {tab === "overview" && (
         <div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-            <Stat label="Search impressions" value={fmt(a.totals.impressions)} sub="shown in search" cur={a.totals.impressions} prev={a.prev.impressions} />
-            <Stat label="Listing views" value={fmt(a.totals.views)} sub="opened your listing" cur={a.totals.views} prev={a.prev.views} />
-            <Stat label="Website visits" value={fmt(a.totals.siteViews)} sub="your booking site" cur={a.totals.siteViews} prev={a.prev.siteViews} />
-            <Stat label="Booking requests" value={fmt(a.totals.bookings)} sub="last 30 days" cur={a.totals.bookings} prev={a.prev.bookings} />
-            <Stat label="Enquiries" value={fmt(a.totals.enquiries)} sub="last 30 days" cur={a.totals.enquiries} prev={a.prev.enquiries} />
-            <Stat label="Enquiry rate" value={`${a.enquiryRate}%`} sub="per listing view" />
-            <Stat label="Active listings" value={fmt(listings.length)} sub="published" />
-            <Stat label="Avg nightly rate" value={avgRate ? formatPrice(avgRate, listings[0]?.currency ?? "gbp") : "—"} sub="across your stays" />
+          <p className="text-xs text-muted mb-2">Tap any stat for a breakdown.</p>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {statCards.map((s) => (
+              <Stat key={s.id} label={s.label} value={s.value} sub={s.sub} cur={s.cur} prev={s.prev} active={openStat === s.id} onClick={() => setOpenStat(openStat === s.id ? null : s.id)} />
+            ))}
           </div>
+          {openStat && <StatDetailPanel metric={openStat} a={a} listings={listings} onClose={() => setOpenStat(null)} />}
 
-          <TrendChart series={a.series} />
+          <div className="mt-6">
+            <TrendChart series={a.series} />
+          </div>
 
           <div className="mt-6 grid sm:grid-cols-2 gap-4">
             <div className="border border-line rounded-2xl p-5">

@@ -14,9 +14,9 @@ export const metadata = {
 function sampleData(): DashboardData {
   const series = Array.from({ length: 30 }, (_, i) => {
     const date = new Date(Date.now() - (29 - i) * 86400000).toISOString().slice(0, 10);
-    const wave = Math.round(40 * Math.sin(i / 4.5));
-    const impressions = Math.max(60, 170 + wave + i * 11 + (i % 7 === 0 ? 55 : 0)); // clear upward trend
-    const views = Math.max(8, Math.round(impressions * 0.15) + (i % 5 === 0 ? 7 : 0));
+    const wave = Math.round(55 * Math.sin(i / 4.5));
+    const impressions = Math.max(150, 360 + wave + i * 22 + (i % 7 === 0 ? 110 : 0)); // strong upward trend
+    const views = Math.max(24, Math.round(impressions * 0.17) + (i % 5 === 0 ? 14 : 0));
     return { date, views, impressions };
   });
   const impressions = series.reduce((s, d) => s + d.impressions, 0);
