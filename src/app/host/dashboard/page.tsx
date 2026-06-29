@@ -7,15 +7,25 @@ import { getListingsByHost, getHostAnalytics, getSiteAnalytics, getEnquiriesForL
 
 export const dynamic = "force-dynamic";
 
-export default async function Dashboard() {
+type SP = Promise<Record<string, string | string[] | undefined>>;
+
+export default async function Dashboard({ searchParams }: { searchParams: SP }) {
   const user = await getUser();
   if (!user) redirect("/login?next=/host/dashboard");
   await ensureHost(user!);
 
+  const sp = await searchParams;
+  const range = String(sp.range ?? "30");
+  const days = range === "7" ? 7 : range === "90" ? 90 : 30;
+  const listingId = typeof sp.listing === "string" ? sp.listing : undefined;
+
   const myListings = await getListingsByHost(user!.id, 50);
+  // The date range + per-listing filter scope the analytics; the management
+  // lists (stays/website/bookings/enquiries) always show everything.
+  const scoped = listingId ? myListings.filter((l) => l.id === listingId) : myListings;
   const [analytics, siteAnalytics, enquiries, bookings, domains] = await Promise.all([
-    getHostAnalytics(myListings, 30),
-    getSiteAnalytics(myListings, 30),
+    getHostAnalytics(scoped, days),
+    getSiteAnalytics(scoped, days),
     getEnquiriesForListings(myListings, 30),
     getBookingsForListings(myListings, 30),
     getDomainsForListings(myListings),

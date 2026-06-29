@@ -11,12 +11,13 @@ export const metadata = {
 
 // Deterministic, believable sample data so anyone can preview the dashboard.
 // Tuned to look healthy and growing (positive deltas vs the previous month).
-function sampleData(): DashboardData {
-  const series = Array.from({ length: 30 }, (_, i) => {
-    const date = new Date(Date.now() - (29 - i) * 86400000).toISOString().slice(0, 10);
+function sampleData(days = 30, listingId?: string): DashboardData {
+  const share = listingId === "d1" ? 0.58 : listingId === "d2" ? 0.42 : 1; // per-listing filter
+  const series = Array.from({ length: days }, (_, i) => {
+    const date = new Date(Date.now() - (days - 1 - i) * 86400000).toISOString().slice(0, 10);
     const wave = Math.round(55 * Math.sin(i / 4.5));
-    const impressions = Math.max(150, 360 + wave + i * 22 + (i % 7 === 0 ? 110 : 0)); // strong upward trend
-    const views = Math.max(24, Math.round(impressions * 0.17) + (i % 5 === 0 ? 14 : 0));
+    const impressions = Math.round((Math.max(150, 360 + wave + i * 22 + (i % 7 === 0 ? 110 : 0))) * share); // strong upward trend
+    const views = Math.max(6, Math.round(impressions * 0.17) + (i % 5 === 0 ? 10 : 0));
     return { date, views, impressions };
   });
   const impressions = series.reduce((s, d) => s + d.impressions, 0);
@@ -80,10 +81,12 @@ function sampleData(): DashboardData {
       prev,
       series,
       enquiryRate,
-      perListing: [
-        { id: "d1", impressions: Math.round(impressions * 0.58), views: Math.round(views * 0.6), enquiries: Math.round(enquiries * 0.62) },
-        { id: "d2", impressions: Math.round(impressions * 0.42), views: Math.round(views * 0.4), enquiries: Math.round(enquiries * 0.38) },
-      ],
+      perListing: listingId
+        ? [{ id: listingId, impressions, views, enquiries }]
+        : [
+            { id: "d1", impressions: Math.round(impressions * 0.58), views: Math.round(views * 0.6), enquiries: Math.round(enquiries * 0.62) },
+            { id: "d2", impressions: Math.round(impressions * 0.42), views: Math.round(views * 0.4), enquiries: Math.round(enquiries * 0.38) },
+          ],
     },
     listings: [
       { id: "d1", slug: "demo-1", propertyName: "Casa do Rio Guesthouse", cityName: "Porto", country: "Portugal", pricePerNight: 95, currency: "gbp", photo: "https://images.unsplash.com/photo-1762529716272-b316f61502e7?auto=format&fit=crop&w=400&q=70", hasBookingSite: true, siteTheme: "coastal", domain: "casadorio.com" },
@@ -102,14 +105,20 @@ function sampleData(): DashboardData {
   };
 }
 
-export default function DemoDashboardPage() {
+type SP = Promise<Record<string, string | string[] | undefined>>;
+
+export default async function DemoDashboardPage({ searchParams }: { searchParams: SP }) {
+  const sp = await searchParams;
+  const range = String(sp.range ?? "30");
+  const days = range === "7" ? 7 : range === "90" ? 90 : 30;
+  const listingId = typeof sp.listing === "string" ? sp.listing : undefined;
   return (
     <>
       <Header />
       <div className="mx-auto max-w-5xl w-full px-4 sm:px-6 pt-6">
         <BackButton fallback="/host" />
       </div>
-      <DashboardView data={sampleData()} demo />
+      <DashboardView data={sampleData(days, listingId)} demo />
     </>
   );
 }

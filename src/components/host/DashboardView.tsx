@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { BookingActions } from "./BookingActions";
 import { formatPrice } from "@/lib/format";
 import type { HostAnalytics, SiteAnalytics, EnquiryRow, BookingRow } from "@/lib/db";
@@ -77,14 +78,14 @@ function Stat({ label, value, sub, cur, prev, active = false, onClick }: { label
 
 const dayLabel = (d: string) => { const dt = new Date(d); return Number.isNaN(dt.getTime()) ? d : dt.toLocaleDateString("en-GB", { day: "numeric", month: "short" }); };
 
-function TrendChart({ series }: { series: HostAnalytics["series"] }) {
+function TrendChart({ series, days = 30 }: { series: HostAnalytics["series"]; days?: number }) {
   const [hover, setHover] = useState<number | null>(null);
   const max = Math.max(1, ...series.map((s) => s.impressions), ...series.map((s) => s.views));
   const h = hover !== null ? series[hover] : null;
   return (
     <div className="border border-line rounded-2xl p-5">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold">Reach over the last 30 days</h3>
+        <h3 className="font-semibold">Reach, last {days} days</h3>
         <div className="flex items-center gap-4 text-xs text-muted">
           <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-line" /> Impressions</span>
           <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-brand" /> Views</span>
@@ -174,6 +175,40 @@ export function DashboardView({ data, demo = false }: { data: DashboardData; dem
   const { analytics: a, listings, enquiries, bookings } = data;
   const [tab, setTab] = useState<Tab>("overview");
   const [openStat, setOpenStat] = useState<string | null>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const sp = useSearchParams();
+  const range = sp.get("range") ?? "30";
+  const days = range === "7" ? 7 : range === "90" ? 90 : 30;
+  const selectedListing = sp.get("listing") ?? "";
+  const setParam = (k: string, v: string) => {
+    const p = new URLSearchParams(sp.toString());
+    if (v) p.set(k, v); else p.delete(k);
+    const qs = p.toString();
+    router.push(qs ? `${pathname}?${qs}` : pathname);
+  };
+  const downloadCSV = () => {
+    const sa = data.siteAnalytics;
+    const rows: string[] = [
+      `FindYourStay analytics, last ${days} days`, "", "Metric,This period,Previous period",
+      `Search impressions,${a.totals.impressions},${a.prev.impressions}`,
+      `Listing views,${a.totals.views},${a.prev.views}`,
+      `Website visits,${a.totals.siteViews},${a.prev.siteViews}`,
+      `Enquiries,${a.totals.enquiries},${a.prev.enquiries}`,
+      `Booking requests,${a.totals.bookings},${a.prev.bookings}`,
+    ];
+    if (sa) {
+      rows.push("", "Traffic source,Visits", ...sa.sources.map((s) => `${s.label},${s.visits}`));
+      rows.push("", "Country,Visits", ...sa.countries.map((c) => `${COUNTRY[c.code] ?? c.code},${c.visits}`));
+      rows.push("", "Device,Visits", ...sa.devices.map((d) => `${d.label},${d.visits}`));
+      rows.push("", "Page,Visits", ...sa.pages.map((p) => `${PAGE[p.path] ?? p.path},${p.visits}`));
+    }
+    const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const el = document.createElement("a");
+    el.href = url; el.download = `findyourstay-analytics-${days}d.csv`;
+    document.body.appendChild(el); el.click(); el.remove(); URL.revokeObjectURL(url);
+  };
   const perById = new Map(a.perListing.map((p) => [p.id, p]));
   const pendingBookings = bookings.filter((b) => b.status === "requested").length;
   const sites = listings.filter((l) => l.hasBookingSite);
@@ -187,8 +222,8 @@ export function DashboardView({ data, demo = false }: { data: DashboardData; dem
     { id: "impressions", label: "Search impressions", value: fmt(a.totals.impressions), sub: "shown in search", cur: a.totals.impressions, prev: a.prev.impressions },
     { id: "views", label: "Listing views", value: fmt(a.totals.views), sub: "opened your listing", cur: a.totals.views, prev: a.prev.views },
     { id: "siteViews", label: "Website visits", value: fmt(a.totals.siteViews), sub: "your booking site", cur: a.totals.siteViews, prev: a.prev.siteViews },
-    { id: "bookings", label: "Booking requests", value: fmt(a.totals.bookings), sub: "last 30 days", cur: a.totals.bookings, prev: a.prev.bookings },
-    { id: "enquiries", label: "Enquiries", value: fmt(a.totals.enquiries), sub: "last 30 days", cur: a.totals.enquiries, prev: a.prev.enquiries },
+    { id: "bookings", label: "Booking requests", value: fmt(a.totals.bookings), sub: `last ${days} days`, cur: a.totals.bookings, prev: a.prev.bookings },
+    { id: "enquiries", label: "Enquiries", value: fmt(a.totals.enquiries), sub: `last ${days} days`, cur: a.totals.enquiries, prev: a.prev.enquiries },
     { id: "enquiryRate", label: "Enquiry rate", value: `${a.enquiryRate}%`, sub: "per listing view", cur: undefined as number | undefined, prev: undefined as number | undefined },
     { id: "listings", label: "Active listings", value: fmt(listings.length), sub: "published", cur: undefined as number | undefined, prev: undefined as number | undefined },
     { id: "avgRate", label: "Avg nightly rate", value: avgRate ? formatPrice(avgRate, listings[0]?.currency ?? "gbp") : "—", sub: "across your stays", cur: undefined as number | undefined, prev: undefined as number | undefined },
@@ -206,11 +241,30 @@ export function DashboardView({ data, demo = false }: { data: DashboardData; dem
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-5">
         <div>
           <h1 className="text-2xl font-display font-bold">{demo ? "Host dashboard preview" : "Your dashboard"}</h1>
-          <p className="text-sm text-muted">{demo ? "Example data, last 30 days" : `Signed in as ${data.email}`}</p>
+          <p className="text-sm text-muted">{demo ? `Example data, last ${days} days` : `Signed in as ${data.email}`}{selectedListing && listings.find((l) => l.id === selectedListing) ? ` · ${listings.find((l) => l.id === selectedListing)!.propertyName}` : ""}</p>
         </div>
         <Link href="/host/new" className="self-start bg-brand-gradient bg-brand-gradient-hover text-white text-sm font-semibold px-4 py-2.5 rounded-full shadow-glow">
           {demo ? "Get started" : "+ Add listing"}
         </Link>
+      </div>
+
+      {/* Controls: date range, per-listing filter, CSV export */}
+      <div className="flex flex-wrap items-center gap-2 mb-5">
+        <div className="inline-flex rounded-full border border-line p-0.5">
+          {[["7", "7 days"], ["30", "30 days"], ["90", "90 days"]].map(([v, l]) => (
+            <button key={v} onClick={() => setParam("range", v === "30" ? "" : v)} className={`px-3 py-1.5 text-xs font-semibold rounded-full transition ${range === v ? "bg-ink text-white" : "text-muted hover:text-ink"}`}>{l}</button>
+          ))}
+        </div>
+        {listings.length > 1 && (
+          <select value={selectedListing} onChange={(e) => setParam("listing", e.target.value)} className="text-xs font-semibold border border-line rounded-full px-3 py-2 bg-white outline-none cursor-pointer">
+            <option value="">All listings</option>
+            {listings.map((l) => <option key={l.id} value={l.id}>{l.propertyName}</option>)}
+          </select>
+        )}
+        <button onClick={downloadCSV} className="text-xs font-semibold border border-line rounded-full px-3 py-2 hover:bg-mist inline-flex items-center gap-1.5">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14" /></svg>
+          Export CSV
+        </button>
       </div>
 
       {/* Tabs */}
@@ -243,7 +297,7 @@ export function DashboardView({ data, demo = false }: { data: DashboardData; dem
           {openStat && <StatDetailPanel metric={openStat} a={a} listings={listings} onClose={() => setOpenStat(null)} />}
 
           <div className="mt-6">
-            <TrendChart series={a.series} />
+            <TrendChart series={a.series} days={days} />
           </div>
 
           <div className="mt-6 grid sm:grid-cols-2 gap-4">
@@ -362,7 +416,7 @@ export function DashboardView({ data, demo = false }: { data: DashboardData; dem
         ) : !data.siteAnalytics || data.siteAnalytics.visits === 0 ? (
           <Empty>Your website analytics will appear here as visitors arrive, traffic sources, countries, devices and pages, all in one place.</Empty>
         ) : (
-          <ProStats sa={data.siteAnalytics} enquiries={a.totals.enquiries} bookings={a.totals.bookings} />
+          <ProStats sa={data.siteAnalytics} enquiries={a.totals.enquiries} bookings={a.totals.bookings} days={days} />
         )
       )}
 
@@ -446,13 +500,13 @@ function BarList({ title, subtitle, items, total }: { title: string; subtitle?: 
   );
 }
 
-function VisitsChart({ series }: { series: { date: string; visits: number }[] }) {
+function VisitsChart({ series, days = 30 }: { series: { date: string; visits: number }[]; days?: number }) {
   const [hover, setHover] = useState<number | null>(null);
   const max = Math.max(1, ...series.map((s) => s.visits));
   const h = hover !== null ? series[hover] : null;
   return (
     <div className="border border-line rounded-2xl p-5">
-      <h3 className="font-semibold mb-4">Website visitors, last 30 days</h3>
+      <h3 className="font-semibold mb-4">Website visitors, last {days} days</h3>
       <div className="relative">
         {h && hover !== null && (
           <div className="absolute -top-1 z-10 -translate-x-1/2 -translate-y-full pointer-events-none" style={{ left: `${((hover + 0.5) / series.length) * 100}%` }}>
@@ -475,8 +529,8 @@ function VisitsChart({ series }: { series: { date: string; visits: number }[] })
   );
 }
 
-function ProStats({ sa, enquiries, bookings }: { sa: SiteAnalytics; enquiries: number; bookings: number }) {
-  const avgDay = Math.round(sa.visits / 30);
+function ProStats({ sa, enquiries, bookings, days = 30 }: { sa: SiteAnalytics; enquiries: number; bookings: number; days?: number }) {
+  const avgDay = Math.round(sa.visits / days);
   const bookingRate = sa.visits ? Math.round((bookings / sa.visits) * 1000) / 10 : 0;
   const totalCountries = sa.countries.reduce((s, c) => s + c.visits, 0) || 1;
   const totalDevices = sa.devices.reduce((s, d) => s + d.visits, 0) || 1;
@@ -490,7 +544,7 @@ function ProStats({ sa, enquiries, bookings }: { sa: SiteAnalytics; enquiries: n
         <div className="border border-line rounded-xl p-4"><p className="text-xs text-muted">Visit → booking</p><p className="text-2xl font-semibold mt-1">{bookingRate}%</p><p className="text-xs text-muted mt-1">conversion</p></div>
       </div>
 
-      <VisitsChart series={sa.series} />
+      <VisitsChart series={sa.series} days={days} />
 
       <div className="grid md:grid-cols-2 gap-4">
         <BarList title="Where visitors come from" subtitle="Traffic sources" total={sa.visits} items={sa.sources.slice(0, 7).map((s) => ({ label: s.label, value: s.visits, lead: <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${SOURCE_DOT[s.label] ?? "bg-stone-400"}`} /> }))} />
