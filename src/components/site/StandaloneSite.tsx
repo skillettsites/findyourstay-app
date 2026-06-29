@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { SiteNav, type NavLink } from "./SiteNav";
-import { HeroSearch } from "./HeroSearch";
 import { ScrollProgress, FadeUp, HeroStage, HeroItem, ParallaxImage, Stagger, Item } from "./SiteMotion";
 import { MicrositeBooking } from "@/components/MicrositeBooking";
 import { ResultsMap } from "@/components/ResultsMap";
@@ -123,7 +122,7 @@ export function StandaloneSite({
       <SiteNav name={listing.propertyName} domain={domain} links={links} active={page} bookHref={href("book")} btn={`${t.btn} ${CTA}`} activeText={t.accent} />
 
       <main className="flex-1">
-        {page === "home" && <Home listing={listing} photos={photos} href={href} t={t} theme={theme} />}
+        {page === "home" && <Home listing={listing} photos={photos} href={href} t={t} theme={theme} demo={example} />}
         {page === "rooms" && <Rooms listing={listing} photos={photos} href={href} t={t} />}
         {page === "gallery" && <Gallery listing={listing} photos={photos} t={t} />}
         {page === "location" && <Location listing={listing} t={t} />}
@@ -136,29 +135,58 @@ export function StandaloneSite({
 }
 
 /* ---------------- Home (dispatches to one of three distinct layouts) ---------------- */
-type HomeProps = { listing: Listing; photos: string[]; href: (p: string) => string; t: Tokens };
+type HomeProps = { listing: Listing; photos: string[]; href: (p: string) => string; t: Tokens; demo: boolean };
 function Home(p: HomeProps & { theme: SiteTheme }) {
-  if (p.theme === "modern") return <HomeModern listing={p.listing} photos={p.photos} href={p.href} t={p.t} />;
-  if (p.theme === "coastal") return <HomeCoastal listing={p.listing} photos={p.photos} href={p.href} t={p.t} />;
-  return <HomeClassic listing={p.listing} photos={p.photos} href={p.href} t={p.t} />;
+  const sub: HomeProps = { listing: p.listing, photos: p.photos, href: p.href, t: p.t, demo: p.demo };
+  if (p.theme === "modern") return <HomeModern {...sub} />;
+  if (p.theme === "coastal") return <HomeCoastal {...sub} />;
+  return <HomeClassic {...sub} />;
+}
+
+/* Shared premium hero: full-bleed (or rounded-inset) image, the property on the
+   left and a real booking/request form on the right. Used by all templates so
+   every site opens with a 2-column "book now" hero on a par with the main site. */
+function HeroWithForm({ listing, t, demo, inset = false }: { listing: Listing; t: Tokens; demo: boolean; inset?: boolean }) {
+  const photo = listing.photos[0] ?? `https://picsum.photos/seed/${listing.id}/1600/900`;
+  const inner = (
+    <>
+      <ParallaxImage src={photo} alt={listing.propertyName} priority />
+      <div className={`absolute inset-0 ${t.overlay}`} />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/25 to-transparent" />
+      <HeroStage className="relative w-full mx-auto max-w-6xl px-5 sm:px-8 py-14 sm:py-20 grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
+        <div className="text-white [text-shadow:0_2px_22px_rgba(0,0,0,0.5)]">
+          <HeroItem><p className={t.eyebrow}>{prettyType(listing.propertyType)} · {listing.cityName}{listing.country ? `, ${listing.country}` : ""}</p></HeroItem>
+          <HeroItem><h1 className="font-serif font-medium tracking-tight text-4xl sm:text-5xl xl:text-6xl mt-4 leading-[1.04]">{listing.propertyName}</h1></HeroItem>
+          <HeroItem><p className="mt-5 text-lg text-white/90 max-w-md font-light leading-relaxed">{(listing.description ? listing.description.slice(0, 140) : `An independent stay in ${listing.neighborhood || listing.cityName}`)}. Booked direct, never any platform fees.</p></HeroItem>
+          <HeroItem>
+            <div className="mt-6 flex flex-wrap gap-2">
+              {(listing.perks.length ? listing.perks.slice(0, 3) : ["No platform fees", "Book direct", "Best rate"]).map((x) => (
+                <span key={x} className="text-sm bg-white/15 backdrop-blur rounded-full px-3 py-1.5 border border-white/25">✓ {x}</span>
+              ))}
+            </div>
+          </HeroItem>
+        </div>
+        <HeroItem className="w-full max-w-md lg:justify-self-end mx-auto lg:mx-0">
+          <MicrositeBooking listing={listing} demo={demo} />
+        </HeroItem>
+      </HeroStage>
+    </>
+  );
+  if (inset) {
+    return (
+      <section className="px-3 pt-3">
+        <div className="relative rounded-[2rem] overflow-hidden flex items-center min-h-[84vh]">{inner}</div>
+      </section>
+    );
+  }
+  return <section className="relative flex items-center min-h-[86vh]">{inner}</section>;
 }
 
 /* Classic — symmetrical, centred, full-bleed cinematic hero. Traditional luxe. */
-function HomeClassic({ listing, photos, href, t }: HomeProps) {
+function HomeClassic({ listing, photos, href, t, demo }: HomeProps) {
   return (
     <>
-      <section className="relative h-[68svh] min-h-[440px] max-h-[720px]">
-        <ParallaxImage src={photos[0]} alt={listing.propertyName} priority />
-        <div className={`absolute inset-0 ${t.overlay}`} />
-        <HeroStage className="relative h-full flex flex-col items-center justify-center text-center text-white px-6 pb-28 [text-shadow:0_2px_22px_rgba(0,0,0,0.6)]">
-          <HeroItem><p className={t.eyebrow}>{prettyType(listing.propertyType)} · {listing.cityName}, {listing.country}</p></HeroItem>
-          <HeroItem><h1 className="font-serif font-medium tracking-tight text-5xl sm:text-7xl mt-5 max-w-4xl leading-[1.04]">{listing.propertyName}</h1></HeroItem>
-          <HeroItem><p className="mt-5 text-lg text-white/90 max-w-xl font-light">An independent stay in {listing.neighborhood || listing.cityName}, booked direct with us, never any platform fees.</p></HeroItem>
-        </HeroStage>
-        <FadeUp delay={0.6} className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 pb-8">
-          <HeroSearch bookHref={href("book")} btnClass={`${t.btn} ${CTA}`} />
-        </FadeUp>
-      </section>
+      <HeroWithForm listing={listing} t={t} demo={demo} />
 
       {/* Story */}
       <FadeUp className="mx-auto max-w-3xl px-4 sm:px-6 py-20 sm:py-28 text-center">
@@ -217,35 +245,11 @@ function HomeClassic({ listing, photos, href, t }: HomeProps) {
 }
 
 /* Modern — asymmetric split-screen editorial. Monochrome, square, magazine feel. */
-function HomeModern({ listing, photos, href, t }: HomeProps) {
+function HomeModern({ listing, photos, href, t, demo }: HomeProps) {
   const gal = photos.length > 2 ? photos : [...photos, `https://picsum.photos/seed/${listing.id}-m1/900/600`, `https://picsum.photos/seed/${listing.id}-m2/900/600`];
   return (
     <>
-      {/* Split hero: text panel + parallax image */}
-      <section className="grid md:grid-cols-2 md:min-h-[60vh]">
-        <HeroStage className="bg-ink text-white flex flex-col justify-center px-6 sm:px-12 lg:px-16 py-16 order-2 md:order-1">
-          <HeroItem><p className="text-[11px] uppercase tracking-[0.45em] text-white/55">{prettyType(listing.propertyType)} · {listing.cityName}, {listing.country}</p></HeroItem>
-          <HeroItem><h1 className="font-serif text-5xl lg:text-7xl mt-6 leading-[1.02]">{listing.propertyName}</h1></HeroItem>
-          <HeroItem><div className="w-16 h-px bg-white/40 my-8" /></HeroItem>
-          <HeroItem><p className="text-white/70 max-w-md font-light text-lg leading-relaxed">{(listing.description || `An independent stay in ${listing.cityName}, booked direct, never any platform fees.`).slice(0, 180)}</p></HeroItem>
-          <HeroItem>
-            <div className="mt-10 flex flex-wrap items-center gap-7">
-              <Link href={href("book")} className={`bg-white text-ink px-8 py-4 font-semibold text-xs uppercase tracking-[0.2em] hover:bg-white/90 ${CTA}`}>Reserve</Link>
-              <span className="text-sm text-white/60"><span className="font-serif text-2xl text-white">{formatPrice(listing.pricePerNight, listing.currency)}</span> / night</span>
-            </div>
-          </HeroItem>
-        </HeroStage>
-        <div className="relative order-1 md:order-2 min-h-[34vh]">
-          <ParallaxImage src={photos[0]} alt={listing.propertyName} priority />
-        </div>
-      </section>
-
-      {/* Availability strip */}
-      <section className="border-b border-ink/10 bg-mist">
-        <FadeUp className="mx-auto max-w-5xl px-4 sm:px-6 py-7">
-          <HeroSearch bookHref={href("book")} btnClass={`${t.btn} ${CTA}`} />
-        </FadeUp>
-      </section>
+      <HeroWithForm listing={listing} t={t} demo={demo} />
 
       {/* 01 — The space */}
       <section className="mx-auto max-w-6xl px-4 sm:px-6 py-24 grid lg:grid-cols-12 gap-10 items-center">
@@ -306,26 +310,10 @@ function HomeModern({ listing, photos, href, t }: HomeProps) {
 }
 
 /* Coastal — airy, rounded, lots of whitespace. Inset hero with a floating search card. */
-function HomeCoastal({ listing, photos, href, t }: HomeProps) {
+function HomeCoastal({ listing, photos, href, t, demo }: HomeProps) {
   return (
     <>
-      <section className="px-3 pt-3">
-        <div className="relative rounded-[2rem] overflow-hidden h-[62vh] min-h-[420px] max-h-[680px]">
-          <ParallaxImage src={photos[0]} alt={listing.propertyName} priority />
-          <div className="absolute inset-0 bg-emerald-950/35" />
-          <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/75 via-emerald-950/35 to-emerald-950/45" />
-          <HeroStage className="relative h-full flex flex-col items-center justify-center text-center text-white px-6 [text-shadow:0_2px_22px_rgba(0,0,0,0.55)]">
-            <HeroItem><p className="uppercase tracking-[0.3em] text-white/90 text-xs">{prettyType(listing.propertyType)} · {listing.cityName}</p></HeroItem>
-            <HeroItem><h1 className="font-serif text-5xl sm:text-7xl mt-5 max-w-3xl leading-[1.05]">{listing.propertyName}</h1></HeroItem>
-            <HeroItem><p className="mt-5 text-white/90 font-light max-w-md text-lg">A breath of fresh air in {listing.neighborhood || listing.cityName}. Book direct, no fees.</p></HeroItem>
-          </HeroStage>
-        </div>
-      </section>
-
-      {/* Floating availability card overlapping the hero */}
-      <FadeUp delay={0.5} className="px-4 sm:px-6 -mt-10 relative z-10">
-        <HeroSearch bookHref={href("book")} btnClass={`${t.btn} ${CTA}`} />
-      </FadeUp>
+      <HeroWithForm listing={listing} t={t} demo={demo} inset />
 
       {/* Welcome */}
       <FadeUp className="mx-auto max-w-3xl px-4 sm:px-6 py-20 text-center">
