@@ -35,6 +35,11 @@ export function SiteBuilder() {
 
   return (
     <div className="grid lg:grid-cols-[360px_1fr] gap-6 lg:items-start">
+      {/* Mobile-only top CTA — above the preview so "make it live" is the first thing they see */}
+      <Link href={liveHref} className="order-first lg:hidden block text-center bg-brand-gradient bg-brand-gradient-hover text-white font-semibold py-3.5 rounded-full shadow-glow transition-transform active:scale-95">
+        Add my real details &amp; images, make it live →
+      </Link>
+
       {/* Form (below the preview on mobile, left column on desktop) */}
       <div className="order-2 lg:order-1 space-y-4">
         <div>
