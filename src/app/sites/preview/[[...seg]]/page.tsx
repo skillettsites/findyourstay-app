@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { StandaloneSite, type SiteTheme } from "@/components/site/StandaloneSite";
+import { StandaloneSite, type SitePage, type SiteTheme } from "@/components/site/StandaloneSite";
 import { EXAMPLE_STAYS } from "@/lib/exampleStays";
 import { suggestDomain } from "@/lib/format";
 import type { Listing } from "@/lib/types";
@@ -13,6 +13,14 @@ const VIBES: Record<string, { theme: SiteTheme; slug: string }> = {
   mountain: { theme: "classic", slug: "mountain-chalet-geres" },
 };
 
+// Render the real page for the nav segment so inner pages (rooms/gallery/
+// location) show their own content, NOT the home hero + booking form.
+const PAGES = ["rooms", "gallery", "location", "book"];
+function toPage(seg?: string[]): SitePage {
+  const s = seg?.[0];
+  return (s && PAGES.includes(s) ? s : "home") as SitePage;
+}
+
 type SP = Promise<Record<string, string | string[] | undefined>>;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 
@@ -23,7 +31,8 @@ function prettyTypeWord(t: string): string {
 
 // Live, no-signup preview of a host's future site, built from the builder form.
 // A catch-all so the template nav never 404s; it always renders the home preview.
-export default async function PreviewSitePage({ searchParams }: { searchParams: SP }) {
+export default async function PreviewSitePage({ params, searchParams }: { params: Promise<{ seg?: string[] }>; searchParams: SP }) {
+  const { seg } = await params;
   const sp = await searchParams;
   const vibe = one(sp.vibe) && VIBES[one(sp.vibe)!] ? one(sp.vibe)! : "beach";
   const base = EXAMPLE_STAYS[VIBES[vibe].slug];
@@ -55,9 +64,18 @@ export default async function PreviewSitePage({ searchParams }: { searchParams: 
   const domain = suggestDomain(name);
   const liveHref = `/host/new?website=1&tier=featured&theme=${VIBES[vibe].theme}&name=${encodeURIComponent(name)}&city=${encodeURIComponent(city)}&price=${price ?? ""}`;
 
+  // Keep the builder inputs on the template's own nav links so inner pages
+  // render the host's data instead of the default example.
+  const qs = new URLSearchParams();
+  for (const k of ["vibe", "name", "city", "country", "price", "bedrooms", "type"]) {
+    const v = one(sp[k]);
+    if (v) qs.set(k, String(v));
+  }
+  const linkQuery = qs.toString();
+
   return (
     <>
-      <StandaloneSite listing={listing} base="/sites/preview" domain={domain} page="home" theme={VIBES[vibe].theme} example />
+      <StandaloneSite listing={listing} base="/sites/preview" domain={domain} page={toPage(seg)} theme={VIBES[vibe].theme} example linkQuery={linkQuery} />
 
       {/* Sticky "make it live" bar */}
       <div className="sticky bottom-0 z-50 bg-ink text-white border-t border-white/10">

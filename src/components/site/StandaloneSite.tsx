@@ -86,6 +86,7 @@ export function StandaloneSite({
   theme = "classic",
   example = false,
   compactBook = false,
+  linkQuery = "",
 }: {
   listing: Listing;
   base: string;
@@ -94,14 +95,17 @@ export function StandaloneSite({
   theme?: SiteTheme;
   example?: boolean;
   compactBook?: boolean;
+  linkQuery?: string;
 }) {
   const t = THEMES[theme];
   const photos = listing.photos.length ? listing.photos : [`https://picsum.photos/seed/${listing.id}/1600/900`];
   const home = base || "/";
-  const themeQ = example ? `?t=${theme}` : "";
-  const href = (p: string) => `${base}/${p}${themeQ}`;
+  // The preview tool passes its builder inputs as `linkQuery` so the template's
+  // own nav links keep the host's data; real sites just carry the ?t= theme.
+  const suffix = linkQuery ? `?${linkQuery}` : example ? `?t=${theme}` : "";
+  const href = (p: string) => `${base}/${p}${suffix}`;
   const links: NavLink[] = [
-    { key: "home", label: "Home", href: `${home}${themeQ}` },
+    { key: "home", label: "Home", href: `${home}${suffix}` },
     { key: "rooms", label: "The Rooms", href: href("rooms") },
     { key: "gallery", label: "Gallery", href: href("gallery") },
     { key: "location", label: "Location", href: href("location") },
