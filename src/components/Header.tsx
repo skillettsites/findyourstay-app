@@ -107,7 +107,6 @@ function Menu() {
             <Item key={l.href} href={l.href} onClick={() => setOpen(false)}>{l.label}</Item>
           ))}
           <Divider />
-          <Item href="/what-we-do" onClick={() => setOpen(false)}>What we do (for hosts)</Item>
           <Item href="/host/demo" onClick={() => setOpen(false)}>Dashboard preview</Item>
           <Item href="/host#pricing" onClick={() => setOpen(false)}>Pricing</Item>
           <Item href="/host/new" onClick={() => setOpen(false)}>List your stay</Item>

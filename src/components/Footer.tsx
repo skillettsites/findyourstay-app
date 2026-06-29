@@ -16,8 +16,8 @@ export function Footer() {
         <div>
           <h4 className="font-semibold mb-3">Hosts</h4>
           <ul className="space-y-2 text-muted">
-            <li><Link href="/what-we-do" className="hover:underline">What we do</Link></li>
-            <li><Link href="/host" className="hover:underline">List your stay</Link></li>
+            <li><Link href="/host" className="hover:underline">What we do</Link></li>
+            <li><Link href="/host/new" className="hover:underline">List your stay</Link></li>
             <li><Link href="/host#pricing" className="hover:underline">Pricing</Link></li>
             <li><Link href="/host/dashboard" className="hover:underline">Host dashboard</Link></li>
           </ul>

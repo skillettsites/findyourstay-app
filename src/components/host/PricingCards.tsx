@@ -25,42 +25,17 @@ const TIERS: Tier[] = [
     features: ["Everything in Featured", "Top priority placement", "Dedicated profile page", "Monthly report", "Unlimited properties"] },
 ];
 
-const EXAMPLES = [
-  { theme: "coastal", label: "Coastal", place: "Beach house", slug: "beach-house-algarve", img: "https://images.unsplash.com/photo-1730005523015-422bd53dda0b?auto=format&fit=crop&w=600&q=70" },
-  { theme: "modern", label: "Modern", place: "City loft", slug: "city-loft-lisbon", img: "https://images.unsplash.com/photo-1690585552493-2f4406dae499?auto=format&fit=crop&w=600&q=70" },
-  { theme: "classic", label: "Classic", place: "Mountain chalet", slug: "mountain-chalet-geres", img: "https://images.unsplash.com/photo-1605153123052-528d89be0d4e?auto=format&fit=crop&w=600&q=70" },
-];
-
 export function PricingCards() {
   return (
     <div>
+      <p className="text-center text-sm text-muted mb-7 max-w-2xl mx-auto">
+        <b className="text-ink">Already have a website?</b> A plan below is all you need, we list you and send you traffic.
+        {" "}<b className="text-ink">No website?</b> Flip on <b className="text-ink">Add a booking website</b> on any plan and we build and host one for you.
+      </p>
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {TIERS.map((t) => (
           <PricingCard key={t.key} tier={t} />
         ))}
-      </div>
-
-      {/* Example websites you could have */}
-      <div className="mt-12">
-        <div className="text-center">
-          <h3 className="text-xl font-display font-bold">See a website you could have</h3>
-          <p className="text-muted mt-1 text-sm">Three real example sites we built and host. Click around any of them.</p>
-        </div>
-        <div className="grid sm:grid-cols-3 gap-4 mt-6">
-          {EXAMPLES.map((e) => (
-            <Link key={e.slug} href={`/sites/${e.slug}?t=${e.theme}`} target="_blank" rel="noreferrer" className="group rounded-2xl border border-line overflow-hidden bg-white hover:shadow-card transition">
-              <div className="relative h-40 overflow-hidden">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={e.img} alt={`${e.place} example website`} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                <span className="absolute top-2.5 left-2.5 bg-white/90 backdrop-blur text-xs font-semibold px-2.5 py-1 rounded-full">{e.label} template</span>
-              </div>
-              <div className="p-4 flex items-center justify-between">
-                <span className="font-semibold">{e.place}</span>
-                <span className="text-sm font-semibold text-brand group-hover:underline">Preview site →</span>
-              </div>
-            </Link>
-          ))}
-        </div>
       </div>
     </div>
   );
@@ -86,8 +61,13 @@ function PricingCard({ tier }: { tier: Tier }) {
         <span className="text-3xl font-bold">£{total}</span>
         <span className="text-muted">/year</span>
       </p>
+      {total > 0 && (
+        <p className="text-xs font-semibold text-emerald-700 mt-0.5">
+          Founding price £{Math.round(total * 0.8)}/yr for life
+        </p>
+      )}
       <p className="text-sm text-muted mt-1 min-h-5">
-        {withSite ? `Includes £${ADDON} booking website` : tier.photos}
+        {withSite ? `Includes £${ADDON} booking website` : tier.key === "free" ? tier.photos : `Use your own website${tier.photos === "Text-only listing" ? "" : ` · ${tier.photos}`}`}
       </p>
 
       <ul className="mt-4 space-y-2 text-sm flex-1">
