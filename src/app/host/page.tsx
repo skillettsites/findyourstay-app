@@ -160,6 +160,41 @@ export default async function HostPage() {
           </div>
         </section>
 
+        {/* How you get paid */}
+        <section className="bg-mist border-y border-line">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 py-16">
+            <div className="text-center max-w-2xl mx-auto">
+              <span className="inline-block bg-white text-brand text-xs font-bold uppercase tracking-wide px-3 py-1 rounded-full shadow-card">How you get paid</span>
+              <h2 className="mt-4 text-2xl sm:text-3xl font-display font-bold">The money goes straight to you. We never touch it.</h2>
+              <p className="mt-3 text-muted text-lg">
+                You take payment through your <span className="font-semibold text-ink">own Stripe or PayPal</span>, so there&apos;s no
+                commission, no waiting for a payout from us, and nothing for us to be in the middle of.
+              </p>
+            </div>
+
+            <div className="mt-12 grid md:grid-cols-3 gap-6">
+              {[
+                { n: "1", t: "Add your payment link", d: "Paste your own Stripe Payment Link and/or PayPal.Me link. We show you exactly how, it takes about two minutes, and you can change it any time." },
+                { n: "2", t: "Guests pay you directly", d: "On your booking site, guests pay straight into your own account. We just send them there and pass you their dates, we never see the card or the cash." },
+                { n: "3", t: "You keep 100%", d: "No commission, no booking fees, no platform cut. The full price of every stay lands in your account, and refunds and cancellations stay entirely in your control." },
+              ].map((s) => (
+                <div key={s.n} className="bg-white rounded-2xl border border-line p-7 shadow-card">
+                  <div className="w-10 h-10 grid place-items-center rounded-full bg-brand-gradient text-white font-bold">{s.n}</div>
+                  <h3 className="mt-4 font-display font-bold text-lg">{s.t}</h3>
+                  <p className="mt-2 text-muted text-sm leading-relaxed">{s.d}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted">
+              <span className="inline-flex items-center gap-2"><span className="text-emerald-600">✓</span> Your own Stripe / PayPal account</span>
+              <span className="inline-flex items-center gap-2"><span className="text-emerald-600">✓</span> No commission, ever</span>
+              <span className="inline-flex items-center gap-2"><span className="text-emerald-600">✓</span> We&apos;re never a party to the payment</span>
+              <span className="inline-flex items-center gap-2"><span className="text-emerald-600">✓</span> No payment set up? Guests just send a request</span>
+            </div>
+          </div>
+        </section>
+
         {/* One-stop shop: SEO + AI discovery */}
         <section className="bg-ink text-white">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-16">

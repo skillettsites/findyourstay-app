@@ -6,9 +6,10 @@ import { sendEmail, shell } from "@/lib/email";
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
-// Request-to-book for booking-site listings: validates availability against the
-// calendar, records the booking, and holds the dates. (Payment is taken on the
-// host's own Stripe at deploy time; locally this is the confirmation step.)
+// Request-to-book for booking-site listings: validates availability, records the
+// booking request, holds the dates, and emails the host (reply-to the guest) plus
+// a confirmation to the guest. The guest pays the host directly via the host's own
+// Stripe/PayPal link; we never touch the money.
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -47,7 +48,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       ok: true,
       bookingId: result.bookingId,
-      message: `Request sent for ${checkIn} to ${checkOut}. The owner will confirm and take payment securely.`,
+      message: `Request sent for ${checkIn} to ${checkOut}. The owner will confirm and arrange payment with you directly.`,
     });
   } catch {
     return NextResponse.json({ error: "Booking request failed." }, { status: 500 });
