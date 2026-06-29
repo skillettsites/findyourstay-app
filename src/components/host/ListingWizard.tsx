@@ -36,20 +36,20 @@ interface GeoResult {
   lng: number;
 }
 
-export function ListingWizard({ initialTier = "featured", initialBuild = false, userEmail = "" }: { initialTier?: string; initialBuild?: boolean; userEmail?: string }) {
+export function ListingWizard({ initialTier = "featured", initialBuild = false, userEmail = "", initialName = "", initialCity = "", initialPrice = "", initialTheme = "" }: { initialTier?: string; initialBuild?: boolean; userEmail?: string; initialName?: string; initialCity?: string; initialPrice?: string; initialTheme?: string }) {
   const router = useRouter();
   const [step, setStep] = useState(1);
 
-  const [name, setName] = useState("");
+  const [name, setName] = useState(initialName);
   const [type, setType] = useState("guest_house");
   // Single address field; the city, neighbourhood and coordinates are all
   // derived from whichever address the host selects (no separate city field).
-  const [addrQuery, setAddrQuery] = useState("");
+  const [addrQuery, setAddrQuery] = useState(initialCity);
   const [addrSug, setAddrSug] = useState<GeoResult[]>([]);
   const [addrOpen, setAddrOpen] = useState(false);
   const [place, setPlace] = useState<GeoResult | null>(null);
 
-  const [price, setPrice] = useState("");
+  const [price, setPrice] = useState(initialPrice);
   const [description, setDescription] = useState("");
   const [amenities, setAmenities] = useState<string[]>(["WiFi"]);
   const [perks, setPerks] = useState<string[]>([]);
@@ -60,7 +60,9 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false, 
   const [method, setMethod] = useState<"own" | "build">(initialBuild ? "build" : "own");
   const [bookingUrl, setBookingUrl] = useState("");
   const [domain, setDomain] = useState("");
-  const [siteTheme, setSiteTheme] = useState<"classic" | "modern" | "coastal">("classic");
+  const [siteTheme, setSiteTheme] = useState<"classic" | "modern" | "coastal">(
+    ["classic", "modern", "coastal"].includes(initialTheme) ? (initialTheme as "classic" | "modern" | "coastal") : "classic"
+  );
   const [payStripe, setPayStripe] = useState("");
   const [payPaypal, setPayPaypal] = useState("");
 

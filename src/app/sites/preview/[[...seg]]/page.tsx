@@ -1,0 +1,76 @@
+import Link from "next/link";
+import { StandaloneSite, type SiteTheme } from "@/components/site/StandaloneSite";
+import { EXAMPLE_STAYS } from "@/lib/exampleStays";
+import { suggestDomain } from "@/lib/format";
+import type { Listing } from "@/lib/types";
+
+export const dynamic = "force-dynamic";
+
+// Vibe -> template + the curated example image set we preview their site with.
+const VIBES: Record<string, { theme: SiteTheme; slug: string }> = {
+  beach: { theme: "coastal", slug: "beach-house-algarve" },
+  city: { theme: "modern", slug: "city-loft-lisbon" },
+  mountain: { theme: "classic", slug: "mountain-chalet-geres" },
+};
+
+type SP = Promise<Record<string, string | string[] | undefined>>;
+const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
+
+function prettyTypeWord(t: string): string {
+  const m: Record<string, string> = { guest_house: "guesthouse", apartment: "apartment", villa: "villa", chalet: "chalet", cottage: "cottage", house: "house", room: "room", hostel: "hostel", hotel: "boutique hotel" };
+  return m[t] ?? "place";
+}
+
+// Live, no-signup preview of a host's future site, built from the builder form.
+// A catch-all so the template nav never 404s; it always renders the home preview.
+export default async function PreviewSitePage({ searchParams }: { searchParams: SP }) {
+  const sp = await searchParams;
+  const vibe = one(sp.vibe) && VIBES[one(sp.vibe)!] ? one(sp.vibe)! : "beach";
+  const base = EXAMPLE_STAYS[VIBES[vibe].slug];
+
+  const name = (one(sp.name) || base.propertyName).slice(0, 60);
+  const city = (one(sp.city) || base.cityName).slice(0, 60);
+  const country = (one(sp.country) || base.country).slice(0, 60);
+  const price = one(sp.price) ? Math.max(10, Math.min(9999, Number(one(sp.price)) || 0)) : base.pricePerNight;
+  const bedrooms = one(sp.bedrooms) ? Math.max(1, Math.min(20, Number(one(sp.bedrooms)) || 0)) : 0;
+  const type = (one(sp.type) || base.propertyType) as Listing["propertyType"];
+
+  const amenities = [...(bedrooms ? [`${bedrooms} bedroom${bedrooms > 1 ? "s" : ""}`] : []), ...base.amenities].slice(0, 8);
+
+  const listing: Listing = {
+    ...base,
+    id: "preview",
+    slug: "preview",
+    propertyName: name,
+    cityName: city,
+    country,
+    pricePerNight: price,
+    propertyType: type,
+    neighborhood: null,
+    amenities,
+    siteTheme: VIBES[vibe].theme,
+    description: `A wonderful ${prettyTypeWord(type)} to stay in ${city}, booked direct with the owner.`,
+  };
+
+  const domain = suggestDomain(name);
+  const liveHref = `/host/new?website=1&tier=featured&theme=${VIBES[vibe].theme}&name=${encodeURIComponent(name)}&city=${encodeURIComponent(city)}&price=${price ?? ""}`;
+
+  return (
+    <>
+      <StandaloneSite listing={listing} base="/sites/preview" domain={domain} page="home" theme={VIBES[vibe].theme} example />
+
+      {/* Sticky "make it live" bar */}
+      <div className="sticky bottom-0 z-50 bg-ink text-white border-t border-white/10">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm">
+            <b>This is a free preview</b> of your site. We&apos;ll source real photos of your place and put it on your own domain.
+          </p>
+          <div className="flex items-center gap-2">
+            <Link href="/host/build" className="text-sm font-semibold border border-white/30 rounded-full px-4 py-2 hover:bg-white/10">Change details</Link>
+            <Link href={liveHref} className="text-sm font-semibold bg-brand-gradient text-white rounded-full px-5 py-2 shadow-glow">Create this site &amp; make it live →</Link>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
