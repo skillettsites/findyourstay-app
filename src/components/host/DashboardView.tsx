@@ -32,14 +32,15 @@ export interface DashboardData {
   bookings: BookingRow[];
 }
 
-type Tab = "overview" | "stays" | "website" | "prostats" | "bookings" | "enquiries";
-const TABS: { key: Tab; label: string; pro?: boolean }[] = [
+type Tab = "overview" | "stays" | "website" | "prostats" | "bookings" | "enquiries" | "askyourstay";
+const TABS: { key: Tab; label: string; pro?: boolean; addon?: boolean }[] = [
   { key: "overview", label: "Overview" },
   { key: "stays", label: "Your stays" },
   { key: "website", label: "Website" },
   { key: "prostats", label: "Pro stats", pro: true },
   { key: "bookings", label: "Bookings" },
   { key: "enquiries", label: "Enquiries" },
+  { key: "askyourstay", label: "AskYourStay", addon: true },
 ];
 const THEME_LABEL = { classic: "Classic", modern: "Modern", coastal: "Coastal" } as const;
 
@@ -281,6 +282,7 @@ export function DashboardView({ data, demo = false }: { data: DashboardData; dem
             >
               {t.label}
               {t.pro && <span className="ml-1.5 inline-block bg-brand-gradient text-white text-[9px] font-bold px-1.5 py-0.5 rounded align-middle">PRO</span>}
+              {t.addon && <span className="ml-1.5 inline-block bg-ink text-white text-[9px] font-bold px-1.5 py-0.5 rounded align-middle">£4.99</span>}
               {badge > 0 && <span className="ml-1.5 inline-grid place-items-center min-w-5 h-5 px-1 rounded-full bg-brand text-white text-[10px] align-middle">{badge}</span>}
             </button>
           );
@@ -440,12 +442,12 @@ export function DashboardView({ data, demo = false }: { data: DashboardData; dem
         ) : (
           <div className="space-y-2">
             {bookings.map((b) => (
-              <div key={b.id} className="flex flex-wrap items-center gap-3 justify-between border border-line rounded-xl p-3.5">
+              <div key={b.id} className="border border-line rounded-xl p-3.5">
                 <div className="min-w-0">
                   <p className="font-semibold text-sm truncate">{b.listingName}</p>
                   <p className="text-sm text-muted">{b.guestEmail} · {b.checkIn} → {b.checkOut}{b.guests ? ` · ${b.guests} guests` : ""}</p>
                 </div>
-                {demo ? <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-mist capitalize">{b.status}</span> : <BookingActions bookingId={b.id} initialStatus={b.status} />}
+                <BookingActions bookingId={b.id} guestEmail={b.guestEmail} initialStatus={b.status} demo={demo} />
               </div>
             ))}
           </div>
@@ -473,6 +475,36 @@ export function DashboardView({ data, demo = false }: { data: DashboardData; dem
             ))}
           </div>
         )
+      )}
+
+      {/* ---- AskYourStay add-on ---- */}
+      {tab === "askyourstay" && (
+        <div>
+          <div className="rounded-2xl bg-ink text-white p-6 sm:p-8">
+            <span className="inline-block bg-white/10 text-white text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded">Optional add-on · £4.99/mo</span>
+            <h3 className="mt-3 text-2xl font-display font-bold">Add an AI concierge to your stay</h3>
+            <p className="mt-2 text-white/70 max-w-2xl">AskYourStay answers your guests&apos; questions on your booking site around the clock, check-in times, parking, what&apos;s nearby, so you spend less time replying. Every conversation shows up right here.</p>
+            <a href="https://askyourstay.com" target="_blank" rel="noreferrer" className="inline-block mt-5 bg-brand-gradient text-white font-semibold px-6 py-3 rounded-full shadow-glow">Add AskYourStay · £4.99/mo</a>
+          </div>
+
+          <p className="text-sm font-semibold mt-7 mb-3">A preview of what you&apos;d see</p>
+          <div className="space-y-3">
+            {[
+              { who: "Guest · 2h ago", q: "What time is check-in, and can I drop bags earlier?", a: "Check-in is from 3pm. If you arrive earlier you're welcome to leave your bags with us, just message on the day." },
+              { who: "Guest · yesterday", q: "Is there parking nearby?", a: "Yes, there's free street parking right outside, and a secure car park a two-minute walk away (about £8/day)." },
+              { who: "Guest · 3 days ago", q: "Where would you eat dinner near here?", a: "For seafood try Taberna do Largo (5 min walk), and Manteigaria for the best pastéis de nata on your way back." },
+            ].map((c, i) => (
+              <div key={i} className="border border-line rounded-xl p-4">
+                <p className="text-xs text-muted mb-2">{c.who}</p>
+                <p className="bg-mist rounded-2xl rounded-bl-sm px-3.5 py-2 text-sm inline-block max-w-[85%]">{c.q}</p>
+                <div className="mt-2 flex justify-end">
+                  <p className="bg-brand-gradient text-white rounded-2xl rounded-br-sm px-3.5 py-2 text-sm inline-block max-w-[88%]">{c.a}</p>
+                </div>
+                <p className="text-xs text-emerald-600 font-semibold mt-2">✓ Answered automatically</p>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );

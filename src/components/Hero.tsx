@@ -57,8 +57,8 @@ export function Hero({ total }: { total: number }) {
           transition={{ duration: 0.7, ease: EASE, delay: 0.55 }}
           className="mt-6 text-muted text-lg sm:text-xl max-w-2xl mx-auto"
         >
-          Hand-picked guesthouses, B&amp;Bs and apartments around the world. Pay the owner
-          directly, never a platform.
+          Hosts keep 100% with zero commission, and guests get the best price and a little
+          extra. Everyone gets more when you book direct.
         </motion.p>
 
         <motion.div

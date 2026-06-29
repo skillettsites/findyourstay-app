@@ -31,11 +31,11 @@ export function Header({ showSearch = true }: { showSearch?: boolean }) {
           </div>
         )}
         <nav className="flex items-center gap-1 sm:gap-2">
-          <Link
-            href="/host"
-            className="hidden sm:inline-block text-sm font-semibold px-4 py-2 rounded-full hover:bg-mist transition"
-          >
-            List your stay
+          <Link href="/guests" className="hidden sm:inline-block text-sm font-semibold px-3.5 py-2 rounded-full hover:bg-mist transition">
+            For travellers
+          </Link>
+          <Link href="/host" className="hidden sm:inline-block text-sm font-semibold px-3.5 py-2 rounded-full hover:bg-mist transition">
+            For hosts
           </Link>
           <Menu />
         </nav>
@@ -99,15 +99,18 @@ function Menu() {
               Signed in as <span className="font-semibold text-ink">{email}</span>
             </p>
           )}
-          <p className="px-4 pt-1.5 pb-1 text-[11px] font-bold uppercase tracking-wide text-muted">Explore</p>
+          <Item href="/guests" onClick={() => setOpen(false)} strong>For travellers</Item>
+          <Item href="/host" onClick={() => setOpen(false)} strong>For hosts</Item>
+          <Divider />
+          <p className="px-4 pt-1.5 pb-1 text-[11px] font-bold uppercase tracking-wide text-muted">Explore stays</p>
           {EXPLORE.map((l) => (
             <Item key={l.href} href={l.href} onClick={() => setOpen(false)}>{l.label}</Item>
           ))}
           <Divider />
-          <Item href="/what-we-do" onClick={() => setOpen(false)}>What we do</Item>
+          <Item href="/what-we-do" onClick={() => setOpen(false)}>What we do (for hosts)</Item>
           <Item href="/host/demo" onClick={() => setOpen(false)}>Dashboard preview</Item>
           <Item href="/host#pricing" onClick={() => setOpen(false)}>Pricing</Item>
-          <Item href="/host" onClick={() => setOpen(false)}>List your stay</Item>
+          <Item href="/host/new" onClick={() => setOpen(false)}>List your stay</Item>
           <Divider />
           {email ? (
             <>
