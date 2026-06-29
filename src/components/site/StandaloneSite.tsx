@@ -2,6 +2,7 @@ import Link from "next/link";
 import { SiteNav, type NavLink } from "./SiteNav";
 import { ScrollProgress, FadeUp, HeroStage, HeroItem, ParallaxImage, Stagger, Item } from "./SiteMotion";
 import { MicrositeBooking } from "@/components/MicrositeBooking";
+import { StickyBook } from "./StickyBook";
 import { ResultsMap } from "@/components/ResultsMap";
 import { PerksList } from "@/components/PerksList";
 import { prettyType, formatPrice } from "@/lib/format";
@@ -130,6 +131,9 @@ export function StandaloneSite({
       </main>
 
       <Footer listing={listing} domain={domain} links={links} t={t} />
+
+      {/* Collapsed "Book now" on the inner pages (home + book already have the form) */}
+      {(page === "rooms" || page === "gallery" || page === "location") && <StickyBook listing={listing} demo={example} />}
     </div>
   );
 }
