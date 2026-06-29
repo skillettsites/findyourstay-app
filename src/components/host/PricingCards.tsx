@@ -29,8 +29,8 @@ export function PricingCards() {
   return (
     <div>
       <p className="text-center text-sm text-muted mb-7 max-w-2xl mx-auto">
-        <b className="text-ink">Already have a website?</b> A plan below is all you need, we list you and send you traffic.
-        {" "}<b className="text-ink">No website?</b> Flip on <b className="text-ink">Add a booking website</b> on any plan and we build and host one for you.
+        Every paid plan includes <b className="text-ink">your own booking website</b>, built and hosted for you.
+        {" "}Already have one? Tick <b className="text-ink">&ldquo;I already have my own website&rdquo;</b> on any plan and the price drops, we just list you and send you traffic.
       </p>
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {TIERS.map((t) => (
@@ -42,8 +42,13 @@ export function PricingCards() {
 }
 
 function PricingCard({ tier }: { tier: Tier }) {
-  const [withSite, setWithSite] = useState(false);
-  const total = tier.price + (withSite ? ADDON : 0);
+  const isFree = tier.key === "free";
+  // Default: the host NEEDS a site, so a built website is included. Ticking
+  // "I already have my own website" removes it and lowers the price.
+  const [haveOwnSite, setHaveOwnSite] = useState(false);
+  const withSite = !isFree && !haveOwnSite;
+  const standard = tier.price + (withSite ? ADDON : 0);
+  const founder = Math.round(standard * 0.8);
 
   return (
     <div
@@ -57,56 +62,67 @@ function PricingCard({ tier }: { tier: Tier }) {
         </span>
       )}
       <h3 className="font-semibold text-lg">{tier.name}</h3>
-      <p className="mt-2">
-        <span className="text-3xl font-bold">£{total}</span>
-        <span className="text-muted">/year</span>
-      </p>
-      {total > 0 && (
-        <p className="text-xs font-semibold text-emerald-700 mt-0.5">
-          Founding price £{Math.round(total * 0.8)}/yr for life
+
+      {/* Price: founding price is the hero; standard shown smaller beneath */}
+      {isFree ? (
+        <p className="mt-2">
+          <span className="text-3xl font-bold">£0</span>
+          <span className="text-muted">/year</span>
         </p>
+      ) : (
+        <div className="mt-2">
+          <p>
+            <span className="text-3xl font-bold">£{founder}</span>
+            <span className="text-muted">/year</span>
+          </p>
+          <p className="text-xs font-semibold text-emerald-700">Founding price · for life</p>
+          <p className="text-sm text-muted mt-0.5">
+            Standard <span className="line-through">£{standard}/yr</span> · founding price with code <span className="font-mono font-semibold">FOUNDING20</span>
+          </p>
+        </div>
       )}
-      <p className="text-sm text-muted mt-1 min-h-5">
-        {withSite ? `Includes £${ADDON} booking website` : tier.key === "free" ? tier.photos : `Use your own website${tier.photos === "Text-only listing" ? "" : ` · ${tier.photos}`}`}
+
+      <p className="text-sm text-muted mt-2 min-h-5">
+        {isFree
+          ? tier.photos
+          : withSite
+            ? `Your own booking website + ${tier.photos}`
+            : `List + link to your own site · ${tier.photos}`}
       </p>
 
       <ul className="mt-4 space-y-2 text-sm flex-1">
+        {withSite && (
+          <li className="flex gap-2 font-medium text-ink">
+            <span className="text-brand">✓</span> We build, host &amp; secure your own website
+          </li>
+        )}
         {tier.features.map((f) => (
           <li key={f} className="flex gap-2">
             <span className="text-brand">✓</span> {f}
           </li>
         ))}
-        {withSite && (
-          <li className="flex gap-2 font-medium text-ink">
-            <span className="text-brand">✓</span> We build, host &amp; secure your own business website
-          </li>
-        )}
       </ul>
 
-      {/* Add-on toggle */}
-      <button
-        type="button"
-        onClick={() => setWithSite((v) => !v)}
-        className={`mt-5 w-full rounded-xl border p-3 text-left transition ${
-          withSite ? "border-brand bg-rose-50" : "border-line hover:border-ink"
-        }`}
-      >
-        <span className="flex items-center justify-between">
-          <span className="text-sm font-semibold">Add a booking website</span>
-          <span
-            className={`relative w-10 h-6 rounded-full transition ${withSite ? "bg-brand" : "bg-line"}`}
-          >
-            <span
-              className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                withSite ? "translate-x-4" : ""
-              }`}
-            />
+      {/* "Already have a site?" tick — paid tiers only */}
+      {!isFree && (
+        <button
+          type="button"
+          onClick={() => setHaveOwnSite((v) => !v)}
+          className={`mt-5 w-full rounded-xl border p-3 text-left transition flex items-start gap-3 ${
+            haveOwnSite ? "border-brand bg-rose-50" : "border-line hover:border-ink"
+          }`}
+        >
+          <span className={`mt-0.5 grid place-items-center w-5 h-5 rounded border shrink-0 ${haveOwnSite ? "bg-brand border-brand text-white" : "border-line"}`}>
+            {haveOwnSite && (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12l4 4L19 6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            )}
           </span>
-        </span>
-        <span className="block text-xs text-muted mt-1">
-          We design, build &amp; host a secure website for your business, no tech skills needed. +£{ADDON}/yr
-        </span>
-      </button>
+          <span>
+            <span className="text-sm font-semibold block">I already have my own website</span>
+            <span className="block text-xs text-muted mt-0.5">We just list you and send traffic to your site. Saves £{ADDON}/yr.</span>
+          </span>
+        </button>
+      )}
 
       <Link
         href={`/host/new?tier=${tier.key}${withSite ? "&website=1" : ""}`}
@@ -116,7 +132,7 @@ function PricingCard({ tier }: { tier: Tier }) {
             : "border border-ink hover:bg-mist"
         }`}
       >
-        {tier.key === "free" && !withSite ? "Start free" : `Choose ${tier.name}${withSite ? " + Website" : ""}`}
+        {isFree ? "Start free" : `Choose ${tier.name}`}
       </Link>
 
       {withSite && (
