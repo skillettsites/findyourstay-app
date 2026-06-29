@@ -5,47 +5,61 @@ import { useSearchParams } from "next/navigation";
 import type { Listing } from "@/lib/types";
 import { formatPrice } from "@/lib/format";
 
+// Booking widget on the host's own site. Guests pay the host DIRECTLY via the
+// host's own Stripe / PayPal link (we never touch the money). Sending the dates
+// as a request also lets the host confirm availability. Falls back to a plain
+// "request to book" when the host hasn't added a payment link.
 export function MicrositeBooking({ listing, demo = false }: { listing: Listing; demo?: boolean }) {
-  // Prefill from the hero availability search (?in=&out=&guests=) when present.
   const sp = useSearchParams();
   const [checkIn, setCheckIn] = useState(sp.get("in") ?? "");
   const [checkOut, setCheckOut] = useState(sp.get("out") ?? "");
   const [guests, setGuests] = useState(sp.get("guests") ?? "2");
   const [email, setEmail] = useState("");
-  const [done, setDone] = useState(false);
+  const [done, setDone] = useState<null | "request" | "pay">(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  async function reserve() {
+  const nightly = listing.pricePerNight ?? 0;
+  const nights = checkIn && checkOut ? Math.max(0, (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000) : 0;
+  const total = nights * nightly;
+  const hasPay = !!(listing.payStripe || listing.payPaypal);
+
+  function validate() {
+    if (!checkIn || !checkOut || nights <= 0) { setError("Choose your dates."); return false; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError("Add your email so the host can confirm."); return false; }
     setError("");
-    if (!checkIn || !checkOut || nights <= 0) { setError("Choose your dates."); return; }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError("Enter a valid email."); return; }
-    // Example/preview sites have no real listing to book against; show the
-    // explainer message instead of hitting the API.
-    if (demo) { setDone(true); return; }
-    setBusy(true);
-    try {
-      const res = await fetch("/api/booking/request", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ listingId: listing.id, guestEmail: email, checkIn, checkOut, guests }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setDone(true);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not reserve.");
-    } finally {
-      setBusy(false);
-    }
+    return true;
   }
 
-  const nightly = listing.pricePerNight ?? 0;
-  const nights =
-    checkIn && checkOut ? Math.max(0, (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000) : 0;
-  const subtotal = nights * nightly;
-  const fee = 0;
-  const total = subtotal + fee;
+  async function sendRequest() {
+    if (demo) return;
+    const res = await fetch("/api/booking/request", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ listingId: listing.id, guestEmail: email, checkIn, checkOut, guests }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+  }
+
+  async function onRequest() {
+    if (!validate()) return;
+    setBusy(true);
+    try { await sendRequest(); setDone("request"); }
+    catch (e) { setError(e instanceof Error ? e.message : "Could not send your request."); }
+    finally { setBusy(false); }
+  }
+
+  async function onPay(url: string | null) {
+    if (!validate()) return;
+    // Open the host's payment page synchronously (within the click) so popup
+    // blockers don't stop it, then send the dates in the background.
+    if (!demo && url) window.open(url, "_blank", "noopener");
+    setBusy(true);
+    try { await sendRequest(); setDone("pay"); }
+    catch (e) { setError(e instanceof Error ? e.message : "Could not start the booking."); }
+    finally { setBusy(false); }
+  }
 
   if (done) {
     return (
@@ -55,22 +69,24 @@ export function MicrositeBooking({ listing, demo = false }: { listing: Listing; 
           <>
             <h3 className="font-semibold text-lg mt-3">You&apos;re looking at a preview</h3>
             <p className="text-sm text-muted mt-1">
-              On your own live site, the guest would now pay {total ? formatPrice(total, listing.currency) : "the amount due"} securely
-              by card, straight into <span className="font-semibold text-ink">your own Stripe account</span>. FindYourStay never touches
-              the money, and there are no commissions or platform fees.
+              On your live site, the guest sends you their dates and {hasPay ? "is taken straight to your own Stripe or PayPal to pay you directly" : "you reply to arrange payment your way"}.
+              FindYourStay never touches the money, and there are no commissions or platform fees.
+            </p>
+          </>
+        ) : done === "pay" ? (
+          <>
+            <h3 className="font-semibold text-lg mt-3">Almost there</h3>
+            <p className="text-sm text-muted mt-1">
+              Your dates were sent to {listing.propertyName} and your payment page opened in a new tab. The host will confirm your booking by email.
             </p>
           </>
         ) : (
           <>
             <h3 className="font-semibold text-lg mt-3">Request sent</h3>
-            <p className="text-sm text-muted mt-1">
-              Thanks, your dates have been sent to the host. They&apos;ll confirm with you by email very soon.
-            </p>
+            <p className="text-sm text-muted mt-1">Thanks, your dates have been sent to the host. They&apos;ll confirm with you by email very soon.</p>
           </>
         )}
-        <button onClick={() => setDone(false)} className="mt-4 text-sm font-semibold text-brand hover:underline">
-          Back
-        </button>
+        <button onClick={() => setDone(null)} className="mt-4 text-sm font-semibold text-brand hover:underline">Back</button>
       </div>
     );
   }
@@ -100,7 +116,7 @@ export function MicrositeBooking({ listing, demo = false }: { listing: Listing; 
         <div className="mt-4 space-y-2 text-sm">
           <div className="flex justify-between text-muted">
             <span>{formatPrice(nightly, listing.currency)} × {nights} nights</span>
-            <span>{formatPrice(subtotal, listing.currency)}</span>
+            <span>{formatPrice(total, listing.currency)}</span>
           </div>
           <div className="flex justify-between font-semibold pt-2 border-t border-line">
             <span>Total</span>
@@ -116,16 +132,32 @@ export function MicrositeBooking({ listing, demo = false }: { listing: Listing; 
         onChange={(e) => setEmail(e.target.value)}
         className="mt-3 w-full border border-line rounded-xl px-3 py-2.5 text-sm outline-none focus:border-ink"
       />
-      <button
-        onClick={reserve}
-        disabled={busy}
-        className="mt-3 w-full bg-brand-gradient bg-brand-gradient-hover disabled:opacity-50 text-white font-semibold py-3.5 rounded-full shadow-glow transition-transform active:scale-95"
-      >
-        {busy ? "Checking availability…" : "Reserve & pay"}
-      </button>
+
+      {hasPay ? (
+        <div className="mt-3 space-y-2">
+          {listing.payStripe && (
+            <button onClick={() => onPay(listing.payStripe)} disabled={busy} className="w-full bg-brand-gradient bg-brand-gradient-hover disabled:opacity-50 text-white font-semibold py-3.5 rounded-full shadow-glow transition-transform active:scale-95">
+              Pay with card (Stripe)
+            </button>
+          )}
+          {listing.payPaypal && (
+            <button onClick={() => onPay(listing.payPaypal)} disabled={busy} className="w-full bg-[#003087] hover:bg-[#00256b] disabled:opacity-50 text-white font-semibold py-3.5 rounded-full transition-transform active:scale-95">
+              Pay with PayPal
+            </button>
+          )}
+          <button onClick={onRequest} disabled={busy} className="w-full text-sm font-semibold text-muted hover:text-ink py-1.5">
+            or send a request and pay later
+          </button>
+        </div>
+      ) : (
+        <button onClick={onRequest} disabled={busy} className="mt-3 w-full bg-brand-gradient bg-brand-gradient-hover disabled:opacity-50 text-white font-semibold py-3.5 rounded-full shadow-glow transition-transform active:scale-95">
+          {busy ? "Sending…" : "Request to book"}
+        </button>
+      )}
+
       {error && <p className="text-sm text-brand text-center mt-2">{error}</p>}
       <p className="text-xs text-muted text-center mt-3">
-        {demo ? "This is a preview, no payment is taken." : "Secure card payment via the owner’s Stripe. No platform fees."}
+        {demo ? "This is a preview, no payment is taken." : hasPay ? "You pay the host directly. No platform fees, no commission." : "The host will reply to arrange payment. No platform fees."}
       </p>
     </div>
   );

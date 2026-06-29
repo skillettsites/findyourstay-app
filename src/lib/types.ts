@@ -45,6 +45,8 @@ export interface Listing {
   reviewCount: number;
   attribution: string | null; // e.g. "© OpenStreetMap contributors"
   siteTheme: SiteTheme; // chosen booking-site template
+  payStripe: string | null; // host's own Stripe payment link
+  payPaypal: string | null; // host's own PayPal.Me link
   createdAt: string;
 }
 

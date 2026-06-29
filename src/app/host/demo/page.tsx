@@ -89,8 +89,8 @@ function sampleData(days = 30, listingId?: string): DashboardData {
           ],
     },
     listings: [
-      { id: "d1", slug: "demo-1", propertyName: "Casa do Rio Guesthouse", cityName: "Porto", country: "Portugal", pricePerNight: 95, currency: "gbp", photo: "https://images.unsplash.com/photo-1762529716272-b316f61502e7?auto=format&fit=crop&w=400&q=70", hasBookingSite: true, siteTheme: "coastal", domain: "casadorio.com" },
-      { id: "d2", slug: "demo-2", propertyName: "Alfama Terrace Apartment", cityName: "Lisbon", country: "Portugal", pricePerNight: 120, currency: "gbp", photo: "https://images.unsplash.com/photo-1759264244827-1dde5bee00a5?auto=format&fit=crop&w=400&q=70", hasBookingSite: true, siteTheme: "modern", domain: "alfamaterrace.com" },
+      { id: "d1", slug: "demo-1", propertyName: "Casa do Rio Guesthouse", cityName: "Porto", country: "Portugal", pricePerNight: 95, currency: "gbp", photo: "https://images.unsplash.com/photo-1762529716272-b316f61502e7?auto=format&fit=crop&w=400&q=70", hasBookingSite: true, siteTheme: "coastal", domain: "casadorio.com", payStripe: "https://buy.stripe.com/example", payPaypal: "https://www.paypal.com/paypalme/example" },
+      { id: "d2", slug: "demo-2", propertyName: "Alfama Terrace Apartment", cityName: "Lisbon", country: "Portugal", pricePerNight: 120, currency: "gbp", photo: "https://images.unsplash.com/photo-1759264244827-1dde5bee00a5?auto=format&fit=crop&w=400&q=70", hasBookingSite: true, siteTheme: "modern", domain: "alfamaterrace.com", payStripe: "https://buy.stripe.com/example" },
     ],
     bookings: [
       { id: "b1", listingId: "d1", listingName: "Casa do Rio Guesthouse", guestEmail: "marie@example.com", checkIn: "2026-07-12", checkOut: "2026-07-15", guests: 2, status: "requested", createdAt: new Date(Date.now() - 1 * 86400000).toISOString() },

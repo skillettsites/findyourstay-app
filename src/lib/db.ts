@@ -38,6 +38,8 @@ function rowToListing(r: Row): Listing {
     reviewCount: Number(r.review_count ?? 0),
     attribution: (r.attribution as string) ?? null,
     siteTheme: (["classic", "modern", "coastal"].includes(r.site_theme as string) ? r.site_theme : "classic") as Listing["siteTheme"],
+    payStripe: (r.pay_stripe as string) ?? null,
+    payPaypal: (r.pay_paypal as string) ?? null,
     createdAt: r.created_at as string,
   };
 }
@@ -400,6 +402,8 @@ export interface NewListingInput {
   hasBookingSite?: boolean;
   tier?: string;
   siteTheme?: string;
+  payStripe?: string;
+  payPaypal?: string;
   hostEmail?: string;
   hostName?: string;
 }
@@ -438,11 +442,15 @@ export async function createListing(input: NewListingInput): Promise<{ id: strin
     booking_url: input.bookingUrl ?? null, has_booking_site: !!input.hasBookingSite, verified: false,
     tier, tier_rank: TIER_RANK[tier] ?? 3,
   });
-  // Persist the chosen template separately so a missing column (pre-migration)
-  // can't break listing creation. Silently ignored until the column exists.
+  // Persist newer columns separately so a missing one (pre-migration) can't
+  // break listing creation. Silently ignored until the column exists.
   if (input.siteTheme && input.siteTheme !== "classic") {
     await sb.from(T.listings).update({ site_theme: input.siteTheme }).eq("id", id);
   }
+  const payUpd: Row = {};
+  if (input.payStripe) payUpd.pay_stripe = input.payStripe;
+  if (input.payPaypal) payUpd.pay_paypal = input.payPaypal;
+  if (Object.keys(payUpd).length) await sb.from(T.listings).update(payUpd).eq("id", id);
   return { id, slug };
 }
 
@@ -453,6 +461,8 @@ export interface UpdateListingInput {
   amenities?: string[];
   photos?: string[];
   siteTheme?: string;
+  payStripe?: string | null;
+  payPaypal?: string | null;
 }
 
 // Edit a listing the host owns (dashboard). Returns false if not theirs.
@@ -471,8 +481,12 @@ export async function updateListingForHost(id: string, hostId: string, patch: Up
     upd.price_range = p == null ? "mid" : p < 70 ? "budget" : p < 160 ? "mid" : "luxury";
   }
   if (Object.keys(upd).length) await sb.from(T.listings).update(upd).eq("id", id);
-  // Theme update kept separate so a pre-migration column absence is tolerated.
+  // Newer columns kept separate so a pre-migration column absence is tolerated.
   if (patch.siteTheme !== undefined) await sb.from(T.listings).update({ site_theme: patch.siteTheme }).eq("id", id);
+  const payUpd: Row = {};
+  if (patch.payStripe !== undefined) payUpd.pay_stripe = patch.payStripe || null;
+  if (patch.payPaypal !== undefined) payUpd.pay_paypal = patch.payPaypal || null;
+  if (Object.keys(payUpd).length) await sb.from(T.listings).update(payUpd).eq("id", id);
 
   // If this listing has a live booking site, re-submit it to IndexNow so the
   // edits are re-crawled quickly by Bing/Yandex.

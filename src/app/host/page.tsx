@@ -92,9 +92,9 @@ export default async function HostPage() {
               <p className="mt-3 text-muted text-lg">
                 You don&apos;t need a website, the skills to build one, or an expensive hosting bill, we do all of it
                 for you. We design and build a professional website for your B&amp;B or rental, put it on your own
-                domain, and host it on Cloudflare so it&apos;s fast and secure. Guests book and pay you by card
-                straight into <span className="font-semibold text-ink">your own Stripe</span>. You keep 100%, and
-                there&apos;s nothing technical for you to ever touch.
+                domain, and host it on Cloudflare so it&apos;s fast and secure. Guests pay you directly through
+                <span className="font-semibold text-ink"> your own Stripe or PayPal link</span>, so you keep 100% and
+                we&apos;re never in the middle. There&apos;s nothing technical for you to ever touch.
               </p>
               <ul className="mt-5 space-y-3">
                 {[
@@ -103,7 +103,7 @@ export default async function HostPage() {
                   "Choose from 3 professional templates, we build and fill it in for you",
                   "Your own domain, registered for you (e.g. " + demoDomain + ")",
                   "Secure HTTPS with the padlock, included as standard",
-                  "Take card payments into your own Stripe, keep 100% of every booking",
+                  "Guests pay you directly via your own Stripe or PayPal link, keep 100%",
                   "Calendar synced with Airbnb and Booking.com so you never double-book",
                 ].map((f) => (
                   <li key={f} className="flex gap-3">
@@ -190,7 +190,7 @@ export default async function HostPage() {
                 },
                 {
                   t: "Direct bookings, you keep 100%",
-                  d: "Guests find you, book on your own site and pay into your own Stripe. No commission, no platform fees, no middleman, ever.",
+                  d: "Guests find you, book on your own site and pay you directly via your own Stripe or PayPal link. No commission, no platform fees, no middleman, ever.",
                   icon: "M20 6L9 17l-5-5",
                 },
               ].map((c) => (

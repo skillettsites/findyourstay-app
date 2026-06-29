@@ -21,7 +21,7 @@ function Icon({ d }: { d: string }) {
 
 const PILLARS = [
   { title: "Get discovered", body: "Listed in our directory and put in front of travellers searching your city.", icon: "M21 21l-4.35-4.35M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" },
-  { title: "Your own booking site", body: "Built, hosted and secured on your own domain, with payments into your Stripe.", icon: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" },
+  { title: "Your own booking site", body: "Built, hosted and secured on your own domain, with guests paying you directly via your own link.", icon: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" },
   { title: "Found everywhere", body: "Indexed on Google and Bing, and readable by the AI assistants travellers now use.", icon: "M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20" },
 ];
 
@@ -124,7 +124,7 @@ export default function WhatWeDoPage() {
                 ["1", "Tell us about your stay", "Add your details, photos and price in one short form. Five minutes, no tech skills."],
                 ["2", "Choose how guests book", "Use your existing site, or pick a template and we build and host one for you."],
                 ["3", "We get you found", "Submitted to Google and Bing, sitemap and IndexNow set up, llms.txt published for AI."],
-                ["4", "Take direct bookings", "Guests find you, book and pay into your Stripe. You keep 100%, we never touch the money."],
+                ["4", "Take direct bookings", "Guests find you, book and pay you directly via your own Stripe or PayPal link. You keep 100%, we never touch the money."],
               ].map(([n, t, d]) => (
                 <StaggerItem key={n} className="bg-white/5 border border-white/10 rounded-2xl p-6">
                   <div className="w-10 h-10 grid place-items-center rounded-full bg-brand-gradient font-bold">{n}</div>

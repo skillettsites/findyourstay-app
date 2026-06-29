@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AMENITIES_OPTIONS, type Listing } from "@/lib/types";
+import { PaymentLinksFields } from "./PaymentLinksFields";
 
 const TEMPLATES = [
   { key: "classic" as const, label: "Classic", blurb: "Elegant & timeless", swatch: "bg-gradient-to-br from-stone-700 to-stone-900" },
@@ -21,6 +22,8 @@ export function EditListing({ listing }: { listing: Listing }) {
   const [amenities, setAmenities] = useState<string[]>(listing.amenities);
   const [photos, setPhotos] = useState<string[]>(listing.photos);
   const [theme, setTheme] = useState<"classic" | "modern" | "coastal">(listing.siteTheme);
+  const [payStripe, setPayStripe] = useState(listing.payStripe ?? "");
+  const [payPaypal, setPayPaypal] = useState(listing.payPaypal ?? "");
   const [uploading, setUploading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
@@ -58,7 +61,7 @@ export function EditListing({ listing }: { listing: Listing }) {
       const res = await fetch("/api/host/listing/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: listing.id, propertyName: name, description, pricePerNight: price, amenities, photos, siteTheme: theme }),
+        body: JSON.stringify({ id: listing.id, propertyName: name, description, pricePerNight: price, amenities, photos, siteTheme: theme, payStripe, payPaypal }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -129,6 +132,12 @@ export function EditListing({ listing }: { listing: Listing }) {
             ))}
           </div>
           <a href={`/sites/${listing.slug}?t=${theme}`} target="_blank" rel="noreferrer" className="inline-block mt-2 text-sm font-semibold text-brand">Preview ↗</a>
+        </div>
+      )}
+
+      {listing.hasBookingSite && (
+        <div className="mb-6 border-t border-line pt-5">
+          <PaymentLinksFields stripe={payStripe} paypal={payPaypal} onStripe={setPayStripe} onPaypal={setPayPaypal} />
         </div>
       )}
 

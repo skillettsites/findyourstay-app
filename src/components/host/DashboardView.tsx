@@ -19,6 +19,8 @@ export interface DashboardListing {
   hasBookingSite: boolean;
   siteTheme?: "classic" | "modern" | "coastal";
   domain?: string;
+  payStripe?: string | null;
+  payPaypal?: string | null;
 }
 
 export interface DashboardData {
@@ -384,6 +386,17 @@ export function DashboardView({ data, demo = false }: { data: DashboardData; dem
                     <Link href={editHref(l.slug)} className="text-sm font-semibold bg-ink text-white rounded-full px-4 py-2">Edit website</Link>
                     <Link href={demo ? `/sites/${l.slug}` : l.domain ? `https://${l.domain}` : `/sites/${l.slug}`} target="_blank" rel="noreferrer" className="text-sm font-semibold border border-line rounded-full px-4 py-2 hover:bg-mist">View live</Link>
                   </div>
+                </div>
+                <div className="mt-3">
+                  {l.payStripe || l.payPaypal ? (
+                    <span className="inline-flex items-center gap-1.5 text-emerald-700 bg-emerald-50 rounded-full px-3 py-1.5 text-xs font-semibold">
+                      ✓ Guests can pay you{l.payStripe && l.payPaypal ? " · Stripe + PayPal" : l.payStripe ? " · Stripe" : " · PayPal"}
+                    </span>
+                  ) : (
+                    <Link href={editHref(l.slug)} className="inline-flex items-center gap-1.5 text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-full px-3 py-1.5 text-xs font-semibold">
+                      ⚠ Add your Stripe / PayPal link so guests can pay you →
+                    </Link>
+                  )}
                 </div>
                 <div className="mt-4 grid sm:grid-cols-2 gap-2">
                   {[

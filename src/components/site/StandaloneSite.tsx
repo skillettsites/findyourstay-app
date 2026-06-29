@@ -193,7 +193,7 @@ function HomeClassic({ listing, photos, href, t }: HomeProps) {
           {[
             ["Book direct", "No platform fees, no middleman. You deal straight with us, every time."],
             ["Truly independent", `Genuine, personal hospitality in the heart of ${listing.cityName}.`],
-            ["Secure & simple", "Pay securely by card, padlock protected, with instant confirmation."],
+            ["Pay direct", "Pay the host directly via Stripe or PayPal. No middleman, no fees added."],
           ].map(([title, d]) => (
             <Item key={title}>
               <h3 className="font-serif text-2xl">{title}</h3>
@@ -357,7 +357,7 @@ function HomeCoastal({ listing, photos, href, t }: HomeProps) {
         {[
           ["Book direct", "No platform fees, no middleman, ever."],
           ["Truly independent", `Personal hospitality in ${listing.cityName}.`],
-          ["Secure & simple", "Pay safely by card, padlock protected."],
+          ["Pay direct", "Pay the host directly via Stripe or PayPal."],
         ].map(([title, d]) => (
           <Item key={title} className="bg-emerald-50/60 rounded-[2rem] p-8 text-center transition hover:bg-emerald-50 hover:shadow-lg">
             <h3 className="font-serif text-2xl text-emerald-950">{title}</h3>
@@ -485,9 +485,9 @@ function Book({ listing, t, demo = false }: { listing: Listing; t: Tokens; demo?
       <FadeUp>
         <p className={`text-xs font-semibold uppercase tracking-[0.3em] ${t.accent}`}>Reservations</p>
         <h1 className="font-serif font-medium text-5xl mt-3">Book your stay</h1>
-        <p className="mt-4 text-ink/75 text-lg font-light">Check your dates and reserve directly with us. You pay securely by card, with no platform fees added.</p>
+        <p className="mt-4 text-ink/75 text-lg font-light">Send your dates and pay the host directly via Stripe or PayPal, with no platform fees added.</p>
         <ul className="mt-7 space-y-3.5 text-sm">
-          {["Instant request, quick confirmation", "Secure card payment, padlock protected", "Best rate, booked direct", "Personal service from your host"].map((f) => (
+          {["Send your dates, quick confirmation", "Pay the host directly via Stripe or PayPal", "Best rate, booked direct", "Personal service from your host"].map((f) => (
             <li key={f} className="flex gap-3"><span className={`grid place-items-center w-6 h-6 rounded-full bg-ink/5 ${t.check} text-xs shrink-0`}>✓</span> {f}</li>
           ))}
         </ul>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AMENITIES_OPTIONS } from "@/lib/types";
 import { suggestDomain } from "@/lib/format";
+import { PaymentLinksFields } from "./PaymentLinksFields";
 
 const TYPES = ["apartment", "house", "villa", "cottage", "room", "guest_house", "hostel", "hotel", "chalet"];
 const TYPE_LABEL: Record<string, string> = {
@@ -58,6 +59,8 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false, 
   const [bookingUrl, setBookingUrl] = useState("");
   const [domain, setDomain] = useState("");
   const [siteTheme, setSiteTheme] = useState<"classic" | "modern" | "coastal">("classic");
+  const [payStripe, setPayStripe] = useState("");
+  const [payPaypal, setPayPaypal] = useState("");
 
   const [tier, setTier] = useState(initialTier);
   const maxPhotos = tier === "free" ? 1 : 12;
@@ -154,6 +157,8 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false, 
           bookingUrl: method === "own" ? (/^https?:\/\//.test(bookingUrl.trim()) ? bookingUrl.trim() : `https://${bookingUrl.trim()}`) : undefined,
           hasBookingSite: method === "build", bookingDomain: method === "build" ? domain.trim() : undefined,
           siteTheme: method === "build" ? siteTheme : undefined,
+          payStripe: method === "build" ? payStripe.trim() || undefined : undefined,
+          payPaypal: method === "build" ? payPaypal.trim() || undefined : undefined,
           tier, withSite: method === "build",
         }),
       });
@@ -323,9 +328,9 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false, 
                 <input value={domain} onChange={(e) => setDomain(e.target.value)} className={inputCls} />
               </Field>
               <p className="text-sm text-muted mt-2">
-                We&apos;ll check it&apos;s available, register it for you, and build a booking site with online card
-                payments through <span className="font-semibold text-ink">your own Stripe</span>. You keep 100%.
-                Nothing technical for you to do.
+                We&apos;ll check it&apos;s available, register it for you, and build your booking site. Guests pay you
+                directly through <span className="font-semibold text-ink">your own Stripe or PayPal link</span>, so you
+                keep 100% and we&apos;re never in the middle. Nothing technical for you to do.
               </p>
 
               <div className="mt-5">
@@ -357,6 +362,10 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false, 
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-brand mt-0.5 shrink-0"><path d="M21 21l-4.35-4.35M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z" /></svg>
                   <span>We get your site found: submitted to Google &amp; Bing for indexing, with a sitemap and an llms.txt so AI assistants can recommend you too.</span>
                 </div>
+              </div>
+
+              <div className="mt-5 border-t border-rose-100 pt-4">
+                <PaymentLinksFields stripe={payStripe} paypal={payPaypal} onStripe={setPayStripe} onPaypal={setPayPaypal} />
               </div>
             </div>
           )}

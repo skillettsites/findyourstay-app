@@ -19,6 +19,8 @@ export async function POST(req: Request) {
     amenities: Array.isArray(body.amenities) ? body.amenities.map(String) : undefined,
     photos: Array.isArray(body.photos) ? body.photos.map(String) : undefined,
     siteTheme: ["classic", "modern", "coastal"].includes(body.siteTheme) ? body.siteTheme : undefined,
+    payStripe: typeof body.payStripe === "string" ? body.payStripe : undefined,
+    payPaypal: typeof body.payPaypal === "string" ? body.payPaypal : undefined,
   });
 
   if (!ok) return NextResponse.json({ error: "Listing not found." }, { status: 404 });

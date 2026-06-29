@@ -111,7 +111,7 @@ function KeepVisual() {
         {bar("On a booking platform", 82, 82, false, 0.2)}
         {bar("Direct with us", 100, 100, true, 0.5)}
       </div>
-      <motion.p {...reveal(0.9)} className="mt-5 text-sm">No commission. Guests pay straight into <b>your own Stripe</b>.</motion.p>
+      <motion.p {...reveal(0.9)} className="mt-5 text-sm">No commission. Guests pay you directly via <b>your own Stripe or PayPal link</b>.</motion.p>
     </CardFrame>
   );
 }
@@ -242,7 +242,7 @@ const FEATURES: Feat[] = [
   {
     eyebrow: "Keep what you earn",
     title: "No commission, ever",
-    body: "Guests pay by card into your own Stripe. We never take a cut, so you keep the full price of every booking.",
+    body: "Guests pay you directly through your own Stripe or PayPal link. We never take a cut, so you keep the full price of every booking.",
     visual: <KeepVisual />,
   },
   {

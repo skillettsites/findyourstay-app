@@ -34,7 +34,7 @@ export default async function Dashboard({ searchParams }: { searchParams: SP }) 
   const listings: DashboardListing[] = myListings.map((l) => ({
     id: l.id, slug: l.slug, propertyName: l.propertyName, cityName: l.cityName, country: l.country,
     pricePerNight: l.pricePerNight, currency: l.currency, photo: l.photos[0], hasBookingSite: l.hasBookingSite,
-    siteTheme: l.siteTheme, domain: domains[l.id],
+    siteTheme: l.siteTheme, domain: domains[l.id], payStripe: l.payStripe, payPaypal: l.payPaypal,
   }));
 
   return (

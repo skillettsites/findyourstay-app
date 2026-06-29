@@ -150,9 +150,9 @@ const SCENES: { id: string; duration: number; render: () => ReactNode }[] = [
       <div className="mt-5 flex items-center gap-3">
         <span className="font-display font-bold text-3xl"><FilmCount to={100} prefix="£" /></span>
         <motion.span {...rise(0.8)} className="text-white/45">→</motion.span>
-        <Card delay={0.9} className="px-3 py-2 text-sm font-semibold">Your Stripe</Card>
+        <Card delay={0.9} className="px-3 py-2 text-sm font-semibold">Your Stripe / PayPal</Card>
       </div>
-      <Sub delay={1.2}>Guests pay by card into your own Stripe account. No commission, no booking fees, ever.</Sub>
+      <Sub delay={1.2}>Guests pay you directly through your own Stripe or PayPal link. No commission, no booking fees, ever.</Sub>
     </Scene>
   ) },
   { id: "secure", duration: 6500, render: () => (
