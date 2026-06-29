@@ -10,7 +10,11 @@ export const metadata = {
   description: "Find independent guesthouses, B&Bs and rentals worldwide and book direct with the owner, with no platform fees. Ask our trip assistant for ideas.",
 };
 
-export default function GuestsPage() {
+type SP = Promise<Record<string, string | string[] | undefined>>;
+
+export default async function GuestsPage({ searchParams }: { searchParams: SP }) {
+  const sp = await searchParams;
+  const q = typeof sp.q === "string" ? sp.q : undefined;
   return (
     <>
       <Header />
@@ -29,7 +33,7 @@ export default function GuestsPage() {
                 <Link href="/host" className="border border-ink font-semibold px-6 py-3 rounded-full hover:bg-mist transition">Are you a host?</Link>
               </div>
             </div>
-            <ConciergeChat />
+            <ConciergeChat initial={q} />
           </div>
         </section>
 
@@ -37,7 +41,7 @@ export default function GuestsPage() {
           <div className="grid md:grid-cols-3 gap-6">
             {[
               ["Book direct, no fees", "Pay the owner directly. No platform booking fees added on top of your stay."],
-              ["Independent places only", "Real guesthouses, B&Bs and homes with character, not faceless chains."],
+              ["Get more when you book direct", "Many hosts add extras just for booking direct, best price, free breakfast, a welcome drink or late checkout."],
               ["Talk to your host", "Send the owner your dates and questions, and book with a real person."],
             ].map(([t, d]) => (
               <div key={t} className="border border-line rounded-2xl p-6">

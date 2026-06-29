@@ -132,7 +132,11 @@ export function ListingCard({ listing, hrefSuffix = "" }: { listing: Listing; hr
         <p className="text-muted text-sm truncate">
           {prettyType(listing.propertyType)} · {listing.cityName}, {listing.country}
         </p>
-        <p className="text-muted text-sm">Book direct, no fees</p>
+        {listing.perks.length > 0 ? (
+          <p className="text-emerald-700 text-sm font-medium truncate">✓ {listing.perks[0]}{listing.perks.length > 1 ? ` +${listing.perks.length - 1}` : ""}</p>
+        ) : (
+          <p className="text-muted text-sm">Book direct, no fees</p>
+        )}
         <p className="pt-1.5 text-ink">
           <span className="font-bold">{formatPrice(listing.pricePerNight, listing.currency)}</span>
           <span className="text-muted"> night</span>

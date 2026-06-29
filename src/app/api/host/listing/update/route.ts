@@ -21,6 +21,7 @@ export async function POST(req: Request) {
     siteTheme: ["classic", "modern", "coastal"].includes(body.siteTheme) ? body.siteTheme : undefined,
     payStripe: typeof body.payStripe === "string" ? body.payStripe : undefined,
     payPaypal: typeof body.payPaypal === "string" ? body.payPaypal : undefined,
+    perks: Array.isArray(body.perks) ? body.perks.map(String).slice(0, 12) : undefined,
   });
 
   if (!ok) return NextResponse.json({ error: "Listing not found." }, { status: 404 });

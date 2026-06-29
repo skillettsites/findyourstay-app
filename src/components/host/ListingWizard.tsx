@@ -6,6 +6,7 @@ import Link from "next/link";
 import { AMENITIES_OPTIONS } from "@/lib/types";
 import { suggestDomain } from "@/lib/format";
 import { PaymentLinksFields } from "./PaymentLinksFields";
+import { PerksField } from "./PerksField";
 
 const TYPES = ["apartment", "house", "villa", "cottage", "room", "guest_house", "hostel", "hotel", "chalet"];
 const TYPE_LABEL: Record<string, string> = {
@@ -51,6 +52,7 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false, 
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
   const [amenities, setAmenities] = useState<string[]>(["WiFi"]);
+  const [perks, setPerks] = useState<string[]>([]);
   const [uploaded, setUploaded] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadErr, setUploadErr] = useState("");
@@ -153,7 +155,7 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false, 
           propertyType: type, neighborhood: place?.neighborhood || undefined,
           address: place?.address || undefined, lat: place?.lat, lng: place?.lng,
           description, pricePerNight: price ? Number(price) : undefined,
-          amenities, photos,
+          amenities, perks, photos,
           bookingUrl: method === "own" ? (/^https?:\/\//.test(bookingUrl.trim()) ? bookingUrl.trim() : `https://${bookingUrl.trim()}`) : undefined,
           hasBookingSite: method === "build", bookingDomain: method === "build" ? domain.trim() : undefined,
           siteTheme: method === "build" ? siteTheme : undefined,
@@ -283,6 +285,9 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false, 
               ))}
             </div>
           </Field>
+          <div className="mb-4">
+            <PerksField perks={perks} onChange={setPerks} />
+          </div>
           <Field label="Photos">
             <div className="flex flex-wrap gap-3">
               {uploaded.map((u, i) => (

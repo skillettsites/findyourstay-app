@@ -4,6 +4,7 @@ import { HeroSearch } from "./HeroSearch";
 import { ScrollProgress, FadeUp, HeroStage, HeroItem, ParallaxImage, Stagger, Item } from "./SiteMotion";
 import { MicrositeBooking } from "@/components/MicrositeBooking";
 import { ResultsMap } from "@/components/ResultsMap";
+import { PerksList } from "@/components/PerksList";
 import { prettyType, formatPrice } from "@/lib/format";
 import type { Listing } from "@/lib/types";
 
@@ -486,6 +487,7 @@ function Book({ listing, t, demo = false }: { listing: Listing; t: Tokens; demo?
         <p className={`text-xs font-semibold uppercase tracking-[0.3em] ${t.accent}`}>Reservations</p>
         <h1 className="font-serif font-medium text-5xl mt-3">Book your stay</h1>
         <p className="mt-4 text-ink/75 text-lg font-light">Send your dates and pay the host directly via Stripe or PayPal, with no platform fees added.</p>
+        {listing.perks.length > 0 && <PerksList perks={listing.perks} className="mt-6" />}
         <ul className="mt-7 space-y-3.5 text-sm">
           {["Send your dates, quick confirmation", "Pay the host directly via Stripe or PayPal", "Best rate, booked direct", "Personal service from your host"].map((f) => (
             <li key={f} className="flex gap-3"><span className={`grid place-items-center w-6 h-6 rounded-full bg-ink/5 ${t.check} text-xs shrink-0`}>✓</span> {f}</li>

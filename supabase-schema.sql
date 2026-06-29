@@ -41,6 +41,7 @@ create table if not exists fys_listings (
   site_theme text default 'classic',
   pay_stripe text,
   pay_paypal text,
+  perks jsonb default '[]'::jsonb,
   created_at timestamptz default now()
 );
 create index if not exists fys_idx_listings_city on fys_listings(city_slug);

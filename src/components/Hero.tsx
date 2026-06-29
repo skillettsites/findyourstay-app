@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion, useReducedMotion } from "motion/react";
 import { SearchBar } from "./SearchBar";
 
@@ -7,6 +9,9 @@ const EASE = [0.16, 1, 0.3, 1] as const;
 
 export function Hero({ total }: { total: number }) {
   const reduce = useReducedMotion();
+  const router = useRouter();
+  const [mode, setMode] = useState<"search" | "ai">("search");
+  const [ask, setAsk] = useState("");
   const line1 = ["Find", "your", "stay."];
 
   return (
@@ -67,9 +72,24 @@ export function Hero({ total }: { total: number }) {
           transition={{ duration: 0.8, ease: EASE, delay: 0.66 }}
           className="mt-10"
         >
-          <div className="relative z-30 bg-white/60 backdrop-blur-xl rounded-full p-1.5 shadow-float ring-1 ring-black/5 inline-block w-full max-w-3xl">
-            <SearchBar />
+          <div className="flex justify-center gap-1.5 mb-3">
+            <button onClick={() => setMode("search")} className={`text-sm font-semibold px-4 py-1.5 rounded-full transition ${mode === "search" ? "bg-ink text-white" : "bg-white/70 text-muted hover:text-ink"}`}>Search stays</button>
+            <button onClick={() => setMode("ai")} className={`text-sm font-semibold px-4 py-1.5 rounded-full transition inline-flex items-center gap-1.5 ${mode === "ai" ? "bg-brand-gradient text-white shadow-glow" : "bg-white/70 text-muted hover:text-ink"}`}>✦ Ask AI</button>
           </div>
+          {mode === "search" ? (
+            <div className="relative z-30 bg-white/60 backdrop-blur-xl rounded-full p-1.5 shadow-float ring-1 ring-black/5 inline-block w-full max-w-3xl">
+              <SearchBar />
+            </div>
+          ) : (
+            <form
+              onSubmit={(e) => { e.preventDefault(); const q = ask.trim(); router.push(q ? `/guests?q=${encodeURIComponent(q)}` : "/guests"); }}
+              className="relative z-30 bg-white/70 backdrop-blur-xl rounded-full p-1.5 pl-5 shadow-float ring-1 ring-black/5 flex w-full max-w-3xl mx-auto items-center gap-2"
+            >
+              <span className="text-brand text-lg">✦</span>
+              <input value={ask} onChange={(e) => setAsk(e.target.value)} placeholder="Describe your ideal stay, e.g. a cosy B&B in Porto near the river" className="flex-1 bg-transparent outline-none text-sm sm:text-base py-2.5 min-w-0" />
+              <button className="bg-brand-gradient bg-brand-gradient-hover text-white font-semibold px-5 py-2.5 rounded-full shadow-glow shrink-0">Ask</button>
+            </form>
+          )}
         </motion.div>
 
         <motion.div

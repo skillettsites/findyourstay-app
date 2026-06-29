@@ -47,8 +47,23 @@ export interface Listing {
   siteTheme: SiteTheme; // chosen booking-site template
   payStripe: string | null; // host's own Stripe payment link
   payPaypal: string | null; // host's own PayPal.Me link
+  perks: string[]; // "book direct and get..." benefits
   createdAt: string;
 }
+
+// Common book-direct perks hosts can pick from (plus their own free text).
+export const PERK_OPTIONS = [
+  "Best price guaranteed",
+  "Free breakfast",
+  "Free welcome drink",
+  "Free bottle of wine",
+  "Free late checkout",
+  "Free parking",
+  "Free airport pickup",
+  "10% off direct bookings",
+  "Free room upgrade when available",
+  "Flexible cancellation",
+] as const;
 
 export interface CitySummary {
   citySlug: string;

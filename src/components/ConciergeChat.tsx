@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 
 type Stay = { slug: string; name: string; city: string; country: string; price: number | null; currency: string; photo: string | null; type: string };
@@ -8,10 +8,19 @@ type Msg = { role: "user" | "assistant"; text: string; stays?: Stay[]; limited?:
 
 const SUGGESTIONS = ["Family-friendly B&B in Porto", "Beach house in the Algarve under £150", "A quiet cabin in the mountains", "Stylish apartment in Lisbon"];
 
-export function ConciergeChat() {
+export function ConciergeChat({ initial }: { initial?: string }) {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const started = useRef(false);
+
+  useEffect(() => {
+    if (initial && initial.trim() && !started.current) {
+      started.current = true;
+      send(initial);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initial]);
 
   async function send(text: string) {
     const q = text.trim();

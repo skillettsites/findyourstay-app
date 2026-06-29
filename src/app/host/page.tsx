@@ -7,7 +7,8 @@ import { getFeaturedListings, getDemoListing } from "@/lib/db";
 import { EXAMPLE_TEMPLATES } from "@/lib/exampleStays";
 import { suggestDomain } from "@/lib/format";
 
-export const dynamic = "force-dynamic";
+// Cached/ISR marketing page, refreshed hourly (no per-request data).
+export const revalidate = 3600;
 
 export const metadata = {
   title: "List your stay - FindYourStay",
@@ -35,7 +36,8 @@ export default async function HostPage() {
             </h1>
             <p className="mt-4 text-muted text-lg max-w-2xl mx-auto">
               List your B&amp;B, guesthouse or apartment in front of travellers worldwide. No commission, ever.
-              You take bookings and payment your own way. One booking covers your whole year.
+              You take bookings and payment your own way, and add your own &ldquo;book direct&rdquo; perks (best price,
+              free breakfast, a welcome drink) to win more guests. One booking covers your whole year.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link href="/host/new" className="bg-brand-gradient bg-brand-gradient-hover text-white font-semibold px-6 py-3 rounded-full transition-transform active:scale-95 shadow-glow">

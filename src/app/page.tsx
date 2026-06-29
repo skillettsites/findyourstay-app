@@ -8,7 +8,9 @@ import { ListingCard } from "@/components/ListingCard";
 import { Reveal, Stagger, StaggerItem } from "@/components/Motion";
 import { getFeaturedListings, getTopCities, countListings } from "@/lib/db";
 
-export const dynamic = "force-dynamic";
+// Cached/ISR: no per-request data, so serve from the CDN and refresh every
+// 10 minutes instead of re-rendering on every visit (cuts Vercel function use).
+export const revalidate = 600;
 
 export default async function Home() {
   const [featured, cities, total] = await Promise.all([

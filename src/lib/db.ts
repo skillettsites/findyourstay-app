@@ -40,6 +40,7 @@ function rowToListing(r: Row): Listing {
     siteTheme: (["classic", "modern", "coastal"].includes(r.site_theme as string) ? r.site_theme : "classic") as Listing["siteTheme"],
     payStripe: (r.pay_stripe as string) ?? null,
     payPaypal: (r.pay_paypal as string) ?? null,
+    perks: Array.isArray(r.perks) ? (r.perks as string[]) : [],
     createdAt: r.created_at as string,
   };
 }
@@ -404,6 +405,7 @@ export interface NewListingInput {
   siteTheme?: string;
   payStripe?: string;
   payPaypal?: string;
+  perks?: string[];
   hostEmail?: string;
   hostName?: string;
 }
@@ -450,6 +452,7 @@ export async function createListing(input: NewListingInput): Promise<{ id: strin
   const payUpd: Row = {};
   if (input.payStripe) payUpd.pay_stripe = input.payStripe;
   if (input.payPaypal) payUpd.pay_paypal = input.payPaypal;
+  if (input.perks && input.perks.length) payUpd.perks = input.perks;
   if (Object.keys(payUpd).length) await sb.from(T.listings).update(payUpd).eq("id", id);
   return { id, slug };
 }
@@ -463,6 +466,7 @@ export interface UpdateListingInput {
   siteTheme?: string;
   payStripe?: string | null;
   payPaypal?: string | null;
+  perks?: string[];
 }
 
 // Edit a listing the host owns (dashboard). Returns false if not theirs.
@@ -486,6 +490,7 @@ export async function updateListingForHost(id: string, hostId: string, patch: Up
   const payUpd: Row = {};
   if (patch.payStripe !== undefined) payUpd.pay_stripe = patch.payStripe || null;
   if (patch.payPaypal !== undefined) payUpd.pay_paypal = patch.payPaypal || null;
+  if (patch.perks !== undefined) payUpd.perks = patch.perks;
   if (Object.keys(payUpd).length) await sb.from(T.listings).update(payUpd).eq("id", id);
 
   // If this listing has a live booking site, re-submit it to IndexNow so the

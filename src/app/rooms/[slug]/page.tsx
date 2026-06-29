@@ -7,6 +7,7 @@ import { ResultsMap } from "@/components/ResultsMap";
 import { BookingBox } from "@/components/BookingBox";
 import { RoomGallery } from "@/components/RoomGallery";
 import { BackButton } from "@/components/BackButton";
+import { PerksList } from "@/components/PerksList";
 import { Stagger, StaggerItem } from "@/components/Motion";
 import { getListingBySlug, getRelatedListings, recordEvent } from "@/lib/db";
 import { prettyType, formatPrice } from "@/lib/format";
@@ -111,6 +112,8 @@ export default async function RoomPage({ params }: { params: Promise<{ slug: str
             </div>
 
             <p className="mt-5 text-ink/90 leading-relaxed">{listing.description}</p>
+
+            {listing.perks.length > 0 && <PerksList perks={listing.perks} className="mt-6" />}
 
             <h3 className="mt-8 font-semibold text-lg">What this stay offers</h3>
             <div className="mt-3 grid grid-cols-2 gap-3">

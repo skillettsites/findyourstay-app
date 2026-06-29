@@ -20,6 +20,7 @@ const BASE = {
   attribution: null,
   payStripe: "https://buy.stripe.com/example",
   payPaypal: "https://www.paypal.com/paypalme/example",
+  perks: ["Best price guaranteed", "Free welcome drink", "Free late checkout"],
   createdAt: "2026-01-01T00:00:00.000Z",
 };
 

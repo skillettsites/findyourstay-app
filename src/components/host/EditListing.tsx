@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AMENITIES_OPTIONS, type Listing } from "@/lib/types";
 import { PaymentLinksFields } from "./PaymentLinksFields";
+import { PerksField } from "./PerksField";
 
 const TEMPLATES = [
   { key: "classic" as const, label: "Classic", blurb: "Elegant & timeless", swatch: "bg-gradient-to-br from-stone-700 to-stone-900" },
@@ -20,6 +21,7 @@ export function EditListing({ listing }: { listing: Listing }) {
   const [description, setDescription] = useState(listing.description ?? "");
   const [price, setPrice] = useState(listing.pricePerNight != null ? String(listing.pricePerNight) : "");
   const [amenities, setAmenities] = useState<string[]>(listing.amenities);
+  const [perks, setPerks] = useState<string[]>(listing.perks ?? []);
   const [photos, setPhotos] = useState<string[]>(listing.photos);
   const [theme, setTheme] = useState<"classic" | "modern" | "coastal">(listing.siteTheme);
   const [payStripe, setPayStripe] = useState(listing.payStripe ?? "");
@@ -61,7 +63,7 @@ export function EditListing({ listing }: { listing: Listing }) {
       const res = await fetch("/api/host/listing/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: listing.id, propertyName: name, description, pricePerNight: price, amenities, photos, siteTheme: theme, payStripe, payPaypal }),
+        body: JSON.stringify({ id: listing.id, propertyName: name, description, pricePerNight: price, amenities, perks, photos, siteTheme: theme, payStripe, payPaypal }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -98,6 +100,10 @@ export function EditListing({ listing }: { listing: Listing }) {
             <button key={a} type="button" onClick={() => toggle(a)} className={`px-3 py-1.5 rounded-full text-sm border transition ${amenities.includes(a) ? "border-ink bg-ink text-white" : "border-line hover:border-ink"}`}>{a}</button>
           ))}
         </div>
+      </div>
+
+      <div className="mb-5">
+        <PerksField perks={perks} onChange={setPerks} />
       </div>
 
       <div className="mb-4">

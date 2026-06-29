@@ -79,7 +79,9 @@ export default function WhatWeDoPage() {
             <p className="mt-4 text-muted text-lg max-w-2xl mx-auto">
               The big sites can charge 15 to 18% in commission, and guests pay more on top. Booking direct cuts out
               the middleman: better prices for your guests, full margins for you, and a real relationship with the
-              people who stay. Our job is to make direct bookings easy to win and easy to run.
+              people who stay. You can even add your own &ldquo;book direct&rdquo; perks, like a best-price promise or
+              free breakfast, to give travellers a reason to come straight to you. Our job is to make direct bookings
+              easy to win and easy to run.
             </p>
           </Reveal>
         </section>
