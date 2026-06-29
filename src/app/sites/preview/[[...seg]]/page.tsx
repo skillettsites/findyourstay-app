@@ -57,7 +57,7 @@ export default async function PreviewSitePage({ searchParams }: { searchParams: 
 
   return (
     <>
-      <StandaloneSite listing={listing} base="/sites/preview" domain={domain} page="home" theme={VIBES[vibe].theme} example compactBook />
+      <StandaloneSite listing={listing} base="/sites/preview" domain={domain} page="home" theme={VIBES[vibe].theme} example />
 
       {/* Sticky "make it live" bar */}
       <div className="sticky bottom-0 z-50 bg-ink text-white border-t border-white/10">
