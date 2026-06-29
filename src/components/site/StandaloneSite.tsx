@@ -3,6 +3,7 @@ import { SiteNav, type NavLink } from "./SiteNav";
 import { ScrollProgress, FadeUp, HeroStage, HeroItem, ParallaxImage, Stagger, Item } from "./SiteMotion";
 import { MicrositeBooking } from "@/components/MicrositeBooking";
 import { StickyBook } from "./StickyBook";
+import { BookNowButton } from "./BookNowButton";
 import { ResultsMap } from "@/components/ResultsMap";
 import { PerksList } from "@/components/PerksList";
 import { prettyType, formatPrice } from "@/lib/format";
@@ -85,6 +86,7 @@ export function StandaloneSite({
   page,
   theme = "classic",
   example = false,
+  compactBook = false,
 }: {
   listing: Listing;
   base: string;
@@ -92,6 +94,7 @@ export function StandaloneSite({
   page: SitePage;
   theme?: SiteTheme;
   example?: boolean;
+  compactBook?: boolean;
 }) {
   const t = THEMES[theme];
   const photos = listing.photos.length ? listing.photos : [`https://picsum.photos/seed/${listing.id}/1600/900`];
@@ -123,7 +126,7 @@ export function StandaloneSite({
       <SiteNav name={listing.propertyName} domain={domain} links={links} active={page} bookHref={href("book")} btn={`${t.btn} ${CTA}`} activeText={t.accent} />
 
       <main className="flex-1">
-        {page === "home" && <Home listing={listing} photos={photos} href={href} t={t} theme={theme} demo={example} />}
+        {page === "home" && <Home listing={listing} photos={photos} href={href} t={t} theme={theme} demo={example} compactBook={compactBook} />}
         {page === "rooms" && <Rooms listing={listing} photos={photos} href={href} t={t} />}
         {page === "gallery" && <Gallery listing={listing} photos={photos} t={t} />}
         {page === "location" && <Location listing={listing} t={t} />}
@@ -139,9 +142,9 @@ export function StandaloneSite({
 }
 
 /* ---------------- Home (dispatches to one of three distinct layouts) ---------------- */
-type HomeProps = { listing: Listing; photos: string[]; href: (p: string) => string; t: Tokens; demo: boolean };
+type HomeProps = { listing: Listing; photos: string[]; href: (p: string) => string; t: Tokens; demo: boolean; compactBook?: boolean };
 function Home(p: HomeProps & { theme: SiteTheme }) {
-  const sub: HomeProps = { listing: p.listing, photos: p.photos, href: p.href, t: p.t, demo: p.demo };
+  const sub: HomeProps = { listing: p.listing, photos: p.photos, href: p.href, t: p.t, demo: p.demo, compactBook: p.compactBook };
   if (p.theme === "modern") return <HomeModern {...sub} />;
   if (p.theme === "coastal") return <HomeCoastal {...sub} />;
   return <HomeClassic {...sub} />;
@@ -150,7 +153,7 @@ function Home(p: HomeProps & { theme: SiteTheme }) {
 /* Shared premium hero: full-bleed (or rounded-inset) image, the property on the
    left and a real booking/request form on the right. Used by all templates so
    every site opens with a 2-column "book now" hero on a par with the main site. */
-function HeroWithForm({ listing, t, demo, inset = false }: { listing: Listing; t: Tokens; demo: boolean; inset?: boolean }) {
+function HeroWithForm({ listing, t, demo, inset = false, compact = false }: { listing: Listing; t: Tokens; demo: boolean; inset?: boolean; compact?: boolean }) {
   const photo = listing.photos[0] ?? `https://picsum.photos/seed/${listing.id}/1600/900`;
   const inner = (
     <>
@@ -171,7 +174,15 @@ function HeroWithForm({ listing, t, demo, inset = false }: { listing: Listing; t
           </HeroItem>
         </div>
         <HeroItem className="w-full max-w-md lg:justify-self-end mx-auto lg:mx-0">
-          <MicrositeBooking listing={listing} demo={demo} />
+          {compact ? (
+            <div className="rounded-2xl bg-white/95 backdrop-blur shadow-2xl p-6 text-center">
+              <p><span className="font-display font-bold text-3xl">{formatPrice(listing.pricePerNight, listing.currency)}</span> <span className="text-muted">/ night</span></p>
+              <BookNowButton listing={listing} demo={demo} className="mt-4 w-full bg-brand-gradient bg-brand-gradient-hover text-white font-semibold py-3.5 rounded-full shadow-glow transition-transform active:scale-95" />
+              <p className="text-xs text-muted mt-2">Book direct · no platform fees</p>
+            </div>
+          ) : (
+            <MicrositeBooking listing={listing} demo={demo} />
+          )}
         </HeroItem>
       </HeroStage>
     </>
@@ -187,10 +198,10 @@ function HeroWithForm({ listing, t, demo, inset = false }: { listing: Listing; t
 }
 
 /* Classic — symmetrical, centred, full-bleed cinematic hero. Traditional luxe. */
-function HomeClassic({ listing, photos, href, t, demo }: HomeProps) {
+function HomeClassic({ listing, photos, href, t, demo, compactBook }: HomeProps) {
   return (
     <>
-      <HeroWithForm listing={listing} t={t} demo={demo} />
+      <HeroWithForm listing={listing} t={t} demo={demo} compact={compactBook} />
 
       {/* Story */}
       <FadeUp className="mx-auto max-w-3xl px-4 sm:px-6 py-20 sm:py-28 text-center">
@@ -249,11 +260,11 @@ function HomeClassic({ listing, photos, href, t, demo }: HomeProps) {
 }
 
 /* Modern — asymmetric split-screen editorial. Monochrome, square, magazine feel. */
-function HomeModern({ listing, photos, href, t, demo }: HomeProps) {
+function HomeModern({ listing, photos, href, t, demo, compactBook }: HomeProps) {
   const gal = photos.length > 2 ? photos : [...photos, `https://picsum.photos/seed/${listing.id}-m1/900/600`, `https://picsum.photos/seed/${listing.id}-m2/900/600`];
   return (
     <>
-      <HeroWithForm listing={listing} t={t} demo={demo} />
+      <HeroWithForm listing={listing} t={t} demo={demo} compact={compactBook} />
 
       {/* 01 — The space */}
       <section className="mx-auto max-w-6xl px-4 sm:px-6 py-24 grid lg:grid-cols-12 gap-10 items-center">
@@ -314,10 +325,10 @@ function HomeModern({ listing, photos, href, t, demo }: HomeProps) {
 }
 
 /* Coastal — airy, rounded, lots of whitespace. Inset hero with a floating search card. */
-function HomeCoastal({ listing, photos, href, t, demo }: HomeProps) {
+function HomeCoastal({ listing, photos, href, t, demo, compactBook }: HomeProps) {
   return (
     <>
-      <HeroWithForm listing={listing} t={t} demo={demo} inset />
+      <HeroWithForm listing={listing} t={t} demo={demo} inset compact={compactBook} />
 
       {/* Welcome */}
       <FadeUp className="mx-auto max-w-3xl px-4 sm:px-6 py-20 text-center">
