@@ -66,7 +66,7 @@ export function SiteBuilder() {
 
       {/* Live preview — pinned to the top on mobile so it stays visible while
           you scroll the form below; sticky on desktop so it follows you too. */}
-      <div className="order-1 lg:order-2 sticky top-16 lg:top-6 z-20">
+      <div className="order-1 lg:order-2 sticky top-16 lg:top-6 z-20 bg-white pb-3">
         <div className="rounded-2xl border border-line overflow-hidden bg-white shadow-float">
           <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-line bg-mist">
             <span className="w-3 h-3 rounded-full bg-[#ff5f57]" /><span className="w-3 h-3 rounded-full bg-[#febc2e]" /><span className="w-3 h-3 rounded-full bg-[#28c840]" />
