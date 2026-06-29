@@ -78,7 +78,7 @@ export default async function HostPage() {
               <Reveal delay={0.15}>
                 <div className="mt-8 flex flex-wrap justify-center lg:justify-start gap-3">
                   <Link href="/host/build" className="bg-brand-gradient bg-brand-gradient-hover text-white font-semibold px-6 py-3 rounded-full shadow-glow transition-transform active:scale-95">
-                    Build your site free →
+                    See what your site would look like →
                   </Link>
                   <Link href="#pricing" className="border border-ink font-semibold px-6 py-3 rounded-full hover:bg-mist transition">
                     See pricing

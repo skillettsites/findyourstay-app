@@ -18,8 +18,8 @@ export default function BuildPage() {
         <div className="mb-5"><BackButton fallback="/host" /></div>
         <div className="text-center max-w-2xl mx-auto mb-8">
           <span className="inline-block bg-rose-50 text-brand text-xs font-bold uppercase tracking-wide px-3 py-1 rounded-full">Free preview, no signup</span>
-          <h1 className="mt-4 text-3xl sm:text-4xl font-display font-bold">See your booking website come to life</h1>
-          <p className="mt-3 text-muted text-lg">Pick a style, add a few details, and watch your own site build itself on the right. Love it? Make it live in minutes.</p>
+          <h1 className="mt-4 text-3xl sm:text-4xl font-display font-bold">See what your booking website would look like</h1>
+          <p className="mt-3 text-muted text-lg">Pick a style, add a few details, and watch your own site build itself live. Love it? Make it live in minutes.</p>
         </div>
         <SiteBuilder />
       </main>

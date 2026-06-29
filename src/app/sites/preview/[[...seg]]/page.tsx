@@ -64,10 +64,14 @@ export default async function PreviewSitePage({ params, searchParams }: { params
   const domain = suggestDomain(name);
   const liveHref = `/host/new?website=1&tier=featured&theme=${VIBES[vibe].theme}&name=${encodeURIComponent(name)}&city=${encodeURIComponent(city)}&price=${price ?? ""}`;
 
+  // Embedded in the builder iframe: the builder supplies its own CTA, so drop
+  // our sticky bar to give the small mobile preview its full height back.
+  const embed = !!one(sp.embed);
+
   // Keep the builder inputs on the template's own nav links so inner pages
-  // render the host's data instead of the default example.
+  // render the host's data (and stay embedded) instead of the default example.
   const qs = new URLSearchParams();
-  for (const k of ["vibe", "name", "city", "country", "price", "bedrooms", "type"]) {
+  for (const k of ["vibe", "name", "city", "country", "price", "bedrooms", "type", "embed"]) {
     const v = one(sp[k]);
     if (v) qs.set(k, String(v));
   }
@@ -77,7 +81,8 @@ export default async function PreviewSitePage({ params, searchParams }: { params
     <>
       <StandaloneSite listing={listing} base="/sites/preview" domain={domain} page={toPage(seg)} theme={VIBES[vibe].theme} example linkQuery={linkQuery} />
 
-      {/* Sticky "make it live" bar */}
+      {/* Sticky "make it live" bar — hidden when embedded in the builder */}
+      {!embed && (
       <div className="sticky bottom-0 z-50 bg-ink text-white border-t border-white/10">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm">
@@ -89,6 +94,7 @@ export default async function PreviewSitePage({ params, searchParams }: { params
           </div>
         </div>
       </div>
+      )}
     </>
   );
 }
