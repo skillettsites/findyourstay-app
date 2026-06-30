@@ -27,6 +27,13 @@ export async function POST(req: Request) {
     payStripe: typeof body.payStripe === "string" ? body.payStripe : undefined,
     payPaypal: typeof body.payPaypal === "string" ? body.payPaypal : undefined,
     perks: Array.isArray(body.perks) ? body.perks.map(String).slice(0, 12) : undefined,
+    bathrooms: body.bathrooms === undefined ? undefined : Math.max(0, Math.min(20, Number(body.bathrooms) || 0)),
+    bedrooms: Array.isArray(body.bedrooms)
+      ? body.bedrooms
+          .filter((b: unknown): b is { photos?: unknown } => !!b && Array.isArray((b as { photos?: unknown }).photos))
+          .map((b: { name?: unknown; photos: unknown[] }) => ({ name: b.name ? String(b.name).slice(0, 60) : undefined, photos: (b.photos as unknown[]).map(String).slice(0, 5) }))
+          .slice(0, 20)
+      : undefined,
     testimonials: Array.isArray(body.testimonials)
       ? body.testimonials
           .filter((t: unknown): t is { quote?: unknown } => !!t && typeof (t as { quote?: unknown }).quote === "string")

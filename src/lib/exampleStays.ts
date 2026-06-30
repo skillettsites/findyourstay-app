@@ -12,6 +12,8 @@ const BASE = {
   priceRange: "luxury" as const,
   currency: "gbp",
   bookingUrl: null,
+  bedrooms: [],
+  bathrooms: 2,
   heroImage: null,
   hasBookingSite: true,
   verified: false,

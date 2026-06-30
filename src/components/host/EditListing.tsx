@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { AMENITIES_OPTIONS, type Listing, type Testimonial } from "@/lib/types";
+import { AMENITIES_OPTIONS, type Listing, type Testimonial, type Bedroom } from "@/lib/types";
 import { PaymentLinksFields } from "./PaymentLinksFields";
 import { PerksField } from "./PerksField";
 import { TestimonialsField } from "./TestimonialsField";
+import { RoomsField } from "./RoomsField";
 
 const TEMPLATES = [
   { key: "classic" as const, label: "Classic", blurb: "Elegant & timeless", swatch: "bg-gradient-to-br from-stone-700 to-stone-900" },
@@ -35,6 +36,10 @@ export function EditListing({ listing }: { listing: Listing }) {
   const [payStripe, setPayStripe] = useState(listing.payStripe ?? "");
   const [payPaypal, setPayPaypal] = useState(listing.payPaypal ?? "");
   const [testimonials, setTestimonials] = useState<Testimonial[]>(listing.testimonials ?? []);
+  const initBedrooms: Bedroom[] = listing.bedrooms.length ? listing.bedrooms : [{ photos: [] }];
+  const initBathrooms = listing.bathrooms || 1;
+  const [bedrooms, setBedrooms] = useState<Bedroom[]>(initBedrooms);
+  const [bathrooms, setBathrooms] = useState(initBathrooms);
 
   // Address: prefilled with the current area; only changed if they re-pick one.
   const currentArea = [listing.neighborhood, listing.cityName, listing.country].filter(Boolean).join(", ");
@@ -73,17 +78,18 @@ export function EditListing({ listing }: { listing: Listing }) {
 
   // --- dirty tracking: button greys out until something actually changes ---
   const snap = (addr: string) => JSON.stringify({
-    name, description, price, amenities, perks, photos, heroImage, theme, payStripe, payPaypal, testimonials, addr,
+    name, description, price, amenities, perks, photos, bedrooms, bathrooms, heroImage, theme, payStripe, payPaypal, testimonials, addr,
   });
   const initialSnap = JSON.stringify({
     name: listing.propertyName, description: listing.description ?? "", price: listing.pricePerNight != null ? String(listing.pricePerNight) : "",
-    amenities: listing.amenities, perks: listing.perks ?? [], photos: listing.photos, heroImage: listing.heroImage ?? "",
+    amenities: listing.amenities, perks: listing.perks ?? [], photos: listing.photos, bedrooms: initBedrooms, bathrooms: initBathrooms, heroImage: listing.heroImage ?? "",
     theme: listing.siteTheme, payStripe: listing.payStripe ?? "", payPaypal: listing.payPaypal ?? "", testimonials: listing.testimonials ?? [], addr: "",
   });
   const [savedSnap, setSavedSnap] = useState(initialSnap);
   const curSnap = snap(place ? `${place.lat},${place.lng}` : "");
   const dirty = curSnap !== savedSnap;
-  const valid = name.trim() !== "" && photos.length >= 1 && (!hasSite || !!heroImage);
+  const bedroomsOk = bedrooms.length >= 1 && bedrooms.every((b) => b.photos.length >= 1);
+  const valid = name.trim() !== "" && photos.length >= 1 && bedroomsOk && (!hasSite || !!heroImage);
   const canSave = valid && dirty && !busy;
 
   useEffect(() => {
@@ -136,6 +142,7 @@ export function EditListing({ listing }: { listing: Listing }) {
   async function save(preview: boolean) {
     setErr(""); setMsg("");
     if (photos.length === 0) { setErr("Please add at least one room photo before saving."); return; }
+    if (!bedroomsOk) { setErr("Every bedroom needs at least one photo (up to 5)."); return; }
     if (hasSite && !heroImage) { setErr("Please add a hero background image for your website."); return; }
     // On mobile we open the tab synchronously (inside the click) to dodge popup blockers.
     let win: Window | null = null;
@@ -146,6 +153,7 @@ export function EditListing({ listing }: { listing: Listing }) {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: listing.id, propertyName: name, description, pricePerNight: price, amenities, perks, photos,
+          bedrooms: bedrooms.filter((b) => b.photos.length), bathrooms,
           siteTheme: theme, payStripe, payPaypal, testimonials,
           heroImage: hasSite ? heroImage : undefined,
           ...(place ? { lat: place.lat, lng: place.lng, cityName: place.city, citySlug: slugify(place.city), neighborhood: place.neighborhood || "", country: place.country } : {}),
@@ -241,6 +249,11 @@ export function EditListing({ listing }: { listing: Listing }) {
           {photos.length === 0 && <p className="text-xs text-brand mt-1.5">At least one room photo is required.</p>}
         </div>
 
+        {/* Bedrooms & bathrooms (per-bedroom photos mandatory) */}
+        <div className="mb-5 border-t border-line pt-5">
+          <RoomsField bedrooms={bedrooms} bathrooms={bathrooms} onBedrooms={setBedrooms} onBathrooms={setBathrooms} />
+        </div>
+
         {/* Hero background image — gated by the booking-website add-on */}
         <div className="mb-5">
           <span className="block text-sm font-semibold mb-1.5">Website hero image{hasSite && <span className="text-brand"> *</span>}</span>
@@ -300,6 +313,11 @@ export function EditListing({ listing }: { listing: Listing }) {
           <button onClick={() => save(hasSite)} disabled={!canSave} className="bg-brand-gradient bg-brand-gradient-hover disabled:opacity-50 text-white font-semibold px-7 py-3 rounded-full shadow-glow">
             {busy ? "Saving…" : hasSite ? "Save & preview website" : "Save changes"}
           </button>
+          {hasSite && (
+            <button type="button" onClick={() => window.open(`/sites/${listing.slug}`, "_blank")} disabled={dirty} title={dirty ? "Save your changes first" : ""} className="border border-ink font-semibold px-5 py-3 rounded-full disabled:opacity-40 hover:bg-mist">
+              View live website ↗
+            </button>
+          )}
           <Link href="/host/dashboard" className="font-semibold px-5 py-3 rounded-full hover:bg-mist">Back to dashboard</Link>
           {!dirty && !msg && <span className="text-xs text-muted">No changes to save</span>}
           {dirty && !valid && <span className="text-xs text-muted">Add the required photos to save</span>}

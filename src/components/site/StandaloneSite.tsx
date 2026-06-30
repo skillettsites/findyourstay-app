@@ -395,6 +395,11 @@ function Rooms({ listing, photos, href, t }: { listing: Listing; photos: string[
       <FadeUp>
         <p className={`text-xs font-semibold uppercase tracking-[0.3em] ${t.accent}`}>Accommodation</p>
         <h1 className="font-serif font-medium text-5xl mt-3">The rooms</h1>
+        {(listing.bedrooms.length > 0 || listing.bathrooms > 0) && (
+          <p className="text-muted mt-2">
+            {[listing.bedrooms.length > 0 && `${listing.bedrooms.length} bedroom${listing.bedrooms.length > 1 ? "s" : ""}`, listing.bathrooms > 0 && `${listing.bathrooms} bathroom${listing.bathrooms > 1 ? "s" : ""}`].filter(Boolean).join(" · ")}
+          </p>
+        )}
       </FadeUp>
 
       <div className="mt-10 grid lg:grid-cols-3 gap-12">
@@ -424,6 +429,27 @@ function Rooms({ listing, photos, href, t }: { listing: Listing; photos: string[
               ))}
             </div>
           </FadeUp>
+
+          {listing.bedrooms.length > 0 && (
+            <FadeUp>
+              <h2 className="font-serif text-3xl mt-12">The bedrooms</h2>
+              <div className="mt-5 space-y-8">
+                {listing.bedrooms.map((b, i) => (
+                  <div key={i}>
+                    <h3 className="font-semibold text-lg mb-2.5">{b.name?.trim() || `Bedroom ${i + 1}`}</h3>
+                    <Stagger className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {b.photos.map((p, j) => (
+                        <Item key={j} className={`group overflow-hidden ${t.radius}`}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={p} alt="" loading="lazy" className={`w-full h-32 object-cover ${ZOOM}`} />
+                        </Item>
+                      ))}
+                    </Stagger>
+                  </div>
+                ))}
+              </div>
+            </FadeUp>
+          )}
         </div>
 
         <aside className="lg:col-span-1">

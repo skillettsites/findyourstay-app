@@ -30,6 +30,8 @@ function rowToListing(r: Row): Listing {
     currency: (r.currency as string) ?? "gbp",
     amenities: Array.isArray(r.amenities) ? (r.amenities as string[]) : [],
     photos: Array.isArray(r.photos) ? (r.photos as string[]) : [],
+    bedrooms: Array.isArray(r.bedrooms) ? (r.bedrooms as Listing["bedrooms"]) : [],
+    bathrooms: r.bathrooms == null ? 0 : Number(r.bathrooms),
     heroImage: (r.hero_image as string) ?? null,
     bookingUrl: (r.booking_url as string) ?? null,
     hasBookingSite: !!r.has_booking_site,
@@ -401,6 +403,8 @@ export interface NewListingInput {
   pricePerNight?: number;
   amenities?: string[];
   photos?: string[];
+  bedrooms?: import("./types").Bedroom[];
+  bathrooms?: number;
   heroImage?: string | null;
   bookingUrl?: string;
   hasBookingSite?: boolean;
@@ -459,6 +463,8 @@ export async function createListing(input: NewListingInput): Promise<{ id: strin
   if (input.perks && input.perks.length) payUpd.perks = input.perks;
   if (input.heroImage) payUpd.hero_image = input.heroImage;
   if (input.testimonials && input.testimonials.length) payUpd.testimonials = input.testimonials;
+  if (input.bedrooms && input.bedrooms.length) payUpd.bedrooms = input.bedrooms;
+  if (input.bathrooms != null) payUpd.bathrooms = input.bathrooms;
   if (Object.keys(payUpd).length) await sb.from(T.listings).update(payUpd).eq("id", id);
   return { id, slug };
 }
@@ -469,6 +475,8 @@ export interface UpdateListingInput {
   pricePerNight?: number | null;
   amenities?: string[];
   photos?: string[];
+  bedrooms?: import("./types").Bedroom[];
+  bathrooms?: number;
   heroImage?: string | null;
   siteTheme?: string;
   payStripe?: string | null;
@@ -517,6 +525,8 @@ export async function updateListingForHost(id: string, hostId: string, patch: Up
   if (patch.payPaypal !== undefined) payUpd.pay_paypal = patch.payPaypal || null;
   if (patch.perks !== undefined) payUpd.perks = patch.perks;
   if (patch.testimonials !== undefined) payUpd.testimonials = patch.testimonials;
+  if (patch.bedrooms !== undefined) payUpd.bedrooms = patch.bedrooms;
+  if (patch.bathrooms !== undefined) payUpd.bathrooms = patch.bathrooms;
   if (Object.keys(payUpd).length) await sb.from(T.listings).update(payUpd).eq("id", id);
 
   // If this listing has a live booking site, re-submit it to IndexNow so the

@@ -3,11 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { AMENITIES_OPTIONS, type Testimonial } from "@/lib/types";
+import { AMENITIES_OPTIONS, type Testimonial, type Bedroom } from "@/lib/types";
 import { suggestDomain } from "@/lib/format";
 import { PaymentLinksFields } from "./PaymentLinksFields";
 import { PerksField } from "./PerksField";
 import { TestimonialsField } from "./TestimonialsField";
+import { RoomsField } from "./RoomsField";
 
 const TYPES = ["apartment", "house", "villa", "cottage", "room", "guest_house", "hostel", "hotel", "chalet"];
 const TYPE_LABEL: Record<string, string> = {
@@ -57,6 +58,8 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false, 
   const [uploaded, setUploaded] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadErr, setUploadErr] = useState("");
+  const [bedrooms, setBedrooms] = useState<Bedroom[]>([{ photos: [] }]);
+  const [bathrooms, setBathrooms] = useState(1);
 
   const [method, setMethod] = useState<"own" | "build">(initialBuild ? "build" : "own");
   const [bookingUrl, setBookingUrl] = useState("");
@@ -155,9 +158,10 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false, 
   }
 
   const urlOk = /^(https?:\/\/)?[\w-]+(\.[\w-]+)+.*$/.test(bookingUrl.trim());
+  const bedroomsOk = bedrooms.length >= 1 && bedrooms.every((b) => b.photos.length >= 1);
   const canNext =
     step === 1 ? Boolean(name.trim() && place) :
-    step === 2 ? uploaded.length >= 1 : // at least one room photo is required
+    step === 2 ? uploaded.length >= 1 && bedroomsOk : // ≥1 room photo + a photo for every bedroom
     step === 3 ? (method === "own" ? urlOk : Boolean(domain.trim() && heroImage)) : // building a site needs a hero image
     true;
 
@@ -192,6 +196,7 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false, 
           address: place?.address || undefined, lat: place?.lat, lng: place?.lng,
           description, pricePerNight: price ? Number(price) : undefined,
           amenities, perks, photos,
+          bedrooms: bedrooms.filter((b) => b.photos.length), bathrooms,
           bookingUrl: method === "own" ? (/^https?:\/\//.test(bookingUrl.trim()) ? bookingUrl.trim() : `https://${bookingUrl.trim()}`) : undefined,
           hasBookingSite: method === "build", bookingDomain: method === "build" ? domain.trim() : undefined,
           siteTheme: method === "build" ? siteTheme : undefined,
@@ -348,6 +353,10 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false, 
             {uploaded.length === 0 && <p className="text-xs text-brand mt-1">Please add at least one photo of your rooms to continue.</p>}
             {uploadErr && <p className="text-xs text-brand mt-1">{uploadErr}</p>}
           </Field>
+
+          <div className="mb-4 border-t border-line pt-4">
+            <RoomsField bedrooms={bedrooms} bathrooms={bathrooms} onBedrooms={setBedrooms} onBathrooms={setBathrooms} />
+          </div>
         </div>
       )}
 

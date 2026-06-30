@@ -8,6 +8,11 @@ export interface Testimonial {
   source?: string; // "Airbnb", "Booking.com", "Google", "Direct guest"
 }
 
+export interface Bedroom {
+  name?: string; // optional label, e.g. "Master bedroom"
+  photos: string[]; // 1-5 photos, required per bedroom
+}
+
 export type ListingTier = "free" | "standard" | "featured" | "pro";
 export type ListingStatus = "unclaimed" | "pending" | "active" | "suspended";
 export type SiteTheme = "classic" | "modern" | "coastal";
@@ -43,6 +48,8 @@ export interface Listing {
   currency: string;
   amenities: string[];
   photos: string[]; // room/gallery photos
+  bedrooms: Bedroom[]; // per-bedroom photo sets
+  bathrooms: number; // count
   heroImage: string | null; // booking-site hero background (falls back to photos[0])
   bookingUrl: string | null; // host's own direct-booking site
   hasBookingSite: boolean; // FYS-hosted booking site add-on enabled
