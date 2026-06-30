@@ -34,6 +34,17 @@ function isAppHost(host: string): boolean {
 
 export async function middleware(req: NextRequest) {
   const host = req.headers.get("host") ?? "";
+  const hostOnly = host.split(":")[0];
+  const appHostOnly = SITE_HOST.split(":")[0];
+
+  // Consolidate www -> apex (the canonical host) with a permanent redirect, so
+  // www doesn't get mistaken for a tenant microsite and SEO stays on one host.
+  if (hostOnly === `www.${appHostOnly}`) {
+    const url = req.nextUrl.clone();
+    url.protocol = "https:";
+    url.host = appHostOnly;
+    return NextResponse.redirect(url, 308);
+  }
 
   // Custom domain -> serve that host's standalone site (no auth needed).
   if (host && !isAppHost(host)) {
