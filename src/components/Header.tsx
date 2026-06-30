@@ -12,6 +12,15 @@ export function Header({ showSearch = true }: { showSearch?: boolean }) {
   const [scrolled, setScrolled] = useState(false);
   useMotionValueEvent(scrollY, "change", (v) => setScrolled(v > 12));
 
+  // undefined = still loading; null = signed out; string = signed-in email.
+  const [email, setEmail] = useState<string | null | undefined>(undefined);
+  useEffect(() => {
+    const supabase = supabaseBrowser();
+    supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? null));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => setEmail(session?.user?.email ?? null));
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
   return (
     <motion.header
       initial={false}
@@ -31,12 +40,34 @@ export function Header({ showSearch = true }: { showSearch?: boolean }) {
           </div>
         )}
         <nav className="flex items-center gap-1 sm:gap-2">
-          <Link href="/guests" className="hidden sm:inline-block text-sm font-semibold px-3.5 py-2 rounded-full hover:bg-mist transition">
+          <Link href="/guests" className="hidden lg:inline-block text-sm font-semibold px-3.5 py-2 rounded-full hover:bg-mist transition">
             For travellers
           </Link>
-          <Link href="/host" className="hidden sm:inline-block text-sm font-semibold px-3.5 py-2 rounded-full hover:bg-mist transition">
+          <Link href="/host" className="hidden lg:inline-block text-sm font-semibold px-3.5 py-2 rounded-full hover:bg-mist transition">
             For hosts
           </Link>
+
+          {/* Auth-aware buttons. Dashboard stays visible on mobile when signed in. */}
+          {email !== undefined && (email ? (
+            <>
+              <Link href="/host/dashboard" className="text-sm font-semibold px-3 sm:px-4 py-2 rounded-full bg-ink text-white hover:bg-ink/90 transition">
+                Dashboard
+              </Link>
+              <a href="/auth/signout" className="text-sm font-semibold px-2.5 sm:px-3 py-2 rounded-full hover:bg-mist transition">
+                Logout
+              </a>
+            </>
+          ) : (
+            <>
+              <Link href="/login" className="text-sm font-semibold px-2.5 sm:px-3 py-2 rounded-full hover:bg-mist transition">
+                Login
+              </Link>
+              <Link href="/host" className="text-sm font-semibold px-3 sm:px-4 py-2 rounded-full bg-brand-gradient bg-brand-gradient-hover text-white shadow-glow transition-transform active:scale-95">
+                Sign up
+              </Link>
+            </>
+          ))}
+
           <Menu />
         </nav>
       </div>
@@ -107,22 +138,9 @@ function Menu() {
             <Item key={l.href} href={l.href} onClick={() => setOpen(false)}>{l.label}</Item>
           ))}
           <Divider />
-          <Item href="/host/demo" onClick={() => setOpen(false)}>Dashboard preview</Item>
           <Item href="/host#pricing" onClick={() => setOpen(false)}>Pricing</Item>
           <Item href="/guides" onClick={() => setOpen(false)}>Host guides</Item>
           <Item href="/host/new" onClick={() => setOpen(false)}>List your stay</Item>
-          <Divider />
-          {email ? (
-            <>
-              <Item href="/host/dashboard" onClick={() => setOpen(false)} strong>Host dashboard</Item>
-              <a href="/auth/signout" className="block px-4 py-2.5 hover:bg-mist transition text-ink">Log out</a>
-            </>
-          ) : (
-            <>
-              <Item href="/login" onClick={() => setOpen(false)}>Log in</Item>
-              <Item href="/login" onClick={() => setOpen(false)} strong>Sign up</Item>
-            </>
-          )}
         </div>
       )}
     </div>
