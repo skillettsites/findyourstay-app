@@ -50,7 +50,7 @@ export function SiteBuilder() {
   const liveHref = `/host/new?website=1&tier=featured&theme=${theme}&name=${encodeURIComponent(name)}&city=${encodeURIComponent(city)}&price=${price}`;
 
   return (
-    <div className="grid lg:grid-cols-[360px_1fr] gap-6 lg:items-start">
+    <div className="grid lg:grid-cols-[360px_1fr] gap-6 lg:items-stretch">
       {/* Form */}
       <div className="space-y-4">
         <div>
@@ -90,14 +90,15 @@ export function SiteBuilder() {
         <p className="hidden lg:block text-xs text-muted text-center">No card needed to preview. We&apos;ll source real photos of your place and put it on your own domain.</p>
       </div>
 
-      {/* Live preview — desktop only; mobile uses the "See my website" button. */}
-      <div className="hidden lg:block lg:sticky lg:top-6">
-        <div className="rounded-2xl border border-line overflow-hidden bg-white shadow-float">
-          <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-line bg-mist">
+      {/* Live preview — desktop only; mobile uses the "See my website" button.
+          Stretches to match the form's height so the two columns line up. */}
+      <div className="hidden lg:flex lg:flex-col">
+        <div className="flex flex-col flex-1 rounded-2xl border border-line overflow-hidden bg-white shadow-float">
+          <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-line bg-mist shrink-0">
             <span className="w-3 h-3 rounded-full bg-[#ff5f57]" /><span className="w-3 h-3 rounded-full bg-[#febc2e]" /><span className="w-3 h-3 rounded-full bg-[#28c840]" />
             <span className="ml-2 text-xs text-muted truncate">live preview · updates as you type</span>
           </div>
-          {desktop && <iframe key={src} src={src} title="Your site preview" className="w-full h-[78vh] bg-white" />}
+          {desktop && <iframe key={src} src={src} title="Your site preview" className="w-full flex-1 min-h-0 bg-white" />}
         </div>
       </div>
     </div>
