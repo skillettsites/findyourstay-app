@@ -19,7 +19,7 @@ export default async function EditListingPage({ params }: { params: Promise<{ sl
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-3xl w-full px-4 sm:px-6 py-8">
+      <main className="mx-auto max-w-7xl w-full px-4 sm:px-6 py-8">
         <div className="mb-5">
           <BackButton fallback="/host/dashboard" />
         </div>

@@ -167,7 +167,7 @@ export function EditListing({ listing }: { listing: Listing }) {
   }
 
   return (
-    <div className={hasSite ? "lg:grid lg:grid-cols-[1fr_440px] lg:gap-8 lg:items-start" : "max-w-2xl"}>
+    <div className={hasSite ? "lg:grid lg:grid-cols-[minmax(0,1fr)_600px] lg:gap-10 lg:items-start" : "max-w-2xl"}>
       <div className="min-w-0">
         <label className="block mb-4">
           <span className="block text-sm font-semibold mb-1.5">Property name</span>
@@ -310,7 +310,7 @@ export function EditListing({ listing }: { listing: Listing }) {
 
       {/* Desktop live preview (scaled). Updates when you save. */}
       {hasSite && (
-        <div className="hidden lg:block lg:sticky lg:top-6 min-w-0">
+        <div className="hidden lg:block lg:sticky lg:top-24 min-w-0">
           <p className="text-xs text-muted mb-2">Live preview · updates when you save</p>
           <div className="rounded-2xl border border-line overflow-hidden bg-white shadow-float min-w-0">
             <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-line bg-mist">

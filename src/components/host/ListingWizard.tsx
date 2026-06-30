@@ -243,7 +243,7 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false, 
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-3xl mx-auto">
       {/* Progress */}
       <div className="flex items-center gap-2 mb-8">
         {[1, 2, 3, 4].map((s) => (
