@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createListing, getListingById, type NewListingInput } from "@/lib/db";
+import { createListing, getListingById, getListingsByHost, type NewListingInput } from "@/lib/db";
 import { enrichListingPhotos } from "@/lib/enrich";
 import { provisionSite } from "@/lib/provision";
 import { createBillingCheckout } from "@/lib/payments";
@@ -28,6 +28,16 @@ export async function POST(req: Request) {
     }
 
     await ensureHost(user, body.hostName);
+
+    // One stay per host on the current plans (otherwise a host could spin up
+    // website after website). Lift this when we add a multi-stay tier.
+    const existing = await getListingsByHost(user.id, 2);
+    if (existing.length >= 1) {
+      return NextResponse.json(
+        { error: "Your current plan includes one stay. Delete your existing stay first, or get in touch to add more.", atLimit: true },
+        { status: 403 },
+      );
+    }
 
     const { id, slug } = await createListing({
       ...body,

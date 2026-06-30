@@ -178,7 +178,32 @@ export function DashboardView({ data, demo = false }: { data: DashboardData; dem
   const { analytics: a, listings, enquiries, bookings } = data;
   const [tab, setTab] = useState<Tab>("overview");
   const [openStat, setOpenStat] = useState<string | null>(null);
+  const [delTarget, setDelTarget] = useState<DashboardListing | null>(null);
+  const [delStep, setDelStep] = useState(1);
+  const [deleting, setDeleting] = useState(false);
+  const [delErr, setDelErr] = useState("");
   const router = useRouter();
+  // One stay per host on the current plans, so hide "add" once they have one.
+  const atLimit = !demo && listings.length >= 1;
+
+  function askDelete(l: DashboardListing) { setDelTarget(l); setDelStep(1); setDelErr(""); }
+  async function confirmDelete() {
+    if (!delTarget) return;
+    setDeleting(true); setDelErr("");
+    try {
+      const res = await fetch("/api/host/listing/delete", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: delTarget.id }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error || "Could not delete the stay.");
+      setDelTarget(null); setDelStep(1);
+      router.refresh();
+    } catch (e) {
+      setDelErr(e instanceof Error ? e.message : "Could not delete the stay.");
+    } finally {
+      setDeleting(false);
+    }
+  }
   const pathname = usePathname();
   const sp = useSearchParams();
   const range = sp.get("range") ?? "30";
@@ -246,9 +271,13 @@ export function DashboardView({ data, demo = false }: { data: DashboardData; dem
           <h1 className="text-2xl font-display font-bold">{demo ? "Host dashboard preview" : "Your dashboard"}</h1>
           <p className="text-sm text-muted">{demo ? `Example data, last ${days} days` : `Signed in as ${data.email}`}{selectedListing && listings.find((l) => l.id === selectedListing) ? ` · ${listings.find((l) => l.id === selectedListing)!.propertyName}` : ""}</p>
         </div>
-        <Link href="/host/new" className="self-start bg-brand-gradient bg-brand-gradient-hover text-white text-sm font-semibold px-4 py-2.5 rounded-full shadow-glow">
-          {demo ? "Get started" : "+ Add listing"}
-        </Link>
+        {atLimit ? (
+          <span className="self-start text-xs text-muted bg-mist rounded-full px-3 py-2">One stay per plan · manage it below</span>
+        ) : (
+          <Link href="/host/new" className="self-start bg-brand-gradient bg-brand-gradient-hover text-white text-sm font-semibold px-4 py-2.5 rounded-full shadow-glow">
+            {demo ? "Get started" : "+ Add listing"}
+          </Link>
+        )}
       </div>
 
       {/* Controls: date range, per-listing filter, CSV export */}
@@ -347,18 +376,23 @@ export function DashboardView({ data, demo = false }: { data: DashboardData; dem
             listings.map((l) => {
               const p = perById.get(l.id);
               return (
-                <div key={l.id} className="flex items-center gap-4 border border-line rounded-xl p-3">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  {l.photo ? <img src={l.photo} alt="" className="w-20 h-20 rounded-lg object-cover bg-mist" /> : <div className="w-20 h-20 rounded-lg bg-mist" />}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold truncate">{l.propertyName}</p>
-                    <p className="text-sm text-muted truncate">{l.cityName}, {l.country} · {formatPrice(l.pricePerNight, l.currency)}/night{l.hasBookingSite && <span className="ml-2 text-brand font-medium">· Booking website</span>}</p>
-                    <p className="text-xs text-muted mt-0.5">{fmt(p?.impressions ?? 0)} impressions · {fmt(p?.views ?? 0)} views · {fmt(p?.enquiries ?? 0)} enquiries</p>
+                <div key={l.id} className="border border-line rounded-xl p-3">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    {l.photo ? <img src={l.photo} alt="" className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover bg-mist shrink-0" /> : <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg bg-mist shrink-0" />}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold truncate">{l.propertyName}</p>
+                      <p className="text-sm text-muted truncate">{l.cityName}, {l.country} · {formatPrice(l.pricePerNight, l.currency)}/night{l.hasBookingSite && <span className="ml-2 text-brand font-medium">· Booking website</span>}</p>
+                      <p className="text-xs text-muted mt-0.5 truncate">{fmt(p?.impressions ?? 0)} impressions · {fmt(p?.views ?? 0)} views · {fmt(p?.enquiries ?? 0)} enquiries</p>
+                    </div>
                   </div>
-                  <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+                  <div className="flex flex-wrap gap-2 mt-3">
                     <Link href={editHref(l.slug)} className="text-sm font-semibold border border-line rounded-full px-4 py-2 hover:bg-mist text-center">Edit stay</Link>
                     <Link href={calHref(l.slug)} className="text-sm font-semibold border border-line rounded-full px-4 py-2 hover:bg-mist text-center">Calendar</Link>
                     <Link href={viewHref(l.slug)} className="text-sm font-semibold border border-line rounded-full px-4 py-2 hover:bg-mist text-center">View</Link>
+                    {!demo && (
+                      <button type="button" onClick={() => askDelete(l)} className="text-sm font-semibold text-rose-600 border border-rose-200 rounded-full px-4 py-2 hover:bg-rose-50 text-center ml-auto">Delete</button>
+                    )}
                   </div>
                 </div>
               );
@@ -503,6 +537,41 @@ export function DashboardView({ data, demo = false }: { data: DashboardData; dem
                 <p className="text-xs text-emerald-600 font-semibold mt-2">✓ Answered automatically</p>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Delete stay — double confirmation, warns about the website */}
+      {delTarget && (
+        <div className="fixed inset-0 z-[60] grid place-items-center bg-black/50 px-4" onClick={() => !deleting && setDelTarget(null)}>
+          <div className="bg-white rounded-2xl shadow-float max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
+            {delStep === 1 ? (
+              <>
+                <h3 className="text-lg font-display font-bold">Delete {delTarget.propertyName}?</h3>
+                <p className="text-sm text-muted mt-2">This permanently removes your stay from FindYourStay. Travellers won&apos;t be able to find it, and its enquiries and bookings history will be gone. This can&apos;t be undone.</p>
+                {delTarget.hasBookingSite && (
+                  <div className="mt-3 flex items-start gap-2.5 bg-rose-50 border border-rose-100 rounded-xl p-3">
+                    <span className="text-lg leading-none">⚠️</span>
+                    <p className="text-sm text-rose-700">This will also take down your booking website{delTarget.domain ? <> at <b>{delTarget.domain}</b></> : ""}. It will stop working immediately.</p>
+                  </div>
+                )}
+                {delErr && <p className="text-sm text-brand mt-3">{delErr}</p>}
+                <div className="flex gap-2 justify-end mt-5">
+                  <button type="button" onClick={() => setDelTarget(null)} className="font-semibold px-4 py-2.5 rounded-full hover:bg-mist">Cancel</button>
+                  <button type="button" onClick={() => { setDelErr(""); setDelStep(2); }} className="font-semibold px-5 py-2.5 rounded-full bg-rose-600 text-white hover:bg-rose-700">Yes, continue</button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3 className="text-lg font-display font-bold">Are you absolutely sure?</h3>
+                <p className="text-sm text-muted mt-2">Last check. This permanently deletes <b>{delTarget.propertyName}</b>{delTarget.hasBookingSite ? " and its booking website" : ""}. There&apos;s no way back.</p>
+                {delErr && <p className="text-sm text-brand mt-3">{delErr}</p>}
+                <div className="flex gap-2 justify-end mt-5">
+                  <button type="button" disabled={deleting} onClick={() => setDelStep(1)} className="font-semibold px-4 py-2.5 rounded-full hover:bg-mist disabled:opacity-50">Back</button>
+                  <button type="button" disabled={deleting} onClick={confirmDelete} className="font-semibold px-5 py-2.5 rounded-full bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50">{deleting ? "Deleting…" : "Permanently delete"}</button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

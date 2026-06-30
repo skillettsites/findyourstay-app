@@ -4,11 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AMENITIES_OPTIONS, type Testimonial, type Bedroom } from "@/lib/types";
-import { suggestDomain } from "@/lib/format";
 import { PaymentLinksFields } from "./PaymentLinksFields";
 import { PerksField } from "./PerksField";
 import { TestimonialsField } from "./TestimonialsField";
 import { RoomsField } from "./RoomsField";
+import { DomainSearch } from "./DomainSearch";
 
 const TYPES = ["apartment", "house", "villa", "cottage", "room", "guest_house", "hostel", "hotel", "chalet"];
 const TYPE_LABEL: Record<string, string> = {
@@ -82,10 +82,6 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false, 
 
   const addrRef = useRef<HTMLDivElement>(null);
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (!domain && name) setDomain(suggestDomain(name));
-  }, [name, domain]);
 
   useEffect(() => {
     if (!addrOpen) return;
@@ -378,11 +374,9 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false, 
             </Field>
           ) : (
             <div className="mt-6 bg-rose-50 border border-rose-100 rounded-xl p-5">
-              <Field label="Your new website address">
-                <input value={domain} onChange={(e) => setDomain(e.target.value)} className={inputCls} />
-              </Field>
-              <p className="text-sm text-muted mt-2">
-                We&apos;ll check it&apos;s available, register it for you, and build your booking site. Guests pay you
+              <DomainSearch value={domain} onSelect={setDomain} defaultQuery={name} />
+              <p className="text-sm text-muted mt-3">
+                We register your chosen address, build your booking site on it, and host it. Guests pay you
                 directly through <span className="font-semibold text-ink">your own Stripe or PayPal link</span>, so you
                 keep 100% and we&apos;re never in the middle. Nothing technical for you to do.
               </p>
