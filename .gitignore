@@ -53,3 +53,10 @@ next-env.d.ts
 # Outreach scraped data (personal info — never commit)
 scripts/*.csv
 scripts/france-raw.json
+
+# E2E test artifacts (session tokens, screenshots, codes — never commit)
+e2e/auth.json
+e2e/otp.txt
+e2e/_tour_status.txt
+e2e/bug-report.md
+e2e/tour/
