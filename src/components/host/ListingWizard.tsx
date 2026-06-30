@@ -65,6 +65,8 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false, 
   );
   const [payStripe, setPayStripe] = useState("");
   const [payPaypal, setPayPaypal] = useState("");
+  const [heroImage, setHeroImage] = useState("");
+  const [heroUploading, setHeroUploading] = useState(false);
 
   const [tier, setTier] = useState(initialTier);
   const maxPhotos = tier === "free" ? 1 : 12;
@@ -133,11 +135,28 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false, 
     }
   }
 
+  async function onUploadHero(files: FileList | null) {
+    if (!files?.length) return;
+    setUploadErr(""); setHeroUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", files[0]);
+      const res = await fetch("/api/host/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setHeroImage(data.url);
+    } catch (e) {
+      setUploadErr(e instanceof Error ? e.message : "Upload failed.");
+    } finally {
+      setHeroUploading(false);
+    }
+  }
+
   const urlOk = /^(https?:\/\/)?[\w-]+(\.[\w-]+)+.*$/.test(bookingUrl.trim());
   const canNext =
     step === 1 ? Boolean(name.trim() && place) :
-    step === 2 ? true :
-    step === 3 ? (method === "own" ? urlOk : Boolean(domain.trim())) :
+    step === 2 ? uploaded.length >= 1 : // at least one room photo is required
+    step === 3 ? (method === "own" ? urlOk : Boolean(domain.trim() && heroImage)) : // building a site needs a hero image
     true;
 
   const total = TIER_PRICE[tier] + (method === "build" ? ADDON : 0);
@@ -161,6 +180,7 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false, 
           bookingUrl: method === "own" ? (/^https?:\/\//.test(bookingUrl.trim()) ? bookingUrl.trim() : `https://${bookingUrl.trim()}`) : undefined,
           hasBookingSite: method === "build", bookingDomain: method === "build" ? domain.trim() : undefined,
           siteTheme: method === "build" ? siteTheme : undefined,
+          heroImage: method === "build" ? heroImage || undefined : undefined,
           payStripe: method === "build" ? payStripe.trim() || undefined : undefined,
           payPaypal: method === "build" ? payPaypal.trim() || undefined : undefined,
           tier, withSite: method === "build",
@@ -307,10 +327,9 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false, 
               )}
             </div>
             <p className="text-xs text-muted mt-2">
-              {tier === "free"
-                ? "The free plan includes 1 photo. Upgrade for more, or we'll source professional photos for you."
-                : `Add up to ${maxPhotos} photos. Leave empty and we'll source professional photos of your stay for you.`}
+              At least one room photo is required. Add up to {maxPhotos} — the more the better.
             </p>
+            {uploaded.length === 0 && <p className="text-xs text-brand mt-1">Please add at least one photo of your rooms to continue.</p>}
             {uploadErr && <p className="text-xs text-brand mt-1">{uploadErr}</p>}
           </Field>
         </div>
@@ -369,6 +388,23 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false, 
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-brand mt-0.5 shrink-0"><path d="M21 21l-4.35-4.35M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z" /></svg>
                   <span>We get your site found: submitted to Google &amp; Bing for indexing, with a sitemap and an llms.txt so AI assistants can recommend you too.</span>
                 </div>
+              </div>
+
+              <div className="mt-5">
+                <p className="text-sm font-semibold mb-1">Hero background image</p>
+                <p className="text-xs text-muted mb-2">The big background photo at the top of your website. Use your best, widest shot.</p>
+                {heroImage ? (
+                  <div className="relative rounded-xl overflow-hidden border border-line aspect-[16/7]">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={heroImage} alt="" className="w-full h-full object-cover" />
+                    <button type="button" onClick={() => setHeroImage("")} className="absolute top-2 right-2 w-7 h-7 grid place-items-center rounded-full bg-black/60 text-white text-sm">×</button>
+                  </div>
+                ) : (
+                  <label className={`aspect-[16/7] rounded-xl border-2 border-dashed border-rose-200 grid place-items-center cursor-pointer hover:border-brand transition bg-white ${heroUploading ? "opacity-50 pointer-events-none" : ""}`}>
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => onUploadHero(e.target.files)} />
+                    <span className="text-center text-sm text-muted">{heroUploading ? "Uploading…" : "+ Upload hero image (required)"}</span>
+                  </label>
+                )}
               </div>
 
               <div className="mt-5 border-t border-rose-100 pt-4">

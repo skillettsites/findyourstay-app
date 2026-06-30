@@ -36,7 +36,8 @@ export interface Listing {
   pricePerNight: number | null;
   currency: string;
   amenities: string[];
-  photos: string[];
+  photos: string[]; // room/gallery photos
+  heroImage: string | null; // booking-site hero background (falls back to photos[0])
   bookingUrl: string | null; // host's own direct-booking site
   hasBookingSite: boolean; // FYS-hosted booking site add-on enabled
   verified: boolean; // Stripe-KYC verified host

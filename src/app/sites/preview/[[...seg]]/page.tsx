@@ -57,6 +57,7 @@ export default async function PreviewSitePage({ params, searchParams }: { params
     propertyType: type,
     neighborhood: null,
     amenities,
+    heroImage: null,
     siteTheme: VIBES[vibe].theme,
     description: `A wonderful ${prettyTypeWord(type)} to stay in ${city}, booked direct with the owner.`,
   };

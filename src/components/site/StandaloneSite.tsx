@@ -154,7 +154,7 @@ function Home(p: HomeProps & { theme: SiteTheme }) {
    left and a real booking/request form on the right. Used by all templates so
    every site opens with a 2-column "book now" hero on a par with the main site. */
 function HeroWithForm({ listing, t, demo, inset = false, compact = false }: { listing: Listing; t: Tokens; demo: boolean; inset?: boolean; compact?: boolean }) {
-  const photo = listing.photos[0] ?? `https://picsum.photos/seed/${listing.id}/1600/900`;
+  const photo = listing.heroImage || listing.photos[0] || `https://picsum.photos/seed/${listing.id}/1600/900`;
   const inner = (
     <>
       <ParallaxImage src={photo} alt={listing.propertyName} priority />

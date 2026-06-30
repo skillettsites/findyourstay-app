@@ -30,6 +30,7 @@ function rowToListing(r: Row): Listing {
     currency: (r.currency as string) ?? "gbp",
     amenities: Array.isArray(r.amenities) ? (r.amenities as string[]) : [],
     photos: Array.isArray(r.photos) ? (r.photos as string[]) : [],
+    heroImage: (r.hero_image as string) ?? null,
     bookingUrl: (r.booking_url as string) ?? null,
     hasBookingSite: !!r.has_booking_site,
     verified: !!r.verified,
@@ -399,6 +400,7 @@ export interface NewListingInput {
   pricePerNight?: number;
   amenities?: string[];
   photos?: string[];
+  heroImage?: string | null;
   bookingUrl?: string;
   hasBookingSite?: boolean;
   tier?: string;
@@ -453,6 +455,7 @@ export async function createListing(input: NewListingInput): Promise<{ id: strin
   if (input.payStripe) payUpd.pay_stripe = input.payStripe;
   if (input.payPaypal) payUpd.pay_paypal = input.payPaypal;
   if (input.perks && input.perks.length) payUpd.perks = input.perks;
+  if (input.heroImage) payUpd.hero_image = input.heroImage;
   if (Object.keys(payUpd).length) await sb.from(T.listings).update(payUpd).eq("id", id);
   return { id, slug };
 }
@@ -463,10 +466,18 @@ export interface UpdateListingInput {
   pricePerNight?: number | null;
   amenities?: string[];
   photos?: string[];
+  heroImage?: string | null;
   siteTheme?: string;
   payStripe?: string | null;
   payPaypal?: string | null;
   perks?: string[];
+  // address change (all-or-nothing — the autocomplete resolves these together)
+  lat?: number;
+  lng?: number;
+  cityName?: string;
+  citySlug?: string;
+  neighborhood?: string | null;
+  country?: string;
 }
 
 // Edit a listing the host owns (dashboard). Returns false if not theirs.
@@ -484,9 +495,19 @@ export async function updateListingForHost(id: string, hostId: string, patch: Up
     upd.price_per_night = p;
     upd.price_range = p == null ? "mid" : p < 70 ? "budget" : p < 160 ? "mid" : "luxury";
   }
+  // Address change: the host picked a new place; re-fuzz the public coordinates.
+  if (patch.lat != null && patch.lng != null) {
+    const f = fuzz(Number(patch.lat), Number(patch.lng));
+    upd.lat = f.lat; upd.lng = f.lng;
+  }
+  if (patch.cityName !== undefined) upd.city_name = patch.cityName;
+  if (patch.citySlug !== undefined) upd.city_slug = patch.citySlug;
+  if (patch.neighborhood !== undefined) upd.neighborhood = patch.neighborhood;
+  if (patch.country !== undefined) upd.country = patch.country;
   if (Object.keys(upd).length) await sb.from(T.listings).update(upd).eq("id", id);
   // Newer columns kept separate so a pre-migration column absence is tolerated.
   if (patch.siteTheme !== undefined) await sb.from(T.listings).update({ site_theme: patch.siteTheme }).eq("id", id);
+  if (patch.heroImage !== undefined) await sb.from(T.listings).update({ hero_image: patch.heroImage || null }).eq("id", id);
   const payUpd: Row = {};
   if (patch.payStripe !== undefined) payUpd.pay_stripe = patch.payStripe || null;
   if (patch.payPaypal !== undefined) payUpd.pay_paypal = patch.payPaypal || null;
