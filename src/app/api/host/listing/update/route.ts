@@ -27,6 +27,12 @@ export async function POST(req: Request) {
     payStripe: typeof body.payStripe === "string" ? body.payStripe : undefined,
     payPaypal: typeof body.payPaypal === "string" ? body.payPaypal : undefined,
     perks: Array.isArray(body.perks) ? body.perks.map(String).slice(0, 12) : undefined,
+    testimonials: Array.isArray(body.testimonials)
+      ? body.testimonials
+          .filter((t: unknown): t is { quote?: unknown } => !!t && typeof (t as { quote?: unknown }).quote === "string")
+          .map((t: { quote: string; author?: unknown; source?: unknown }) => ({ quote: String(t.quote).slice(0, 600), author: t.author ? String(t.author).slice(0, 80) : undefined, source: t.source ? String(t.source).slice(0, 40) : undefined }))
+          .slice(0, 12)
+      : undefined,
     ...(hasNewAddress ? {
       lat: Number(body.lat), lng: Number(body.lng),
       cityName: typeof body.cityName === "string" ? body.cityName : undefined,

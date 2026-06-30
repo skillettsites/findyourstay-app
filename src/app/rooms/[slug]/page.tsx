@@ -77,8 +77,6 @@ export default async function RoomPage({ params }: { params: Promise<{ slug: str
         {/* Title */}
         <h1 className="text-2xl sm:text-3xl font-display font-bold">{listing.propertyName}</h1>
         <div className="flex flex-wrap items-center gap-x-2 text-sm text-muted mt-1">
-          {listing.rating != null && <span className="text-ink">★ {listing.rating.toFixed(2)}</span>}
-          <span>· {listing.reviewCount} reviews ·</span>
           <span className="underline">
             {listing.neighborhood ? `${listing.neighborhood}, ` : ""}
             {listing.cityName}, {listing.country}

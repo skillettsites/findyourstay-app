@@ -69,9 +69,6 @@ export function BookingBox({ listing }: { listing: Listing }) {
           <span className="font-semibold">{formatPrice(listing.pricePerNight, listing.currency)}</span>
           <span className="text-muted text-base"> night</span>
         </p>
-        {listing.rating != null && (
-          <span className="text-sm text-muted">★ {listing.rating.toFixed(2)} · {listing.reviewCount} reviews</span>
-        )}
       </div>
 
       <div className="mt-4 grid grid-cols-2 border border-line rounded-xl overflow-hidden text-sm">

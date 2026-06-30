@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { AMENITIES_OPTIONS } from "@/lib/types";
+import { AMENITIES_OPTIONS, type Testimonial } from "@/lib/types";
 import { suggestDomain } from "@/lib/format";
 import { PaymentLinksFields } from "./PaymentLinksFields";
 import { PerksField } from "./PerksField";
+import { TestimonialsField } from "./TestimonialsField";
 
 const TYPES = ["apartment", "house", "villa", "cottage", "room", "guest_house", "hostel", "hotel", "chalet"];
 const TYPE_LABEL: Record<string, string> = {
@@ -67,6 +68,7 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false, 
   const [payPaypal, setPayPaypal] = useState("");
   const [heroImage, setHeroImage] = useState("");
   const [heroUploading, setHeroUploading] = useState(false);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
 
   const [tier, setTier] = useState(initialTier);
   const maxPhotos = tier === "free" ? 1 : 12;
@@ -161,6 +163,19 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false, 
 
   const total = TIER_PRICE[tier] + (method === "build" ? ADDON : 0);
 
+  // Open a live preview of the host's own site (their photos/hero/copy) in a new tab.
+  const THEME_TO_VIBE: Record<string, string> = { classic: "mountain", modern: "city", coastal: "beach" };
+  function openPreview() {
+    const p = new URLSearchParams({ vibe: THEME_TO_VIBE[siteTheme] || "beach", name, city: place?.city || "", country: place?.country || "", price: price || "120", type });
+    if (heroImage) p.set("hero", heroImage);
+    if (description) p.set("desc", description);
+    if (perks.length) p.set("perks", perks.join("|"));
+    if (amenities.length) p.set("amenities", amenities.join("|"));
+    uploaded.forEach((u) => p.append("photo", u));
+    window.open(`/sites/preview?${p.toString()}`, "_blank");
+  }
+  const canPreview = Boolean(name.trim() && place && uploaded.length >= 1 && heroImage);
+
   async function publish() {
     setBusy(true);
     setError("");
@@ -181,6 +196,7 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false, 
           hasBookingSite: method === "build", bookingDomain: method === "build" ? domain.trim() : undefined,
           siteTheme: method === "build" ? siteTheme : undefined,
           heroImage: method === "build" ? heroImage || undefined : undefined,
+          testimonials: method === "build" ? testimonials.filter((t) => t.quote.trim()) : undefined,
           payStripe: method === "build" ? payStripe.trim() || undefined : undefined,
           payPaypal: method === "build" ? payPaypal.trim() || undefined : undefined,
           tier, withSite: method === "build",
@@ -408,7 +424,20 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false, 
               </div>
 
               <div className="mt-5 border-t border-rose-100 pt-4">
+                <TestimonialsField testimonials={testimonials} onChange={setTestimonials} />
+              </div>
+
+              <div className="mt-5 border-t border-rose-100 pt-4">
                 <PaymentLinksFields stripe={payStripe} paypal={payPaypal} onStripe={setPayStripe} onPaypal={setPayPaypal} />
+              </div>
+
+              <div className="mt-5 border-t border-rose-100 pt-4">
+                <button type="button" onClick={openPreview} disabled={!canPreview} className="w-full bg-ink text-white disabled:opacity-40 font-semibold py-3 rounded-full hover:bg-ink/90 transition">
+                  Preview your website ↗
+                </button>
+                <p className="text-xs text-muted mt-1.5 text-center">
+                  {canPreview ? "Opens your site with your photos and details in a new tab." : "Add your address, a room photo and a hero image to preview."}
+                </p>
               </div>
             </div>
           )}

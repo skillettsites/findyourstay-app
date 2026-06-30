@@ -123,11 +123,6 @@ export function ListingCard({ listing, hrefSuffix = "" }: { listing: Listing; hr
           <h3 className="font-semibold text-ink truncate group-hover:text-brand transition-colors">
             {listing.propertyName}
           </h3>
-          {listing.rating != null && (
-            <span className="flex items-center gap-1 text-sm shrink-0 text-ink">
-              <Star /> {listing.rating.toFixed(2)}
-            </span>
-          )}
         </div>
         <p className="text-muted text-sm truncate">
           {prettyType(listing.propertyType)} · {listing.cityName}, {listing.country}
@@ -157,14 +152,6 @@ function CarBtn({ dir, onClick }: { dir: "prev" | "next"; onClick: (e: React.Mou
         <path d={dir === "prev" ? "M15 6l-6 6 6 6" : "M9 6l6 6-6 6"} strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     </button>
-  );
-}
-
-function Star() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" className="text-ink">
-      <path d="M12 2l2.9 6.3 6.8.7-5.1 4.6 1.5 6.7L12 17.8 5.9 20.6l1.5-6.7L2.3 9l6.8-.7L12 2Z" />
-    </svg>
   );
 }
 

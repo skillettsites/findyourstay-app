@@ -44,7 +44,19 @@ export default async function PreviewSitePage({ params, searchParams }: { params
   const bedrooms = one(sp.bedrooms) ? Math.max(1, Math.min(20, Number(one(sp.bedrooms)) || 0)) : 0;
   const type = (one(sp.type) || base.propertyType) as Listing["propertyType"];
 
-  const amenities = [...(bedrooms ? [`${bedrooms} bedroom${bedrooms > 1 ? "s" : ""}`] : []), ...base.amenities].slice(0, 8);
+  const amenitiesParam = one(sp.amenities);
+  const amenities = amenitiesParam
+    ? amenitiesParam.split("|").filter(Boolean).slice(0, 10)
+    : [...(bedrooms ? [`${bedrooms} bedroom${bedrooms > 1 ? "s" : ""}`] : []), ...base.amenities].slice(0, 8);
+
+  // Optional real content passed from the add/edit forms so the preview shows the
+  // host's own photos, hero, description and perks (not just the example defaults).
+  const heroImage = one(sp.hero) || null;
+  const photoParam = sp.photo;
+  const photos = Array.isArray(photoParam) ? photoParam : photoParam ? [photoParam] : base.photos;
+  const desc = one(sp.desc);
+  const perksParam = one(sp.perks);
+  const perks = perksParam ? perksParam.split("|").filter(Boolean).slice(0, 8) : base.perks;
 
   const listing: Listing = {
     ...base,
@@ -57,9 +69,11 @@ export default async function PreviewSitePage({ params, searchParams }: { params
     propertyType: type,
     neighborhood: null,
     amenities,
-    heroImage: null,
+    photos,
+    heroImage,
+    perks,
     siteTheme: VIBES[vibe].theme,
-    description: `A wonderful ${prettyTypeWord(type)} to stay in ${city}, booked direct with the owner.`,
+    description: desc || `A wonderful ${prettyTypeWord(type)} to stay in ${city}, booked direct with the owner.`,
   };
 
   const domain = suggestDomain(name);

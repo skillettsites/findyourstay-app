@@ -42,6 +42,7 @@ function rowToListing(r: Row): Listing {
     payStripe: (r.pay_stripe as string) ?? null,
     payPaypal: (r.pay_paypal as string) ?? null,
     perks: Array.isArray(r.perks) ? (r.perks as string[]) : [],
+    testimonials: Array.isArray(r.testimonials) ? (r.testimonials as Listing["testimonials"]) : [],
     createdAt: r.created_at as string,
   };
 }
@@ -408,6 +409,7 @@ export interface NewListingInput {
   payStripe?: string;
   payPaypal?: string;
   perks?: string[];
+  testimonials?: import("./types").Testimonial[];
   hostEmail?: string;
   hostName?: string;
 }
@@ -456,6 +458,7 @@ export async function createListing(input: NewListingInput): Promise<{ id: strin
   if (input.payPaypal) payUpd.pay_paypal = input.payPaypal;
   if (input.perks && input.perks.length) payUpd.perks = input.perks;
   if (input.heroImage) payUpd.hero_image = input.heroImage;
+  if (input.testimonials && input.testimonials.length) payUpd.testimonials = input.testimonials;
   if (Object.keys(payUpd).length) await sb.from(T.listings).update(payUpd).eq("id", id);
   return { id, slug };
 }
@@ -471,6 +474,7 @@ export interface UpdateListingInput {
   payStripe?: string | null;
   payPaypal?: string | null;
   perks?: string[];
+  testimonials?: import("./types").Testimonial[];
   // address change (all-or-nothing — the autocomplete resolves these together)
   lat?: number;
   lng?: number;
@@ -512,6 +516,7 @@ export async function updateListingForHost(id: string, hostId: string, patch: Up
   if (patch.payStripe !== undefined) payUpd.pay_stripe = patch.payStripe || null;
   if (patch.payPaypal !== undefined) payUpd.pay_paypal = patch.payPaypal || null;
   if (patch.perks !== undefined) payUpd.perks = patch.perks;
+  if (patch.testimonials !== undefined) payUpd.testimonials = patch.testimonials;
   if (Object.keys(payUpd).length) await sb.from(T.listings).update(payUpd).eq("id", id);
 
   // If this listing has a live booking site, re-submit it to IndexNow so the

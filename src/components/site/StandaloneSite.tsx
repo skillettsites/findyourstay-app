@@ -247,6 +247,8 @@ function HomeClassic({ listing, photos, href, t, demo, compactBook }: HomeProps)
         </Stagger>
       </section>
 
+      <GuestQuotes listing={listing} t={t} />
+
       {/* CTA */}
       <section className={t.dark}>
         <FadeUp className="mx-auto max-w-6xl px-4 sm:px-6 py-20 text-center">
@@ -313,6 +315,8 @@ function HomeModern({ listing, photos, href, t, demo, compactBook }: HomeProps) 
         </div>
       </section>
 
+      <GuestQuotes listing={listing} t={t} />
+
       {/* CTA */}
       <section className="bg-ink text-white">
         <FadeUp className="mx-auto max-w-6xl px-4 sm:px-6 py-24 flex flex-col md:flex-row md:items-end md:justify-between gap-8">
@@ -369,6 +373,8 @@ function HomeCoastal({ listing, photos, href, t, demo, compactBook }: HomeProps)
           </Item>
         ))}
       </Stagger>
+
+      <GuestQuotes listing={listing} t={t} />
 
       {/* CTA — rounded emerald slab */}
       <section className="px-3 pb-3">
@@ -505,6 +511,29 @@ function Book({ listing, t, demo = false }: { listing: Listing; t: Tokens; demo?
         <div className="lg:sticky lg:top-24">
           <MicrositeBooking listing={listing} demo={demo} />
         </div>
+      </FadeUp>
+    </section>
+  );
+}
+
+/* ---------------- What guests say (host-curated quotes) ---------------- */
+function GuestQuotes({ listing, t }: { listing: Listing; t: Tokens }) {
+  if (!listing.testimonials?.length) return null;
+  return (
+    <section className={t.alt}>
+      <FadeUp className="mx-auto max-w-6xl px-4 sm:px-6 py-16 sm:py-20">
+        <p className={`text-xs font-semibold uppercase tracking-[0.3em] ${t.accent} text-center`}>What guests say</p>
+        <h2 className="font-serif font-medium text-3xl sm:text-4xl mt-3 text-center">Loved by our guests</h2>
+        <Stagger className="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {listing.testimonials.slice(0, 6).map((q, i) => (
+            <Item key={i} className={`bg-white border border-line p-6 shadow-card ${t.radius}`}>
+              <p className="text-ink/85 leading-relaxed font-light">&ldquo;{q.quote}&rdquo;</p>
+              <p className="mt-4 text-sm font-semibold">
+                {q.author || "Guest"}{q.source ? <span className="text-muted font-normal"> · via {q.source}</span> : null}
+              </p>
+            </Item>
+          ))}
+        </Stagger>
       </FadeUp>
     </section>
   );

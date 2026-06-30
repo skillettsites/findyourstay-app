@@ -22,6 +22,10 @@ const BASE = {
   payStripe: "https://buy.stripe.com/example",
   payPaypal: "https://www.paypal.com/paypalme/example",
   perks: ["Best price guaranteed", "Free welcome drink", "Free late checkout"],
+  testimonials: [
+    { quote: "One of the loveliest places we have stayed. Spotless, a warm welcome, and booking direct was so easy.", author: "Sarah & Tom", source: "Airbnb" },
+    { quote: "Perfect location and the host could not have been more helpful. We will definitely be back.", author: "James", source: "Booking.com" },
+  ],
   createdAt: "2026-01-01T00:00:00.000Z",
 };
 

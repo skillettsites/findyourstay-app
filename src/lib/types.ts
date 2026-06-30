@@ -2,6 +2,12 @@
 // These mirror the spec's data model; the local SQLite store and the future
 // Supabase/Postgres store both map onto these shapes.
 
+export interface Testimonial {
+  quote: string;
+  author?: string; // "Sarah, June 2026"
+  source?: string; // "Airbnb", "Booking.com", "Google", "Direct guest"
+}
+
 export type ListingTier = "free" | "standard" | "featured" | "pro";
 export type ListingStatus = "unclaimed" | "pending" | "active" | "suspended";
 export type SiteTheme = "classic" | "modern" | "coastal";
@@ -49,6 +55,7 @@ export interface Listing {
   payStripe: string | null; // host's own Stripe payment link
   payPaypal: string | null; // host's own PayPal.Me link
   perks: string[]; // "book direct and get..." benefits
+  testimonials: Testimonial[]; // host-curated guest quotes (no on-platform reviews)
   createdAt: string;
 }
 
