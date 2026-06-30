@@ -176,6 +176,9 @@ export function ListingWizard({ initialTier = "featured", initialBuild = false, 
     if (perks.length) p.set("perks", perks.join("|"));
     if (amenities.length) p.set("amenities", amenities.join("|"));
     uploaded.forEach((u) => p.append("photo", u));
+    const beds = bedrooms.filter((b) => b.photos.length);
+    if (beds.length) p.set("rooms", JSON.stringify(beds));
+    p.set("bath", String(bathrooms));
     window.open(`/sites/preview?${p.toString()}`, "_blank");
   }
   const canPreview = Boolean(name.trim() && place && uploaded.length >= 1 && heroImage);

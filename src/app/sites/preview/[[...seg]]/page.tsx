@@ -57,6 +57,10 @@ export default async function PreviewSitePage({ params, searchParams }: { params
   const desc = one(sp.desc);
   const perksParam = one(sp.perks);
   const perks = perksParam ? perksParam.split("|").filter(Boolean).slice(0, 8) : base.perks;
+  let bedroomsData = base.bedrooms;
+  try { const rd = one(sp.rooms); if (rd) { const parsed = JSON.parse(rd); if (Array.isArray(parsed)) bedroomsData = parsed.slice(0, 20); } } catch { /* ignore bad json */ }
+  const bathParam = one(sp.bath);
+  const bathrooms = bathParam ? Math.max(0, Math.min(20, Number(bathParam) || 0)) : base.bathrooms;
 
   const listing: Listing = {
     ...base,
@@ -70,6 +74,8 @@ export default async function PreviewSitePage({ params, searchParams }: { params
     neighborhood: null,
     amenities,
     photos,
+    bedrooms: bedroomsData,
+    bathrooms,
     heroImage,
     perks,
     siteTheme: VIBES[vibe].theme,
