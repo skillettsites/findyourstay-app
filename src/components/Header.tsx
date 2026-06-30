@@ -32,14 +32,14 @@ export function Header({ showSearch = true }: { showSearch?: boolean }) {
         scrolled ? "border-line" : "border-transparent"
       }`}
     >
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 h-[60px] sm:h-[68px] flex items-center justify-between gap-4">
-        <Brand />
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 h-[60px] sm:h-[68px] flex items-center justify-between gap-2 sm:gap-4">
+        <Brand className="min-w-0 shrink" />
         {showSearch && (
           <div className="hidden md:block">
             <SearchBar compact />
           </div>
         )}
-        <nav className="flex items-center gap-1 sm:gap-2">
+        <nav className="flex items-center gap-1 sm:gap-2 shrink-0">
           <Link href="/guests" className="hidden lg:inline-block text-sm font-semibold px-3.5 py-2 rounded-full hover:bg-mist transition">
             For travellers
           </Link>
@@ -111,12 +111,12 @@ function Menu() {
         onClick={() => setOpen((o) => !o)}
         aria-label="Menu"
         aria-expanded={open}
-        className="flex items-center gap-2 border border-line rounded-full pl-3 pr-1.5 py-1.5 bg-white hover:shadow-float transition-shadow"
+        className="flex items-center gap-2 border border-line rounded-full px-2.5 sm:pl-3 sm:pr-1.5 py-1.5 bg-white hover:shadow-float transition-shadow"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M3 6h18M3 12h18M3 18h18" strokeLinecap="round" />
         </svg>
-        <span className={`grid place-items-center w-7 h-7 rounded-full text-white text-xs font-semibold ${email ? "bg-brand-gradient" : "bg-ink"}`}>
+        <span className={`hidden sm:grid place-items-center w-7 h-7 rounded-full text-white text-xs font-semibold ${email ? "bg-brand-gradient" : "bg-ink"}`}>
           {email ? email[0].toUpperCase() : (
             <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 2c-3.3 0-8 1.7-8 5v1h16v-1c0-3.3-4.7-5-8-5Z" /></svg>
           )}
