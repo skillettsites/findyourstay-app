@@ -28,7 +28,8 @@ function LoginInner() {
   const [error, setError] = useState("");
   const [note, setNote] = useState("");
 
-  const reset = (m: "password" | "code") => { setMode(m); setCodeStep("email"); setError(""); setNote(""); setPassword(""); setPassword2(""); setCode(""); };
+  const [resetPw, setResetPw] = useState(false); // forgot-password flow → force a new password after the code
+  const reset = (m: "password" | "code", asReset = false) => { setMode(m); setCodeStep("email"); setResetPw(asReset); setError(""); setNote(""); setPassword(""); setPassword2(""); setCode(""); };
   const done = () => { router.push(next); router.refresh(); };
 
   // --- Password sign-in (returning hosts) ---
@@ -73,9 +74,12 @@ function LoginInner() {
       const { data, error: vErr } = await supabase.auth.verifyOtp({ email: email.trim().toLowerCase(), token: code.trim(), type: "email" });
       if (vErr) throw new Error("That code didn't work. Check it and try again.");
       const hasPassword = Boolean(data.user?.user_metadata?.has_password);
-      if (hasPassword) { done(); return; }
-      // first time (or never set one): ask them to create a password
-      setCodeStep("setpw"); setNote("You're verified. Set a password so you can log in faster next time."); setBusy(false);
+      // Skip the set-password step only for a plain code sign-in by someone who
+      // already has a password. New users and the forgot-password flow set one.
+      if (hasPassword && !resetPw) { done(); return; }
+      setCodeStep("setpw");
+      setNote(resetPw ? "Verified. Now choose a new password." : "You're verified. Set a password so you can log in faster next time.");
+      setBusy(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Verification failed.");
       setBusy(false);
@@ -119,6 +123,9 @@ function LoginInner() {
                   <span className="block text-sm font-semibold mb-1.5">Password</span>
                   <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Your password" className={inputCls} />
                 </label>
+                <div className="text-right">
+                  <button type="button" onClick={() => reset("code", true)} className="text-xs font-semibold text-muted hover:text-ink">Forgot your password?</button>
+                </div>
                 <button disabled={busy} className={btnCls}>{busy ? "Logging in…" : "Log in"}</button>
               </form>
               <button type="button" onClick={() => reset("code")} className="w-full text-sm font-semibold text-brand py-2 mt-2">
@@ -134,8 +141,8 @@ function LoginInner() {
           {/* ---------- CODE MODE: email -> code -> set password ---------- */}
           {mode === "code" && codeStep === "email" && (
             <>
-              <h1 className="text-2xl font-display font-bold">Sign in with a code</h1>
-              <p className="text-muted mt-1 text-sm">We&apos;ll email you a one-time code. No password needed to start.</p>
+              <h1 className="text-2xl font-display font-bold">{resetPw ? "Reset your password" : "Sign in with a code"}</h1>
+              <p className="text-muted mt-1 text-sm">{resetPw ? "We'll email you a one-time code to verify it's you, then you can set a new password." : "We'll email you a one-time code. No password needed to start."}</p>
               <form onSubmit={sendCode} className="mt-6 space-y-3">
                 <label className="block">
                   <span className="block text-sm font-semibold mb-1.5">Email</span>
@@ -170,8 +177,8 @@ function LoginInner() {
 
           {mode === "code" && codeStep === "setpw" && (
             <>
-              <h1 className="text-2xl font-display font-bold">Set a password</h1>
-              <p className="text-muted mt-1 text-sm">So you can log in with just a password next time.</p>
+              <h1 className="text-2xl font-display font-bold">{resetPw ? "Set a new password" : "Set a password"}</h1>
+              <p className="text-muted mt-1 text-sm">{resetPw ? "Choose a new password for your account." : "So you can log in with just a password next time."}</p>
               <form onSubmit={setPasswordAndFinish} className="mt-6 space-y-3">
                 {note && <p className="text-sm text-emerald-700">{note}</p>}
                 <label className="block">
@@ -182,7 +189,7 @@ function LoginInner() {
                   <span className="block text-sm font-semibold mb-1.5">Confirm password</span>
                   <input type="password" required value={password2} onChange={(e) => setPassword2(e.target.value)} placeholder="Re-enter your password" className={inputCls} />
                 </label>
-                <button disabled={busy} className={btnCls}>{busy ? "Saving…" : "Set password & continue"}</button>
+                <button disabled={busy} className={btnCls}>{busy ? "Saving…" : resetPw ? "Save new password & log in" : "Set password & continue"}</button>
               </form>
             </>
           )}
