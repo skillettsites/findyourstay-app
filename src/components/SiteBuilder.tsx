@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 
 const VIBES = [
@@ -49,8 +49,26 @@ export function SiteBuilder() {
   const theme = VIBES.find((v) => v.key === vibe)?.theme ?? "coastal";
   const liveHref = `/host/new?website=1&tier=featured&theme=${theme}&name=${encodeURIComponent(name)}&city=${encodeURIComponent(city)}&price=${price}`;
 
+  // Render the iframe at a real desktop width and scale it down to fit the box,
+  // so the preview shows the full 2-column hero (incl. the pay buttons) without
+  // scrolling — instead of rendering at the narrow box width (mobile layout).
+  const FRAME_W = 1280;
+  const FRAME_H = 880;
+  const previewRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0.58);
+  useEffect(() => {
+    if (!desktop) return;
+    const el = previewRef.current;
+    if (!el) return;
+    const update = () => setScale(el.clientWidth / FRAME_W);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [desktop]);
+
   return (
-    <div className="grid lg:grid-cols-[360px_1fr] gap-6 lg:items-stretch">
+    <div className="grid lg:grid-cols-[360px_1fr] gap-6 lg:items-start">
       {/* Form */}
       <div className="space-y-4">
         <div>
@@ -91,14 +109,25 @@ export function SiteBuilder() {
       </div>
 
       {/* Live preview — desktop only; mobile uses the "See my website" button.
-          Stretches to match the form's height so the two columns line up. */}
-      <div className="hidden lg:flex lg:flex-col">
-        <div className="flex flex-col flex-1 rounded-2xl border border-line overflow-hidden bg-white shadow-float">
-          <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-line bg-mist shrink-0">
+          The iframe renders at desktop width (1280) and is scaled to fit, so the
+          full 2-column hero (with the pay buttons) is visible without scrolling. */}
+      <div className="hidden lg:block lg:sticky lg:top-6">
+        <div className="rounded-2xl border border-line overflow-hidden bg-white shadow-float">
+          <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-line bg-mist">
             <span className="w-3 h-3 rounded-full bg-[#ff5f57]" /><span className="w-3 h-3 rounded-full bg-[#febc2e]" /><span className="w-3 h-3 rounded-full bg-[#28c840]" />
             <span className="ml-2 text-xs text-muted truncate">live preview · updates as you type</span>
           </div>
-          {desktop && <iframe key={src} src={src} title="Your site preview" className="w-full flex-1 min-h-0 bg-white" />}
+          <div ref={previewRef} className="relative w-full overflow-hidden bg-white" style={{ height: Math.round(FRAME_H * scale) }}>
+            {desktop && (
+              <iframe
+                key={src}
+                src={src}
+                title="Your site preview"
+                style={{ width: FRAME_W, height: FRAME_H, transform: `scale(${scale})`, transformOrigin: "top left", border: 0 }}
+                className="bg-white"
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>
