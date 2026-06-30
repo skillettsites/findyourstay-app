@@ -49,3 +49,7 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# Outreach scraped data (personal info — never commit)
+scripts/*.csv
+scripts/france-raw.json
