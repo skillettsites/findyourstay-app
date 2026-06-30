@@ -109,6 +109,7 @@ function Menu() {
           <Divider />
           <Item href="/host/demo" onClick={() => setOpen(false)}>Dashboard preview</Item>
           <Item href="/host#pricing" onClick={() => setOpen(false)}>Pricing</Item>
+          <Item href="/guides" onClick={() => setOpen(false)}>Host guides</Item>
           <Item href="/host/new" onClick={() => setOpen(false)}>List your stay</Item>
           <Divider />
           {email ? (

@@ -18,6 +18,7 @@ export function Footer() {
           <ul className="space-y-2 text-muted">
             <li><Link href="/host" className="hover:underline">What we do</Link></li>
             <li><Link href="/host/new" className="hover:underline">List your stay</Link></li>
+            <li><Link href="/guides" className="hover:underline">Host guides</Link></li>
             <li><Link href="/host#pricing" className="hover:underline">Pricing</Link></li>
             <li><Link href="/host/dashboard" className="hover:underline">Host dashboard</Link></li>
           </ul>
