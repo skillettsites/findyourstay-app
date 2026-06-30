@@ -111,8 +111,8 @@ export function SiteBuilder() {
       {/* Live preview — desktop only; mobile uses the "See my website" button.
           The iframe renders at desktop width (1280) and is scaled to fit, so the
           full 2-column hero (with the pay buttons) is visible without scrolling. */}
-      <div className="hidden lg:block lg:sticky lg:top-6">
-        <div className="rounded-2xl border border-line overflow-hidden bg-white shadow-float">
+      <div className="hidden lg:block lg:sticky lg:top-6 min-w-0">
+        <div className="rounded-2xl border border-line overflow-hidden bg-white shadow-float min-w-0">
           <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-line bg-mist">
             <span className="w-3 h-3 rounded-full bg-[#ff5f57]" /><span className="w-3 h-3 rounded-full bg-[#febc2e]" /><span className="w-3 h-3 rounded-full bg-[#28c840]" />
             <span className="ml-2 text-xs text-muted truncate">live preview · updates as you type</span>
