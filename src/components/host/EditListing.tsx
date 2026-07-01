@@ -55,6 +55,7 @@ export function EditListing({ listing }: { listing: Listing }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
+  const [triedSave, setTriedSave] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
 
   // --- live preview (desktop iframe, scaled) ---
@@ -176,6 +177,23 @@ export function EditListing({ listing }: { listing: Listing }) {
   // Directly on click (no await first) so mobile popup blockers don't fire.
   function openPreview() {
     window.open(`/sites/${listing.slug}?v=${previewVer || "live"}`, "_blank");
+  }
+
+  // Why Save is greyed out, so a click can explain exactly what's missing.
+  function missingReason(): string {
+    if (busy) return "";
+    if (!name.trim()) return "Add a property name to save.";
+    if (photos.length < 1) return "Add at least one room photo to save.";
+    if (!bedroomsOk) return "Each bedroom needs at least one photo (up to 5) to save.";
+    if (hasSite && !heroImage) return "Add a website hero image to save.";
+    if (!dirty) return "You haven't made any changes to save yet.";
+    return "";
+  }
+  function onSaveClick() {
+    if (busy) return;
+    if (!canSave) { setTriedSave(true); return; } // greyed: explain instead of saving
+    setTriedSave(false);
+    save();
   }
 
   return (
@@ -313,21 +331,29 @@ export function EditListing({ listing }: { listing: Listing }) {
           </div>
         )}
 
-        <div className="flex flex-wrap items-center gap-3 sticky bottom-0 bg-white py-3 border-t border-line">
-          <button onClick={save} disabled={!canSave} className="bg-brand-gradient bg-brand-gradient-hover disabled:opacity-50 text-white font-semibold px-7 py-3 rounded-full shadow-glow">
-            {busy ? "Saving…" : "Save changes"}
-          </button>
-          {hasSite && (
-            <button type="button" onClick={openPreview} disabled={dirty} title={dirty ? "Save your changes first" : ""} className="border border-ink font-semibold px-5 py-3 rounded-full disabled:opacity-40 hover:bg-mist">
-              Preview website ↗
+        <div className="sticky bottom-0 bg-white py-3 border-t border-line">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Clickable even when greyed, so a click can say what's missing. */}
+            <button type="button" onClick={onSaveClick} aria-disabled={!canSave} className={`text-white font-semibold px-7 py-3 rounded-full shadow-glow transition ${canSave ? "bg-brand-gradient bg-brand-gradient-hover" : "bg-brand-gradient opacity-50 cursor-not-allowed"}`}>
+              {busy ? "Saving…" : "Save changes"}
             </button>
-          )}
-          <Link href="/host/dashboard" className="font-semibold px-5 py-3 rounded-full hover:bg-mist">Back to dashboard</Link>
-          {dirty && valid && <span className="text-xs text-muted">Save to update your live website, then preview</span>}
-          {dirty && !valid && <span className="text-xs text-muted">Add the required photos to save</span>}
-          {!dirty && !msg && <span className="text-xs text-muted">No changes to save</span>}
-          {msg && <span className="text-sm text-emerald-700">{msg}</span>}
-          {err && <span className="text-sm text-brand">{err}</span>}
+            {hasSite && (
+              <button type="button" onClick={openPreview} disabled={dirty} title={dirty ? "Save your changes first" : ""} className="border border-ink font-semibold px-5 py-3 rounded-full disabled:opacity-40 hover:bg-mist">
+                Preview website ↗
+              </button>
+            )}
+            <Link href="/host/dashboard" className="font-semibold px-5 py-3 rounded-full hover:bg-mist">Back to dashboard</Link>
+          </div>
+          {/* Feedback line, directly under the buttons */}
+          {(() => {
+            const reason = missingReason();
+            if (err) return <p className="text-sm text-brand mt-2">{err}</p>;
+            if (triedSave && !canSave && reason) return <p className="text-sm text-amber-600 mt-2">{reason}</p>;
+            if (dirty && valid) return <p className="text-sm text-muted mt-2">Save to update your live website, then preview.</p>;
+            if (msg) return <p className="text-sm text-emerald-700 mt-2">{msg}</p>;
+            if (!dirty) return <p className="text-xs text-muted mt-2">No changes to save.</p>;
+            return null;
+          })()}
         </div>
       </div>
 
