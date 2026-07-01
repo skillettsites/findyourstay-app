@@ -554,6 +554,14 @@ export async function getHostListings(limit = 10): Promise<Listing[]> {
   return (data ?? []).map(rowToListing);
 }
 
+// Property/website allowance by plan. Pro is a bundle (up to 5 stays + 5
+// websites); every other plan is a single stay + single website. A host counts
+// as "on Pro" once any of their listings is the pro tier.
+export function planAllowance(listings: { tier: string }[]): { properties: number; websites: number; isPro: boolean } {
+  const isPro = listings.some((l) => l.tier === "pro");
+  return { properties: isPro ? 5 : 1, websites: isPro ? 5 : 1, isPro };
+}
+
 // Listings owned by a specific logged-in host.
 export async function getListingsByHost(hostId: string, limit = 50): Promise<Listing[]> {
   const { data } = await sb

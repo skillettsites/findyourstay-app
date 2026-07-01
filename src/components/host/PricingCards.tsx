@@ -18,11 +18,11 @@ const TIERS: Tier[] = [
   { key: "free", name: "Free", price: 0, photos: "Text-only listing", featured: false,
     features: ["Listed on city + search pages", "Enquiry relay", "1 property", "Listed below paid stays"] },
   { key: "standard", name: "Standard", price: 79, photos: "6 photos", featured: false,
-    features: ["Photo listing", "‘Book direct’ link to your site", "Enquiry relay", "Basic stats", "Up to 3 properties"] },
+    features: ["Photo listing", "‘Book direct’ link to your site", "Enquiry relay", "Basic stats", "1 property + 1 website"] },
   { key: "featured", name: "Featured", price: 149, photos: "10 photos", featured: true,
-    features: ["Everything in Standard", "Featured placement", "‘Featured Stay’ badge", "Detailed analytics", "Up to 10 properties"] },
+    features: ["Everything in Standard", "Featured placement", "‘Featured Stay’ badge", "Detailed analytics", "1 property + 1 website"] },
   { key: "pro", name: "Pro", price: 299, photos: "20 photos", featured: false,
-    features: ["Everything in Featured", "Top priority placement", "Dedicated profile page", "Monthly report", "Unlimited properties"] },
+    features: ["Everything in Featured", "Top priority placement", "Dedicated profile page", "Monthly report", "Up to 5 properties + 5 websites"] },
 ];
 
 export function PricingCards() {

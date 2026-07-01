@@ -62,6 +62,9 @@ export function EditListing({ listing }: { listing: Listing }) {
   const [scale, setScale] = useState(0.36);
   const [desktop, setDesktop] = useState(false);
   const [previewKey, setPreviewKey] = useState(0);
+  // Cache-bust token so the preview always loads the just-saved content, never a
+  // stale cached copy (the source of the "still shows the old stuff" bug).
+  const [previewVer, setPreviewVer] = useState(0);
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 1024px)");
     const u = () => setDesktop(mq.matches); u();
@@ -139,14 +142,11 @@ export function EditListing({ listing }: { listing: Listing }) {
     finally { setHeroUploading(false); }
   }
 
-  async function save(preview: boolean) {
+  async function save() {
     setErr(""); setMsg("");
     if (photos.length === 0) { setErr("Please add at least one room photo before saving."); return; }
     if (!bedroomsOk) { setErr("Every bedroom needs at least one photo (up to 5)."); return; }
     if (hasSite && !heroImage) { setErr("Please add a hero background image for your website."); return; }
-    // On mobile we open the tab synchronously (inside the click) to dodge popup blockers.
-    let win: Window | null = null;
-    if (preview && hasSite && !desktop) win = window.open("about:blank", "_blank");
     setBusy(true);
     try {
       const res = await fetch("/api/host/listing/update", {
@@ -162,16 +162,20 @@ export function EditListing({ listing }: { listing: Listing }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setSavedSnap(curSnap);
-      setMsg(hasSite ? "Saved. Listing and website updated." : "Listing updated.");
+      setMsg(hasSite ? "Saved. Preview is up to date." : "Listing updated.");
+      // Refresh the preview to the just-saved version (bust any cached copy).
+      setPreviewVer(Date.now());
+      if (hasSite && desktop) setPreviewKey((k) => k + 1);
       router.refresh();
-      if (preview && hasSite) {
-        if (desktop) setPreviewKey((k) => k + 1);
-        else if (win) win.location.href = `/sites/${listing.slug}`;
-      }
     } catch (e) {
-      if (win) win.close();
       setErr(e instanceof Error ? e.message : "Could not save.");
     } finally { setBusy(false); }
+  }
+
+  // Open the live website in a new tab, always at the latest saved version.
+  // Directly on click (no await first) so mobile popup blockers don't fire.
+  function openPreview() {
+    window.open(`/sites/${listing.slug}?v=${previewVer || "live"}`, "_blank");
   }
 
   return (
@@ -310,17 +314,18 @@ export function EditListing({ listing }: { listing: Listing }) {
         )}
 
         <div className="flex flex-wrap items-center gap-3 sticky bottom-0 bg-white py-3 border-t border-line">
-          <button onClick={() => save(hasSite)} disabled={!canSave} className="bg-brand-gradient bg-brand-gradient-hover disabled:opacity-50 text-white font-semibold px-7 py-3 rounded-full shadow-glow">
-            {busy ? "Saving…" : hasSite ? "Save & preview website" : "Save changes"}
+          <button onClick={save} disabled={!canSave} className="bg-brand-gradient bg-brand-gradient-hover disabled:opacity-50 text-white font-semibold px-7 py-3 rounded-full shadow-glow">
+            {busy ? "Saving…" : "Save changes"}
           </button>
           {hasSite && (
-            <button type="button" onClick={() => window.open(`/sites/${listing.slug}`, "_blank")} disabled={dirty} title={dirty ? "Save your changes first" : ""} className="border border-ink font-semibold px-5 py-3 rounded-full disabled:opacity-40 hover:bg-mist">
-              View live website ↗
+            <button type="button" onClick={openPreview} disabled={dirty} title={dirty ? "Save your changes first" : ""} className="border border-ink font-semibold px-5 py-3 rounded-full disabled:opacity-40 hover:bg-mist">
+              Preview website ↗
             </button>
           )}
           <Link href="/host/dashboard" className="font-semibold px-5 py-3 rounded-full hover:bg-mist">Back to dashboard</Link>
-          {!dirty && !msg && <span className="text-xs text-muted">No changes to save</span>}
+          {dirty && valid && <span className="text-xs text-muted">Save to update your live website, then preview</span>}
           {dirty && !valid && <span className="text-xs text-muted">Add the required photos to save</span>}
+          {!dirty && !msg && <span className="text-xs text-muted">No changes to save</span>}
           {msg && <span className="text-sm text-emerald-700">{msg}</span>}
           {err && <span className="text-sm text-brand">{err}</span>}
         </div>
@@ -337,7 +342,7 @@ export function EditListing({ listing }: { listing: Listing }) {
             </div>
             <div ref={previewRef} className="relative w-full overflow-hidden bg-white" style={{ height: Math.round(FRAME_H * scale) }}>
               {desktop && (
-                <iframe key={previewKey} src={`/sites/${listing.slug}`} title="Your website preview" style={{ width: FRAME_W, height: FRAME_H, transform: `scale(${scale})`, transformOrigin: "top left", border: 0 }} className="bg-white" />
+                <iframe key={previewKey} src={`/sites/${listing.slug}?v=${previewVer || "live"}`} title="Your website preview" style={{ width: FRAME_W, height: FRAME_H, transform: `scale(${scale})`, transformOrigin: "top left", border: 0 }} className="bg-white" />
               )}
             </div>
           </div>

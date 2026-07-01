@@ -21,6 +21,7 @@ export interface DashboardListing {
   domain?: string;
   payStripe?: string | null;
   payPaypal?: string | null;
+  tier?: string;
 }
 
 export interface DashboardData {
@@ -183,8 +184,10 @@ export function DashboardView({ data, demo = false }: { data: DashboardData; dem
   const [deleting, setDeleting] = useState(false);
   const [delErr, setDelErr] = useState("");
   const router = useRouter();
-  // One stay per host on the current plans, so hide "add" once they have one.
-  const atLimit = !demo && listings.length >= 1;
+  // Plan allowance: Pro = 5 stays, every other plan = 1. Hide "add" at the cap.
+  const isPro = listings.some((l) => l.tier === "pro");
+  const stayAllowance = isPro ? 5 : 1;
+  const atLimit = !demo && listings.length >= stayAllowance;
 
   function askDelete(l: DashboardListing) { setDelTarget(l); setDelStep(1); setDelErr(""); }
   async function confirmDelete() {
@@ -272,7 +275,7 @@ export function DashboardView({ data, demo = false }: { data: DashboardData; dem
           <p className="text-sm text-muted">{demo ? `Example data, last ${days} days` : `Signed in as ${data.email}`}{selectedListing && listings.find((l) => l.id === selectedListing) ? ` · ${listings.find((l) => l.id === selectedListing)!.propertyName}` : ""}</p>
         </div>
         {atLimit ? (
-          <span className="self-start text-xs text-muted bg-mist rounded-full px-3 py-2">One stay per plan · manage it below</span>
+          <span className="self-start text-xs text-muted bg-mist rounded-full px-3 py-2">{isPro ? `All ${stayAllowance} stays used · manage them below` : "One stay per plan · manage it below"}</span>
         ) : (
           <Link href="/host/new" className="self-start bg-brand-gradient bg-brand-gradient-hover text-white text-sm font-semibold px-4 py-2.5 rounded-full shadow-glow">
             {demo ? "Get started" : "+ Add listing"}
@@ -300,7 +303,7 @@ export function DashboardView({ data, demo = false }: { data: DashboardData; dem
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 border-b border-line overflow-x-auto no-scrollbar">
+      <div className="flex gap-1 mb-6 border-b border-line overflow-x-auto overflow-y-hidden no-scrollbar touch-pan-x overscroll-x-contain">
         {TABS.map((t) => {
           const badge = t.key === "bookings" && pendingBookings ? pendingBookings : 0;
           return (
@@ -386,12 +389,12 @@ export function DashboardView({ data, demo = false }: { data: DashboardData; dem
                       <p className="text-xs text-muted mt-0.5 truncate">{fmt(p?.impressions ?? 0)} impressions · {fmt(p?.views ?? 0)} views · {fmt(p?.enquiries ?? 0)} enquiries</p>
                     </div>
                   </div>
-                  <div className="flex flex-wrap gap-2 mt-3">
+                  <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 mt-3">
                     <Link href={editHref(l.slug)} className="text-sm font-semibold border border-line rounded-full px-4 py-2 hover:bg-mist text-center">Edit stay</Link>
                     <Link href={calHref(l.slug)} className="text-sm font-semibold border border-line rounded-full px-4 py-2 hover:bg-mist text-center">Calendar</Link>
                     <Link href={viewHref(l.slug)} className="text-sm font-semibold border border-line rounded-full px-4 py-2 hover:bg-mist text-center">View</Link>
                     {!demo && (
-                      <button type="button" onClick={() => askDelete(l)} className="text-sm font-semibold text-rose-600 border border-rose-200 rounded-full px-4 py-2 hover:bg-rose-50 text-center ml-auto">Delete</button>
+                      <button type="button" onClick={() => askDelete(l)} className="text-sm font-semibold text-rose-600 border border-rose-200 rounded-full px-4 py-2 hover:bg-rose-50 text-center sm:ml-auto">Delete</button>
                     )}
                   </div>
                 </div>

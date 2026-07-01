@@ -48,7 +48,7 @@ export default async function HostPage() {
         {/* Founding banner */}
         <div className="bg-ink text-white text-sm">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-2.5 text-center">
-            <span className="font-semibold">Founding offer:</span> 20% off for life for the first 50 hosts. Use code{" "}
+            <span className="font-semibold">Founding offer:</span> 20% off for life with code{" "}
             <span className="font-mono font-bold bg-white/15 rounded px-1.5 py-0.5">FOUNDING20</span> at checkout.
           </div>
         </div>
@@ -209,8 +209,8 @@ export default async function HostPage() {
               <h2 className="text-2xl sm:text-3xl font-display font-bold">Simple yearly pricing</h2>
               <p className="text-muted mt-2">Billed yearly. Cancel anytime. No commission on any booking.</p>
               <p className="mt-3 inline-block bg-ink text-white text-sm rounded-full px-4 py-1.5">
-                Founding hosts: <span className="font-semibold">20% off for life</span> with code{" "}
-                <span className="font-mono font-bold">FOUNDING20</span> · first 50 only
+                <span className="font-semibold">20% off for life</span> with code{" "}
+                <span className="font-mono font-bold">FOUNDING20</span>
               </p>
             </div>
             <PricingCards />

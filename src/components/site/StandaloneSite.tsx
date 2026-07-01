@@ -11,6 +11,18 @@ import type { Listing } from "@/lib/types";
 export type SitePage = "home" | "rooms" | "gallery" | "location" | "book";
 export type SiteTheme = "classic" | "modern" | "coastal";
 
+// Short hero blurb that never cuts mid-sentence/mid-word. Prefers the first full
+// sentence(s) under ~160 chars; otherwise trims to a word boundary with an ellipsis.
+function heroBlurb(desc: string | null, fallback: string): string {
+  const base = (desc || fallback).trim();
+  if (base.length <= 160) return base.replace(/[.\s]+$/, "");
+  const cut = base.slice(0, 150);
+  const sentenceEnd = Math.max(cut.lastIndexOf(". "), cut.lastIndexOf("! "), cut.lastIndexOf("? "));
+  if (sentenceEnd > 80) return base.slice(0, sentenceEnd).trim();
+  const wordEnd = cut.lastIndexOf(" ");
+  return base.slice(0, wordEnd > 80 ? wordEnd : 150).trim() + "…";
+}
+
 // Three original, premium standalone website templates for a host's B&B / rental.
 // Cinematic, animated, multi-page sites with their own nav, hero search, gallery
 // and booking. `theme` swaps the whole palette and feel. Luxury-hospitality genre.
@@ -164,7 +176,7 @@ function HeroWithForm({ listing, t, demo, inset = false, compact = false }: { li
         <div className="text-white [text-shadow:0_2px_22px_rgba(0,0,0,0.5)]">
           <HeroItem><p className={t.eyebrow}>{prettyType(listing.propertyType)} · {listing.cityName}{listing.country ? `, ${listing.country}` : ""}</p></HeroItem>
           <HeroItem><h1 className="font-serif font-medium tracking-tight text-4xl sm:text-5xl xl:text-6xl mt-4 leading-[1.04]">{listing.propertyName}</h1></HeroItem>
-          <HeroItem><p className="mt-5 text-lg text-white/90 max-w-md font-light leading-relaxed">{(listing.description ? listing.description.slice(0, 140) : `An independent stay in ${listing.neighborhood || listing.cityName}`)}. Booked direct, never any platform fees.</p></HeroItem>
+          <HeroItem><p className="mt-5 text-lg text-white/90 max-w-md font-light leading-relaxed">{heroBlurb(listing.description, `An independent stay in ${listing.neighborhood || listing.cityName}`)}. Booked direct, never any platform fees.</p></HeroItem>
           <HeroItem>
             <div className="mt-6 flex flex-wrap gap-2">
               {(listing.perks.length ? listing.perks.slice(0, 3) : ["No platform fees", "Book direct", "Best rate"]).map((x) => (

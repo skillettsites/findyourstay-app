@@ -132,15 +132,15 @@ function Menu() {
           )}
           <Item href="/guests" onClick={() => setOpen(false)} strong>For travellers</Item>
           <Item href="/host" onClick={() => setOpen(false)} strong>For hosts</Item>
+          <Item href="/host#pricing" onClick={() => setOpen(false)} strong>Pricing</Item>
+          <Item href="/host/new" onClick={() => setOpen(false)} strong>List your stay</Item>
           <Divider />
           <p className="px-4 pt-1.5 pb-1 text-[11px] font-bold uppercase tracking-wide text-muted">Explore stays</p>
           {EXPLORE.map((l) => (
             <Item key={l.href} href={l.href} onClick={() => setOpen(false)}>{l.label}</Item>
           ))}
           <Divider />
-          <Item href="/host#pricing" onClick={() => setOpen(false)}>Pricing</Item>
           <Item href="/guides" onClick={() => setOpen(false)}>Host guides</Item>
-          <Item href="/host/new" onClick={() => setOpen(false)}>List your stay</Item>
         </div>
       )}
     </div>
