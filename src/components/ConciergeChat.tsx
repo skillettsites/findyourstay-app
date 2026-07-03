@@ -13,6 +13,7 @@ export function ConciergeChat({ initial }: { initial?: string }) {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const started = useRef(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (initial && initial.trim() && !started.current) {
@@ -22,14 +23,21 @@ export function ConciergeChat({ initial }: { initial?: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initial]);
 
+  // Keep the newest message in view without growing the window.
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [msgs, busy]);
+
   async function send(text: string) {
     const q = text.trim();
     if (!q || busy) return;
+    // Conversation so far (before this turn) — gives the assistant memory.
+    const history = msgs.filter((m) => !m.limited && m.text).map((m) => ({ role: m.role, text: m.text }));
     setInput("");
     setMsgs((m) => [...m, { role: "user", text: q }]);
     setBusy(true);
     try {
-      const res = await fetch("/api/concierge", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: q }) });
+      const res = await fetch("/api/concierge", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: q, history }) });
       const d = await res.json();
       if (d.limited) setMsgs((m) => [...m, { role: "assistant", text: "", limited: true, signedIn: d.signedIn }]);
       else setMsgs((m) => [...m, { role: "assistant", text: d.reply, stays: d.listings }]);
@@ -41,8 +49,8 @@ export function ConciergeChat({ initial }: { initial?: string }) {
   }
 
   return (
-    <div className="border border-line rounded-3xl bg-white shadow-card overflow-hidden flex flex-col max-h-[72vh]">
-      <div className="px-5 py-4 border-b border-line flex items-center gap-2.5">
+    <div className="border border-line rounded-3xl bg-white shadow-card overflow-hidden flex flex-col">
+      <div className="px-5 py-4 border-b border-line flex items-center gap-2.5 shrink-0">
         <span className="grid place-items-center w-9 h-9 rounded-full bg-brand-gradient text-white shadow-glow">✦</span>
         <div>
           <p className="font-semibold text-sm">Trip assistant</p>
@@ -50,7 +58,7 @@ export function ConciergeChat({ initial }: { initial?: string }) {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-5 space-y-4 min-h-[240px]">
+      <div ref={scrollRef} className="overflow-y-auto p-5 space-y-4 h-[52vh] min-h-[280px] max-h-[520px]">
         {msgs.length === 0 && (
           <div>
             <p className="text-sm text-muted mb-3">For example:</p>
@@ -99,7 +107,7 @@ export function ConciergeChat({ initial }: { initial?: string }) {
         {busy && <p className="text-sm text-muted">Thinking…</p>}
       </div>
 
-      <form onSubmit={(e) => { e.preventDefault(); send(input); }} className="p-3 border-t border-line flex gap-2">
+      <form onSubmit={(e) => { e.preventDefault(); send(input); }} className="p-3 border-t border-line flex gap-2 shrink-0">
         <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="e.g. a cosy B&B in Porto near the river" className="flex-1 border border-line rounded-full px-4 py-2.5 text-sm outline-none focus:border-ink" />
         <button disabled={busy} className="bg-brand-gradient bg-brand-gradient-hover text-white font-semibold px-5 py-2.5 rounded-full shadow-glow disabled:opacity-50">Ask</button>
       </form>

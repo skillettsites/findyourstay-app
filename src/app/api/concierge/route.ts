@@ -5,20 +5,23 @@ import { sb, T } from "@/lib/sb";
 import { searchListings, recordEvent } from "@/lib/db";
 import type { Listing, PropertyType } from "@/lib/types";
 
-// Guest "trip assistant": recommends stays from our OWN directory (grounded, no
-// hallucinated places). Free, but rate-limited — anonymous get a few questions,
-// signed-in guests get 20/month. Usage is counted via fys_events (no new table).
+// Guest "trip assistant": a genuinely helpful travel concierge that recommends
+// stays from our OWN directory (grounded, never hallucinated). It remembers the
+// conversation, understands cities AND countries, and geocodes places it doesn't
+// recognise so it can still point you to the nearest stays we cover.
 export const dynamic = "force-dynamic";
 
 const ANON_LIMIT = 3;
 const GUEST_LIMIT = 20;
 const GKEY = (process.env.GEMINI_API_KEY || "").replace(/\\n$/, "").trim();
+const MAPS_KEY = (process.env.GOOGLE_PLACES_API_KEY || "").replace(/\\n$/, "").trim();
+
+type Turn = { role: "user" | "assistant"; text: string };
 
 function monthStartISO() {
   const d = new Date();
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)).toISOString();
 }
-
 async function usageThisMonth(key: string): Promise<number> {
   const { count } = await sb.from(T.events).select("*", { count: "exact", head: true }).eq("listing_id", key).eq("type", "ai_message").gte("created_at", monthStartISO());
   return count ?? 0;
@@ -37,51 +40,98 @@ function parseType(m: string): PropertyType | undefined {
   if (/cottage/.test(s)) return "cottage";
   return undefined;
 }
+
+let _countriesCache: { at: number; list: string[] } | null = null;
+async function distinctCountries(): Promise<string[]> {
+  if (_countriesCache && Date.now() - _countriesCache.at < 300000) return _countriesCache.list;
+  const { data } = await sb.from(T.citySummary).select("country").limit(2000);
+  const list = [...new Set(((data ?? []) as { country: string }[]).map((c) => c.country).filter(Boolean))];
+  _countriesCache = { at: Date.now(), list };
+  return list;
+}
+
 async function findCity(msg: string): Promise<{ slug: string; name: string } | null> {
   const { data } = await sb.from(T.citySummary).select("city_slug,city_name").limit(900);
   const lower = " " + msg.toLowerCase() + " ";
   let best: { slug: string; name: string } | null = null;
   for (const c of (data ?? []) as { city_slug: string; city_name: string }[]) {
     const n = (c.city_name || "").toLowerCase();
-    if (n.length > 2 && lower.includes(n) && (!best || n.length > best.name.length)) best = { slug: c.city_slug, name: c.city_name };
+    if (n.length > 2 && lower.includes(" " + n) && (!best || n.length > best.name.length)) best = { slug: c.city_slug, name: c.city_name };
   }
   return best;
 }
 
-// Country match (so "Canada" / "the US" surfaces stays in that country as
-// near-matches). Uses the countries actually present in our directory + a few
-// common aliases, and returns the exact stored value for filtering.
 const COUNTRY_ALIASES: Record<string, string[]> = {
   "united states": ["usa", "u.s.", "u.s.a", "the us", "america", "the states"],
   "united kingdom": ["uk", "u.k.", "britain", "great britain"],
 };
 async function findCountry(msg: string): Promise<string | null> {
-  const { data } = await sb.from(T.citySummary).select("country").limit(2000);
-  const countries = [...new Set(((data ?? []) as { country: string }[]).map((c) => c.country).filter(Boolean))];
+  const countries = await distinctCountries();
   const lower = " " + msg.toLowerCase() + " ";
   let best: string | null = null;
   for (const c of countries) {
     const n = c.toLowerCase();
-    if (n.length > 2 && lower.includes(n) && (!best || n.length > best.length)) best = c;
+    if (n.length > 2 && lower.includes(" " + n) && (!best || n.length > best.length)) best = c;
   }
   if (best) return best;
-  for (const c of countries) {
-    for (const alias of COUNTRY_ALIASES[c.toLowerCase()] ?? []) {
-      if (lower.includes(" " + alias + " ")) return c;
-    }
-  }
+  for (const c of countries) for (const alias of COUNTRY_ALIASES[c.toLowerCase()] ?? []) if (lower.includes(" " + alias + " ")) return c;
   return null;
 }
 
-async function geminiReply(message: string, items: Listing[]): Promise<string> {
+// Map a geocoded country name to whichever country string our data actually uses
+// (e.g. Google's "United Kingdom" → our "England").
+function normalizeCountry(geo: string, ours: string[]): string | null {
+  const g = geo.toLowerCase().trim();
+  const direct = ours.find((c) => c.toLowerCase() === g);
+  if (direct) return direct;
+  const families: string[][] = [
+    ["united kingdom", "uk", "great britain", "england", "scotland", "wales", "northern ireland"],
+    ["united states", "usa", "united states of america", "us", "america"],
+  ];
+  for (const fam of families) if (fam.includes(g)) { const hit = ours.find((c) => fam.includes(c.toLowerCase())); if (hit) return hit; }
+  return null;
+}
+
+// Geocode a free-text place ("cornwall", "a beach near Nice") to a city/country
+// via Google, so we can still find the nearest stays we cover. Best-effort.
+async function geocodePlace(q: string): Promise<{ country?: string; city?: string } | null> {
+  if (!MAPS_KEY) return null;
+  try {
+    const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(q)}&key=${MAPS_KEY}`);
+    const j = await res.json();
+    const r = j.results?.[0];
+    if (!r) return null;
+    let country: string | undefined, city: string | undefined;
+    for (const c of (r.address_components ?? []) as { types: string[]; long_name: string }[]) {
+      if (c.types.includes("country")) country = c.long_name;
+      if (c.types.includes("locality") || c.types.includes("postal_town")) city = c.long_name;
+    }
+    return { country, city };
+  } catch {
+    return null;
+  }
+}
+
+async function geminiReply(history: Turn[], message: string, items: Listing[], note: string): Promise<string> {
   if (!GKEY) return "";
-  const list = items.map((l, i) => `${i + 1}. ${l.propertyName}, ${l.cityName}${l.country ? ", " + l.country : ""} — ${l.propertyType.replace("_", " ")}, £${l.pricePerNight ?? "?"}/night. ${(l.description || "").slice(0, 130)}`).join("\n");
-  const prompt = `You are FindYourStay's warm, concise travel assistant. Recommend places to stay ONLY from the numbered list below — never invent a stay. Reply in 2-4 sentences, mention 1-3 by name and why they fit the request. If the list is empty, gently ask which city or area they have in mind.\n\nTraveller said: "${message}"\n\nAvailable stays:\n${list || "(none found yet)"}\n\nYour reply:`;
+  const list = items
+    .map((l, i) => `${i + 1}. ${l.propertyName} — ${l.cityName}${l.country ? ", " + l.country : ""}. ${l.propertyType.replace("_", " ")}, £${l.pricePerNight ?? "?"}/night. ${(l.description || "").slice(0, 160)} [approx coords ${l.lat?.toFixed(2)},${l.lng?.toFixed(2)}]`)
+    .join("\n");
+  const system = `You are FindYourStay's expert travel concierge — warm, knowledgeable and genuinely helpful, like the world's best travel agent. Recommend places to stay ONLY from the "Available stays" list; never invent a stay or a location detail you can't support. Use your own geographic knowledge to judge fit — which stays are near a beach/coast, mountains, old town, nightlife, transport, family attractions, etc.
+Rules:
+- Remember the whole conversation; combine what the traveller said across messages (e.g. "near a beach" then "in Canada" = a beach stay in Canada).
+- If good matches exist, recommend 1-3 by name and say WHY they fit (location, vibe, price, and roughly how close they are to what they asked for).
+- If the matches aren't a perfect fit (e.g. they wanted beachfront but ours are city stays), be honest, recommend the closest and say what's genuinely good about it, then offer to look elsewhere.
+- If there are no stays for their area yet, say so briefly and warmly, and ask for a city or country to try — do NOT invent places.
+- Keep replies to 2-4 sentences. Everything is booked direct with the owner, no platform fees.`;
+  const contents: { role: string; parts: { text: string }[] }[] = [];
+  for (const t of history.slice(-8)) contents.push({ role: t.role === "assistant" ? "model" : "user", parts: [{ text: t.text }] });
+  contents.push({ role: "user", parts: [{ text: `${message}\n\n${note ? note + "\n\n" : ""}Available stays:\n${list || "(none found for this request)"}` }] });
   try {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GKEY}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { temperature: 0.5, maxOutputTokens: 400, thinkingConfig: { thinkingBudget: 0 } } }),
+      body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents, generationConfig: { temperature: 0.6, maxOutputTokens: 400, thinkingConfig: { thinkingBudget: 0 } } }),
     });
     const j = await res.json();
     return j?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
@@ -93,6 +143,9 @@ async function geminiReply(message: string, items: Listing[]): Promise<string> {
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   const message = String(body.message ?? "").trim().slice(0, 500);
+  const history: Turn[] = Array.isArray(body.history)
+    ? body.history.filter((t: unknown): t is Turn => !!t && typeof (t as Turn).text === "string").map((t: Turn) => ({ role: t.role === "assistant" ? "assistant" : "user", text: String(t.text).slice(0, 500) })).slice(-8)
+    : [];
   if (!message) return NextResponse.json({ error: "Tell me what you're looking for." }, { status: 400 });
 
   const user = await getUser();
@@ -110,11 +163,25 @@ export async function POST(req: Request) {
     return r;
   }
 
-  // Retrieve candidate stays from our directory — matched to the request only.
-  const max = parseMax(message);
-  const type = parseType(message);
-  const city = await findCity(message);
-  const country = city ? null : await findCountry(message);
+  // Build a retrieval context from the last few user turns + this message, so
+  // intent expressed across messages ("near a beach" … "in canada") combines.
+  const recentUser = [...history.filter((t) => t.role === "user").slice(-3).map((t) => t.text), message];
+  const context = recentUser.join(". ");
+
+  const max = parseMax(context);
+  const type = parseType(context);
+  let city = await findCity(context);
+  let country = city ? null : await findCountry(context);
+  let note = "";
+
+  // Maps fallback: if we didn't recognise a place, geocode it and map to the
+  // nearest city/country we actually cover.
+  if (!city && !country) {
+    const geo = await geocodePlace(context);
+    if (geo?.city) { const c = await findCity(" " + geo.city + " "); if (c) city = c; }
+    if (!city && geo?.country) { country = normalizeCountry(geo.country, await distinctCountries()); if (country && geo.city) note = `(Note: we don't have stays in ${geo.city} specifically, but here are the closest we cover in ${country}.)`; }
+  }
+
   let items: Listing[] = [];
   if (city) {
     items = (await searchListings({ citySlug: city.slug, propertyType: type, maxPrice: max, limit: 6 })).items;
@@ -123,10 +190,10 @@ export async function POST(req: Request) {
     items = (await searchListings({ country, propertyType: type, maxPrice: max, limit: 6 })).items;
     if (!items.length) items = (await searchListings({ country, limit: 6 })).items;
   }
-  // No generic "featured" fallback: if we don't cover the place they asked for,
-  // show no tiles and let the assistant ask for another area — never mismatched stays.
+  // Never show mismatched stays: if we don't cover the place, tiles stay empty
+  // and the assistant asks for another area.
 
-  const ai = await geminiReply(message, items);
+  const ai = await geminiReply(history, message, items, note);
   const reply = ai || (
     !GKEY ? "Our trip assistant is just being switched on. In the meantime, tell me a city or country and I'll find you a place."
     : items.length ? "Here are a few places that might suit, take a look below."
