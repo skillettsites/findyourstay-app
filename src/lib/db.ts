@@ -167,9 +167,26 @@ export async function countListings(): Promise<number> {
   return count ?? 0;
 }
 
-export async function getAllListingSlugs(limit = 5000): Promise<{ slug: string }[]> {
-  const { data } = await sb.from(T.listings).select("slug").in("status", ["active", "unclaimed"]).limit(limit);
-  return (data ?? []) as { slug: string }[];
+export async function getAllListingSlugs(limit = 50000): Promise<{ slug: string }[]> {
+  // PostgREST caps a single response at 1000 rows, so page through with range()
+  // until every active/unclaimed slug is collected (or the safety limit is hit).
+  // A stable order keeps the sitemap consistent between fetches, so Google sees a
+  // complete, unchanging set of URLs instead of a shifting 1000-row subset.
+  const pageSize = 1000;
+  const out: { slug: string }[] = [];
+  for (let from = 0; from < limit; from += pageSize) {
+    const to = Math.min(from + pageSize, limit) - 1;
+    const { data } = await sb
+      .from(T.listings)
+      .select("slug")
+      .in("status", ["active", "unclaimed"])
+      .order("slug", { ascending: true })
+      .range(from, to);
+    const rows = (data ?? []) as { slug: string }[];
+    out.push(...rows);
+    if (rows.length < pageSize) break;
+  }
+  return out;
 }
 
 // ---- Write API ----
