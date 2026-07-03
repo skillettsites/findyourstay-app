@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getUser } from "@/lib/auth";
 import { sb, T } from "@/lib/sb";
-import { searchListings, getFeaturedListings, recordEvent } from "@/lib/db";
+import { searchListings, recordEvent } from "@/lib/db";
 import type { Listing, PropertyType } from "@/lib/types";
 
 // Guest "trip assistant": recommends stays from our OWN directory (grounded, no
@@ -48,6 +48,31 @@ async function findCity(msg: string): Promise<{ slug: string; name: string } | n
   return best;
 }
 
+// Country match (so "Canada" / "the US" surfaces stays in that country as
+// near-matches). Uses the countries actually present in our directory + a few
+// common aliases, and returns the exact stored value for filtering.
+const COUNTRY_ALIASES: Record<string, string[]> = {
+  "united states": ["usa", "u.s.", "u.s.a", "the us", "america", "the states"],
+  "united kingdom": ["uk", "u.k.", "britain", "great britain"],
+};
+async function findCountry(msg: string): Promise<string | null> {
+  const { data } = await sb.from(T.citySummary).select("country").limit(2000);
+  const countries = [...new Set(((data ?? []) as { country: string }[]).map((c) => c.country).filter(Boolean))];
+  const lower = " " + msg.toLowerCase() + " ";
+  let best: string | null = null;
+  for (const c of countries) {
+    const n = c.toLowerCase();
+    if (n.length > 2 && lower.includes(n) && (!best || n.length > best.length)) best = c;
+  }
+  if (best) return best;
+  for (const c of countries) {
+    for (const alias of COUNTRY_ALIASES[c.toLowerCase()] ?? []) {
+      if (lower.includes(" " + alias + " ")) return c;
+    }
+  }
+  return null;
+}
+
 async function geminiReply(message: string, items: Listing[]): Promise<string> {
   if (!GKEY) return "";
   const list = items.map((l, i) => `${i + 1}. ${l.propertyName}, ${l.cityName}${l.country ? ", " + l.country : ""} — ${l.propertyType.replace("_", " ")}, £${l.pricePerNight ?? "?"}/night. ${(l.description || "").slice(0, 130)}`).join("\n");
@@ -85,19 +110,28 @@ export async function POST(req: Request) {
     return r;
   }
 
-  // Retrieve candidate stays from our directory.
+  // Retrieve candidate stays from our directory — matched to the request only.
   const max = parseMax(message);
   const type = parseType(message);
   const city = await findCity(message);
+  const country = city ? null : await findCountry(message);
   let items: Listing[] = [];
   if (city) {
     items = (await searchListings({ citySlug: city.slug, propertyType: type, maxPrice: max, limit: 6 })).items;
     if (!items.length) items = (await searchListings({ citySlug: city.slug, limit: 6 })).items;
+  } else if (country) {
+    items = (await searchListings({ country, propertyType: type, maxPrice: max, limit: 6 })).items;
+    if (!items.length) items = (await searchListings({ country, limit: 6 })).items;
   }
-  if (!items.length) items = await getFeaturedListings(6);
+  // No generic "featured" fallback: if we don't cover the place they asked for,
+  // show no tiles and let the assistant ask for another area — never mismatched stays.
 
   const ai = await geminiReply(message, items);
-  const reply = ai || (GKEY ? "Here are a few places that might suit, take a look below." : "Our trip assistant is just being switched on. In the meantime, here are some places you might like.");
+  const reply = ai || (
+    !GKEY ? "Our trip assistant is just being switched on. In the meantime, tell me a city or country and I'll find you a place."
+    : items.length ? "Here are a few places that might suit, take a look below."
+    : "I couldn't find a match there yet. Tell me another city or country and I'll look again."
+  );
 
   await recordEvent(key, "ai_message");
 

@@ -5,6 +5,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { sb, T } from "./sb";
+import { notifyTelegram } from "./telegram";
 
 const URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "").replace(/\\n$/, "").trim();
 const ANON = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "").replace(/\\n$/, "").trim();
@@ -45,12 +46,16 @@ export async function getUser(): Promise<SessionUser | null> {
 }
 
 // Ensure a fys_hosts row exists for this authed user (idempotent). Returns the
-// host id (== auth user id).
+// host id (== auth user id). Pings Telegram the first time a host is created.
 export async function ensureHost(user: SessionUser, name?: string): Promise<string> {
+  const { data: existing } = await sb.from(T.hosts).select("id").eq("id", user.id).maybeSingle();
   await sb.from(T.hosts).upsert(
     { id: user.id, email: user.email, ...(name ? { name } : {}) },
     { onConflict: "id" },
   );
+  if (!existing) {
+    void notifyTelegram(`🎉 <b>New FindYourStay signup</b>\n${user.email}${name ? `\n${name}` : ""}`);
+  }
   return user.id;
 }
 

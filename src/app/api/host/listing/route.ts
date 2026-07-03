@@ -5,6 +5,7 @@ import { provisionSite } from "@/lib/provision";
 import { createBillingCheckout } from "@/lib/payments";
 import { getUser, ensureHost } from "@/lib/auth";
 import { sendEmail, shell } from "@/lib/email";
+import { notifyTelegram } from "@/lib/telegram";
 
 interface Body extends NewListingInput {
   bookingDomain?: string;
@@ -70,6 +71,13 @@ export async function POST(req: Request) {
     if (body.hasBookingSite && body.bookingDomain) {
       site = await provisionSite(id, body.bookingDomain);
     }
+
+    // Operator ping — a host just listed a stay.
+    void notifyTelegram(
+      `🏡 <b>New FindYourStay listing</b>\n${body.propertyName} — ${body.cityName}${body.country ? `, ${body.country}` : ""}` +
+      `\nPlan: ${body.tier ?? "free"}${body.hasBookingSite ? " + website" : ""} · £${body.pricePerNight ?? "?"}/night` +
+      `\nby ${user.email}`,
+    );
 
     // Welcome / live email (best-effort).
     void sendEmail({
