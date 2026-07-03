@@ -112,18 +112,21 @@ async function geocodePlace(q: string): Promise<{ country?: string; city?: strin
   }
 }
 
-async function geminiReply(history: Turn[], message: string, items: Listing[], note: string): Promise<string> {
-  if (!GKEY) return "";
+// Returns the prose reply AND the list numbers of the stays it actually
+// recommended, so the tiles shown can be exactly the ones it suggested.
+async function geminiReply(history: Turn[], message: string, items: Listing[], note: string): Promise<{ reply: string; picks: number[] }> {
+  if (!GKEY) return { reply: "", picks: [] };
   const list = items
     .map((l, i) => `${i + 1}. ${l.propertyName} — ${l.cityName}${l.country ? ", " + l.country : ""}. ${l.propertyType.replace("_", " ")}, £${l.pricePerNight ?? "?"}/night. ${(l.description || "").slice(0, 160)} [approx coords ${l.lat?.toFixed(2)},${l.lng?.toFixed(2)}]`)
     .join("\n");
   const system = `You are FindYourStay's expert travel concierge — warm, knowledgeable and genuinely helpful, like the world's best travel agent. Recommend places to stay ONLY from the "Available stays" list; never invent a stay or a location detail you can't support. Use your own geographic knowledge to judge fit — which stays are near a beach/coast, mountains, old town, nightlife, transport, family attractions, etc.
 Rules:
 - Remember the whole conversation; combine what the traveller said across messages (e.g. "near a beach" then "in Canada" = a beach stay in Canada).
-- If good matches exist, recommend 1-3 by name and say WHY they fit (location, vibe, price, and roughly how close they are to what they asked for).
-- If the matches aren't a perfect fit (e.g. they wanted beachfront but ours are city stays), be honest, recommend the closest and say what's genuinely good about it, then offer to look elsewhere.
-- If there are no stays for their area yet, say so briefly and warmly, and ask for a city or country to try — do NOT invent places.
-- Keep replies to 2-4 sentences. Everything is booked direct with the owner, no platform fees.`;
+- When stays are available, recommend the best 1-3 for the request BY NAME, say WHY each fits (location, vibe, price, roughly how close to what they asked for), and put THOSE stays' list numbers in "picks".
+- If the matches aren't a perfect fit (e.g. they wanted beachfront but ours are city stays), be honest, recommend the closest, and still put its number in "picks".
+- Only leave "picks" empty if there are genuinely no stays to offer and you're asking a clarifying question — never invent places.
+- Keep "reply" to 2-4 warm sentences. Everything is booked direct with the owner, no platform fees.
+Return JSON: { "reply": string, "picks": number[] } where picks are the list numbers of the stays named in your reply.`;
   const contents: { role: string; parts: { text: string }[] }[] = [];
   for (const t of history.slice(-8)) contents.push({ role: t.role === "assistant" ? "model" : "user", parts: [{ text: t.text }] });
   contents.push({ role: "user", parts: [{ text: `${message}\n\n${note ? note + "\n\n" : ""}Available stays:\n${list || "(none found for this request)"}` }] });
@@ -131,12 +134,27 @@ Rules:
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GKEY}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents, generationConfig: { temperature: 0.6, maxOutputTokens: 400, thinkingConfig: { thinkingBudget: 0 } } }),
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: system }] },
+        contents,
+        generationConfig: {
+          temperature: 0.6, maxOutputTokens: 600, thinkingConfig: { thinkingBudget: 0 },
+          responseMimeType: "application/json",
+          responseSchema: { type: "OBJECT", properties: { reply: { type: "STRING" }, picks: { type: "ARRAY", items: { type: "INTEGER" } } }, required: ["reply", "picks"] },
+        },
+      }),
     });
     const j = await res.json();
-    return j?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
+    const text = j?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
+    try {
+      const p = JSON.parse(text);
+      const picks = Array.isArray(p.picks) ? p.picks.map(Number).filter((n: number) => Number.isInteger(n) && n >= 1 && n <= items.length) : [];
+      return { reply: String(p.reply ?? "").trim(), picks };
+    } catch {
+      return { reply: text, picks: [] };
+    }
   } catch {
-    return "";
+    return { reply: "", picks: [] };
   }
 }
 
@@ -193,8 +211,20 @@ export async function POST(req: Request) {
   // Never show mismatched stays: if we don't cover the place, tiles stay empty
   // and the assistant asks for another area.
 
-  const ai = await geminiReply(history, message, items, note);
-  const reply = ai || (
+  const { reply: aiReply, picks } = await geminiReply(history, message, items, note);
+
+  // Tiles = only the stays the assistant actually recommended. Prefer its
+  // explicit picks; fall back to name-matching its prose; if it recommended
+  // nothing (a clarifying question), show no tiles.
+  let tiles: Listing[] = items; // when the AI is off, show what we retrieved
+  if (GKEY && aiReply) {
+    tiles = picks.length
+      ? picks.map((n) => items[n - 1]).filter(Boolean)
+      : items.filter((it) => aiReply.toLowerCase().includes(it.propertyName.toLowerCase()));
+  }
+  tiles = [...new Set(tiles)];
+
+  const reply = aiReply || (
     !GKEY ? "Our trip assistant is just being switched on. In the meantime, tell me a city or country and I'll find you a place."
     : items.length ? "Here are a few places that might suit, take a look below."
     : "I couldn't find a match there yet. Tell me another city or country and I'll look again."
@@ -204,7 +234,7 @@ export async function POST(req: Request) {
 
   const r = NextResponse.json({
     reply,
-    listings: items.map((l) => ({ slug: l.slug, name: l.propertyName, city: l.cityName, country: l.country, price: l.pricePerNight, currency: l.currency, photo: l.photos[0] ?? null, type: l.propertyType })),
+    listings: tiles.map((l) => ({ slug: l.slug, name: l.propertyName, city: l.cityName, country: l.country, price: l.pricePerNight, currency: l.currency, photo: l.photos[0] ?? null, type: l.propertyType })),
     used: used + 1,
     limit,
     signedIn: !!user,
