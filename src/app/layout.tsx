@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Bricolage_Grotesque, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
+import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const display = Bricolage_Grotesque({
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en" className={`${geistSans.variable} ${display.variable} ${serif.variable} h-full antialiased`}>
       <head>
+        <GoogleAnalytics />
         <link rel="preconnect" href="https://u6tymn7wo0dz2c1b.public.blob.vercel-storage.com" />
         <link rel="dns-prefetch" href="https://picsum.photos" />
         <link rel="dns-prefetch" href="https://a.tile.openstreetmap.org" />
