@@ -117,12 +117,24 @@ async function geocodePlace(q: string): Promise<{ country?: string; city?: strin
 async function geminiReply(history: Turn[], message: string, items: Listing[], note: string): Promise<{ reply: string; picks: number[] }> {
   if (!GKEY) return { reply: "", picks: [] };
   const list = items
-    .map((l, i) => `${i + 1}. ${l.propertyName} — ${l.cityName}${l.country ? ", " + l.country : ""}. ${l.propertyType.replace("_", " ")}, £${l.pricePerNight ?? "?"}/night. ${(l.description || "").slice(0, 160)} [approx coords ${l.lat?.toFixed(2)},${l.lng?.toFixed(2)}]`)
+    .map((l, i) => {
+      const beds = l.bedrooms?.length ? `${l.bedrooms.length} bedroom${l.bedrooms.length > 1 ? "s" : ""}` : "";
+      const baths = l.bathrooms ? `${l.bathrooms} bathroom${l.bathrooms > 1 ? "s" : ""}` : "";
+      const size = [beds, baths].filter(Boolean).join(", ");
+      const amen = (l.amenities ?? []).join(", ");
+      const perks = (l.perks ?? []).join(", ");
+      return `${i + 1}. ${l.propertyName} — ${l.cityName}${l.country ? ", " + l.country : ""}. ${l.propertyType.replace("_", " ")}, £${l.pricePerNight ?? "?"}/night${size ? ", " + size : ""}.`
+        + (amen ? ` Facilities: ${amen}.` : "")
+        + (perks ? ` Free perks: ${perks}.` : "")
+        + (l.description ? ` About: ${l.description.slice(0, 240)}` : "")
+        + ` [approx coords ${l.lat?.toFixed(2)},${l.lng?.toFixed(2)}]`;
+    })
     .join("\n");
   const system = `You are FindYourStay's expert travel concierge — warm, knowledgeable and genuinely helpful, like the world's best travel agent. Recommend places to stay ONLY from the "Available stays" list; never invent a stay or a location detail you can't support. Use your own geographic knowledge to judge fit — which stays are near a beach/coast, mountains, old town, nightlife, transport, family attractions, etc.
 Rules:
 - Remember the whole conversation; combine what the traveller said across messages (e.g. "near a beach" then "in Canada" = a beach stay in Canada).
-- When stays are available, recommend the best 1-3 for the request BY NAME, say WHY each fits (location, vibe, price, roughly how close to what they asked for), and put THOSE stays' list numbers in "picks".
+- Match on EVERYTHING each stay lists: price/budget, facilities/amenities (wifi, parking, kitchen, pool, breakfast, pet-friendly, etc.), free perks, number of bedrooms/bathrooms, property type and the description — as well as location and vibe. If they ask for something specific (e.g. "with parking", "free breakfast", "family of 5", "under £120"), prefer stays that actually have it and say so; if none do, say that honestly.
+- When stays are available, recommend the best 1-3 for the request BY NAME, say WHY each fits (call out the specific facilities/perks/price/size that match), and put THOSE stays' list numbers in "picks".
 - If the matches aren't a perfect fit (e.g. they wanted beachfront but ours are city stays), be honest, recommend the closest, and still put its number in "picks".
 - Only leave "picks" empty if there are genuinely no stays to offer and you're asking a clarifying question — never invent places.
 - Keep "reply" to 2-4 warm sentences. Everything is booked direct with the owner, no platform fees.
