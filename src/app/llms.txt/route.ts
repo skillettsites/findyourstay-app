@@ -37,6 +37,9 @@ export function GET() {
 ${guideLines}
 
 ## Key pages
+- [FindYourStay home](${SITE}/)
+- [Browse and search all stays](${SITE}/s)
+- [For travellers: find a stay and ask the trip assistant](${SITE}/guests)
 - [How it works for hosts](${SITE}/host)
 - [Build a free preview of your booking site](${SITE}/host/build)
 - [All host guides](${SITE}/guides)
