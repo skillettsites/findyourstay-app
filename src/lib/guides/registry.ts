@@ -17,19 +17,33 @@ import { guide as takingBookingsOffAirbnbPenalty } from "./articles/taking-booki
 import { guide as otaCommissionCalculator } from "./articles/ota-commission-calculator";
 import { guide as airbnbHostFeeCalculator } from "./articles/airbnb-host-fee-calculator";
 import { guide as bookingComCommissionCalculator } from "./articles/booking-com-commission-calculator";
+import { guide as bnbWebsiteCost } from "./articles/how-much-does-a-bnb-website-cost";
+import { guide as howMuchHostsLoseToCommission } from "./articles/how-much-hosts-lose-to-commission";
+import { guide as avoidAirbnbFeesLegally } from "./articles/how-to-avoid-airbnb-fees-legally";
+import { guide as takeDepositsPayments } from "./articles/take-deposits-payments-holiday-let";
+import { guide as googleBusinessProfileBnb } from "./articles/google-business-profile-for-bnb";
+import { guide as rateParityCheaperOwnWebsite } from "./articles/rate-parity-cheaper-own-website";
+import { guide as isBookingComGeniusWorthIt } from "./articles/is-booking-com-genius-worth-it";
 
 // Ordered for the hub — pillars first, then supporting guides.
 export const GUIDES: Guide[] = [
   otaCommissionCalculator,
   bookingCommissionCompared,
+  howMuchHostsLoseToCommission,
   moveAirbnbGuestsDirect,
   takingBookingsOffAirbnbPenalty,
   airbnbHostFeeCalculator,
   bookingComCommissionCalculator,
+  avoidAirbnbFeesLegally,
+  isBookingComGeniusWorthIt,
+  rateParityCheaperOwnWebsite,
   howToGetDirectBookings,
+  googleBusinessProfileBnb,
   doINeedAWebsite,
   takeBookingsOwnWebsite,
+  takeDepositsPayments,
   bestWebsiteBuilders,
+  bnbWebsiteCost,
   airbnbHostFees,
   bookingComCommission,
   airbnbVsBookingCom,
