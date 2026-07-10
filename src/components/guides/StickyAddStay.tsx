@@ -22,8 +22,8 @@ export function StickyAddStay() {
     <div className="fixed bottom-0 inset-x-0 z-50 glass border-t border-line shadow-[0_-6px_24px_rgba(0,0,0,0.08)]">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 py-3 flex items-center gap-3">
         <p className="text-sm text-ink flex-1 min-w-0">
-          <span className="font-semibold">Keep 100% of your bookings.</span>
-          <span className="text-muted hidden sm:inline"> List your stay and get a direct-booking site — no commission.</span>
+          <span className="font-semibold">Keep ~£13 of every £100 booking.</span>
+          <span className="text-muted hidden sm:inline"> Get your own direct-booking site — 0% commission, ever.</span>
         </p>
         <Link href="/host/build" className="shrink-0 bg-brand-gradient bg-brand-gradient-hover text-white text-sm font-semibold px-4 sm:px-5 py-2.5 rounded-full shadow-glow transition-transform active:scale-95">
           See your free site →

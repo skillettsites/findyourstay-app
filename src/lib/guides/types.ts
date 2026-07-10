@@ -13,7 +13,11 @@ export type Block =
   | { t: "callout"; tone?: "win" | "info" | "warn"; title?: string; text: string }
   | { t: "stats"; items: { value: string; label: string }[] }
   | { t: "quote"; text: string; cite?: string }
-  | { t: "cta"; title: string; body?: string; label: string; href: string };
+  | { t: "cta"; title: string; body?: string; label: string; href: string }
+  // "You'd keep £X" money callout — the £ maths is computed from these inputs.
+  | { t: "savings"; price?: number; bookingsPerYear?: number; otaRate?: number; ota?: string; label?: string; href?: string }
+  // Interactive £ calculator embedded mid-article (client component).
+  | { t: "calculator"; variant: "ota" | "airbnb" | "bookingcom"; title?: string };
 
 export type Faq = { q: string; a: string };
 
@@ -40,6 +44,9 @@ export type Guide = {
   date: string;
   updated?: string;
   readMins: number;
+  /** 40-60 word direct answer shown above the takeaways — the block LLMs and
+   *  featured snippets lift verbatim. Answer-first. */
+  answerFirst?: string;
   /** Short skimmable "key takeaways" — great for featured snippets + LLM answers. */
   takeaways?: string[];
   blocks: Block[];

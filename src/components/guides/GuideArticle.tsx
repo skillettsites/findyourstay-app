@@ -26,6 +26,8 @@ export function GuideArticle({ guide }: { guide: Guide }) {
     mainEntityOfPage: url,
     keywords: guide.keywords.join(", "),
     articleSection: guide.category,
+    // Mark the answer-first + takeaways as the extractable answer for voice/AI.
+    speakable: { "@type": "SpeakableSpecification", cssSelector: ["#answer-first", "#key-takeaways"] },
   };
   const breadcrumbLd = {
     "@context": "https://schema.org",
@@ -74,9 +76,17 @@ export function GuideArticle({ guide }: { guide: Guide }) {
             </p>
           </Reveal>
 
+          {/* Answer-first TL;DR — the block LLMs & snippets lift verbatim */}
+          {guide.answerFirst ? (
+            <div id="answer-first" className="not-prose mt-8 rounded-2xl border-l-4 border-brand bg-rose-50/70 p-5 sm:p-6">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand mb-2">Short answer</p>
+              <p className="text-[17px] leading-relaxed text-ink/90">{renderInline(guide.answerFirst)}</p>
+            </div>
+          ) : null}
+
           {/* Key takeaways — snippet + LLM friendly */}
           {guide.takeaways?.length ? (
-            <div className="not-prose mt-8 rounded-2xl border border-line bg-mist p-5 sm:p-6">
+            <div id="key-takeaways" className="not-prose mt-6 rounded-2xl border border-line bg-mist p-5 sm:p-6">
               <p className="font-display font-bold text-ink mb-3">Key takeaways</p>
               <ul className="space-y-2">
                 {guide.takeaways.map((t, i) => (

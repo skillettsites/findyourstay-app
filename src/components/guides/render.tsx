@@ -1,6 +1,29 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { Block } from "@/lib/guides/types";
+import { CommissionCalculator } from "./CommissionCalculator";
+
+const gbp = (n: number) => "£" + Math.round(n).toLocaleString("en-GB");
+
+// "You'd keep £X" money callout — maths computed server-side so it's static,
+// cacheable and readable by LLMs. Defaults reflect a typical UK host on Airbnb.
+function SavingsCallout({ price = 100, bookingsPerYear = 40, otaRate = 0.155, ota, label = "See your free site →", href = "/host/build" }:
+  { price?: number; bookingsPerYear?: number; otaRate?: number; ota?: string; label?: string; href?: string }) {
+  const perBooking = price * otaRate;
+  const annual = perBooking * bookingsPerYear;
+  const keep = annual - price * 0.015 * bookingsPerYear;
+  return (
+    <div className="not-prose my-8 rounded-2xl border-2 border-brand/30 bg-rose-50/60 p-6 sm:p-7">
+      <p className="font-display font-bold text-ink text-lg">💷 The commission you&apos;re giving away</p>
+      <p className="mt-2 text-ink/80 leading-relaxed">
+        {gbp(price)} booking × {(otaRate * 100).toFixed(1)}%{ota ? ` (${ota})` : ""} × {bookingsPerYear} a year =
+        {" "}<b className="text-brand">about {gbp(annual)} a year</b> handed to the platform.
+      </p>
+      <p className="mt-1.5 text-ink/80 leading-relaxed">Direct bookings cost 0% commission — just ~1.5% card processing. You&apos;d keep about <b>{gbp(keep)}</b> of that back.</p>
+      <Link href={href} className="inline-block mt-4 bg-brand-gradient bg-brand-gradient-hover text-white font-semibold px-6 py-3 rounded-full shadow-glow transition-transform active:scale-95">{label}</Link>
+    </div>
+  );
+}
 
 // --- tiny inline markdown: **bold**, _italic_, [label](href) ---
 export function renderInline(text: string): ReactNode[] {
@@ -129,6 +152,15 @@ export function Blocks({ blocks }: { blocks: Block[] }) {
             );
           case "cta":
             return <InlineCTA key={i} {...b} />;
+          case "savings":
+            return <SavingsCallout key={i} {...b} />;
+          case "calculator":
+            return (
+              <div key={i} className="scroll-mt-24">
+                {b.title && <h2 className="font-display font-bold text-2xl sm:text-3xl text-ink mt-12 mb-4">{b.title}</h2>}
+                <CommissionCalculator variant={b.variant} />
+              </div>
+            );
           default:
             return null;
         }
