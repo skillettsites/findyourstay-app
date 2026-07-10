@@ -24,6 +24,14 @@ import { guide as takeDepositsPayments } from "./articles/take-deposits-payments
 import { guide as googleBusinessProfileBnb } from "./articles/google-business-profile-for-bnb";
 import { guide as rateParityCheaperOwnWebsite } from "./articles/rate-parity-cheaper-own-website";
 import { guide as isBookingComGeniusWorthIt } from "./articles/is-booking-com-genius-worth-it";
+import { guide as cleaningFeeCommission } from "./articles/does-airbnb-charge-commission-cleaning-fee";
+import { guide as cancellationsCommission } from "./articles/does-booking-com-charge-commission-cancellations";
+import { guide as localSeoBnb } from "./articles/local-seo-for-bnb";
+import { guide as bookingsWithoutAirbnb } from "./articles/how-to-get-bookings-without-airbnb";
+import { guide as ukStlRegistration } from "./articles/uk-short-term-let-registration-scheme";
+import { guide as airbnb155Fee2026 } from "./articles/airbnb-15-5-host-fee-2026";
+import { guide as emailMarketingBnbs } from "./articles/email-marketing-for-bnbs";
+import { guide as directBookingChecklist } from "./articles/direct-booking-website-checklist";
 
 // Ordered for the hub — pillars first, then supporting guides.
 export const GUIDES: Guide[] = [
@@ -35,13 +43,21 @@ export const GUIDES: Guide[] = [
   airbnbHostFeeCalculator,
   bookingComCommissionCalculator,
   avoidAirbnbFeesLegally,
+  airbnb155Fee2026,
   isBookingComGeniusWorthIt,
   rateParityCheaperOwnWebsite,
+  cleaningFeeCommission,
+  cancellationsCommission,
   howToGetDirectBookings,
+  bookingsWithoutAirbnb,
   googleBusinessProfileBnb,
+  localSeoBnb,
+  emailMarketingBnbs,
+  ukStlRegistration,
   doINeedAWebsite,
   takeBookingsOwnWebsite,
   takeDepositsPayments,
+  directBookingChecklist,
   bestWebsiteBuilders,
   bnbWebsiteCost,
   airbnbHostFees,
