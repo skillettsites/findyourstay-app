@@ -5,7 +5,7 @@ import { CommissionCalculator } from "./CommissionCalculator";
 
 const gbp = (n: number) => "£" + Math.round(n).toLocaleString("en-GB");
 
-// "You'd keep £X" money callout — maths computed server-side so it's static,
+// "You'd keep £X" money callout, maths computed server-side so it's static,
 // cacheable and readable by LLMs. Defaults reflect a typical UK host on Airbnb.
 function SavingsCallout({ price = 100, bookingsPerYear = 40, otaRate = 0.155, ota, label = "See your free site →", href = "/host/build" }:
   { price?: number; bookingsPerYear?: number; otaRate?: number; ota?: string; label?: string; href?: string }) {
@@ -19,7 +19,7 @@ function SavingsCallout({ price = 100, bookingsPerYear = 40, otaRate = 0.155, ot
         {gbp(price)} booking × {(otaRate * 100).toFixed(1)}%{ota ? ` (${ota})` : ""} × {bookingsPerYear} a year =
         {" "}<b className="text-brand">about {gbp(annual)} a year</b> handed to the platform.
       </p>
-      <p className="mt-1.5 text-ink/80 leading-relaxed">Direct bookings cost 0% commission — just ~1.5% card processing. You&apos;d keep about <b>{gbp(keep)}</b> of that back.</p>
+      <p className="mt-1.5 text-ink/80 leading-relaxed">Direct bookings cost 0% commission, just ~1.5% card processing. You&apos;d keep about <b>{gbp(keep)}</b> of that back.</p>
       <Link href={href} className="inline-block mt-4 bg-brand-gradient bg-brand-gradient-hover text-white font-semibold px-6 py-3 rounded-full shadow-glow transition-transform active:scale-95">{label}</Link>
     </div>
   );
@@ -147,7 +147,7 @@ export function Blocks({ blocks }: { blocks: Block[] }) {
             return (
               <blockquote key={i} className="not-prose my-7 border-l-4 border-brand pl-5 py-1">
                 <p className="font-serif text-xl text-ink/90 italic leading-relaxed">{renderInline(b.text)}</p>
-                {b.cite && <cite className="block mt-2 text-sm text-muted not-italic">— {b.cite}</cite>}
+                {b.cite && <cite className="block mt-2 text-sm text-muted not-italic">, {b.cite}</cite>}
               </blockquote>
             );
           case "cta":

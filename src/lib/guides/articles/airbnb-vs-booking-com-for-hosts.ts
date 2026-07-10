@@ -6,7 +6,7 @@ export const guide: Guide = {
   title: "Airbnb vs Booking.com for Hosts: Fees & Control (2026)",
   h1: "Airbnb vs Booking.com for hosts: fees, payouts and control compared",
   description:
-    "Airbnb charges hosts around 15.5% and Booking.com between 10 and 25%. We compare fees, payout timing, guest types and control so you can decide which platform — or neither — makes sense for your B&B.",
+    "Airbnb charges hosts around 15.5% and Booking.com between 10 and 25%. We compare fees, payout timing, guest types and control so you can decide which platform, or neither, makes sense for your B&B.",
   dek: "Both platforms take a significant cut and set the rules. Here is how they compare, and why more independent hosts are adding direct bookings as a third channel.",
   keywords: [
     "airbnb vs booking.com for hosts",

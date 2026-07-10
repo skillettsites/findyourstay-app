@@ -20,9 +20,9 @@ export const guide: Guide = {
   readMins: 7,
   takeaways: [
     "Most UK/European Airbnb hosts pay a **15.5% host-only service fee** in 2026, deducted straight from payout.",
-    "The older **split-fee model** charges hosts ~3% but adds roughly **14% on top of the guest's bill** — making your listing appear more expensive in search.",
+    "The older **split-fee model** charges hosts ~3% but adds roughly **14% on top of the guest's bill**, making your listing appear more expensive in search.",
     "Cleaning fees are passed through to guests without a service-fee deduction, but they do affect search ranking and guest perception.",
-    "Direct bookings cost **0% commission** — only card processing (~1.5% + 20p), so you keep roughly **£98 on every £100** versus ~£84.50 through Airbnb.",
+    "Direct bookings cost **0% commission**, only card processing (~1.5% + 20p), so you keep roughly **£98 on every £100** versus ~£84.50 through Airbnb.",
     "Converting even a handful of repeat guests to direct bookings each year can more than cover the cost of your own booking site.",
   ],
   blocks: [
@@ -176,7 +176,7 @@ export const guide: Guide = {
     { t: "h2", text: "Should you leave Airbnb?" },
     {
       t: "p",
-      text: "For most independent hosts, the honest answer is no — not entirely, and certainly not yet. Airbnb's biggest value is **discovery**: guests who have never heard of your property can find it through search, reviews and the platform's brand. Abandoning that overnight means losing a real acquisition channel.",
+      text: "For most independent hosts, the honest answer is no, not entirely, and certainly not yet. Airbnb's biggest value is **discovery**: guests who have never heard of your property can find it through search, reviews and the platform's brand. Abandoning that overnight means losing a real acquisition channel.",
     },
     {
       t: "p",

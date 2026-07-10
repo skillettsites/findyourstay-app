@@ -54,7 +54,7 @@ export function CommissionCalculator({ variant }: { variant: Variant }) {
             <label className="block mt-5">
               <span className="text-sm font-semibold text-ink">Booking platform</span>
               <select value={platform} onChange={(e) => setPlatform(e.target.value)} className="mt-1.5 w-full border border-line rounded-xl px-3 py-2.5 text-sm bg-white outline-none focus:border-ink">
-                {PLATFORMS.map((p) => <option key={p.id} value={p.id}>{p.label} — {p.rate}%</option>)}
+                {PLATFORMS.map((p) => <option key={p.id} value={p.id}>{p.label}, {p.rate}%</option>)}
               </select>
             </label>
           )}
