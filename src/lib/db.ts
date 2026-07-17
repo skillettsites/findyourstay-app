@@ -62,7 +62,12 @@ export async function searchListings(query: ListingQuery = {}): Promise<{ items:
   let qb = sb.from(T.listings).select("*", { count: "exact" }).in("status", ["active", "unclaimed"]);
 
   if (query.citySlug) qb = qb.eq("city_slug", query.citySlug);
-  if (query.country) qb = qb.eq("country", query.country);
+  // Country arrives as a lowercase-hyphenated slug from legacy /country/:slug
+  // redirects (e.g. "united-kingdom") but is stored Title Case ("United Kingdom").
+  // ilike with no wildcards is a case-insensitive exact match, so this catches
+  // both the slug form and any properly-cased free text without an exact .eq()
+  // silently returning zero rows.
+  if (query.country) qb = qb.ilike("country", query.country.replace(/-/g, " "));
   if (query.propertyType) qb = qb.eq("property_type", query.propertyType);
   if (query.minPrice != null) qb = qb.gte("price_per_night", query.minPrice);
   if (query.maxPrice != null) qb = qb.lte("price_per_night", query.maxPrice);
