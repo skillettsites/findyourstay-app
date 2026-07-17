@@ -24,7 +24,8 @@ const nextConfig: NextConfig = {
       { source: "/travel/:rest*", destination: "/s", permanent: true },
       { source: "/price-watch/:rest*", destination: "/s", permanent: true },
       { source: "/countries", destination: "/s", permanent: true },
-      { source: "/country/:rest*", destination: "/s", permanent: true },
+      { source: "/country/:country", destination: "/s?country=:country", permanent: true },
+      { source: "/country/:country/:rest*", destination: "/s?country=:country", permanent: true },
       { source: "/about", destination: "/", permanent: true },
     ];
   },
