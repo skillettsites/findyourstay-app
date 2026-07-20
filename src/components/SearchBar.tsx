@@ -152,6 +152,7 @@ export function SearchBar({ compact = false, initialQ = "" }: { compact?: boolea
             value={q}
             onChange={(e) => { setQ(e.target.value); setCitySlug(null); }}
             onFocus={() => setPanel("where")}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); buildAndGo(); } }}
             placeholder="Search destinations"
             autoComplete="off"
             className="w-full text-sm text-ink placeholder:text-muted outline-none bg-transparent"

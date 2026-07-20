@@ -42,7 +42,9 @@ export default async function SearchPage({ searchParams }: { searchParams: SP })
     ? `Stays matching "${query.q}"`
     : query.citySlug
       ? `Stays in ${items[0]?.cityName ?? query.citySlug}`
-      : "All stays";
+      : query.country
+        ? `Stays in ${items[0]?.country ?? query.country.replace(/-/g, " ")}`
+        : "All stays";
 
   // Acknowledge the dates/flexible/guests the traveller chose (carried to the booking box).
   const inDate = one(sp.in);
