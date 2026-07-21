@@ -86,8 +86,26 @@ export default async function SearchPage({ searchParams }: { searchParams: SP })
           </div>
 
           {items.length === 0 ? (
-            <div className="text-center py-20 border border-dashed border-line rounded-xl text-muted">
-              No stays found. Try a different search.
+            <div className="text-center py-16 border border-dashed border-line rounded-xl text-muted">
+              <p className="mb-4">No stays found. Try a different search, or browse a popular destination:</p>
+              <div className="flex flex-wrap justify-center gap-2">
+                {[
+                  { name: "London", slug: "london" },
+                  { name: "Paris", slug: "paris" },
+                  { name: "Rome", slug: "rome" },
+                  { name: "Barcelona", slug: "barcelona" },
+                  { name: "New York", slug: "new-york" },
+                  { name: "Lisbon", slug: "lisbon" },
+                ].map((c) => (
+                  <a
+                    key={c.slug}
+                    href={`/s?city=${c.slug}`}
+                    className="px-4 py-2 rounded-full border border-line text-sm text-ink hover:border-ink transition-colors"
+                  >
+                    {c.name}
+                  </a>
+                ))}
+              </div>
             </div>
           ) : (
             <Stagger className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-5 gap-y-8">
