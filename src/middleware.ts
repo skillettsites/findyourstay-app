@@ -32,10 +32,33 @@ function isAppHost(host: string): boolean {
   );
 }
 
+// Old travel-intelligence site sections (the pre-pivot idea). These are gone
+// for good: ~1,900 of them were still in Google's index redirecting into /s,
+// which Google was flagging as Soft 404 / duplicate-canonical. A hard 410
+// tells crawlers to drop them so the index becomes the directory only.
+const GONE_PREFIXES = /^\/(stay|blog|compare|travel|price-watch|countries|country|analysestay)(\/|$)/;
+
+function goneResponse(): NextResponse {
+  return new NextResponse(
+    `<!doctype html><html><head><meta charset="utf-8"><title>Page removed | FindYourStay</title><meta name="robots" content="noindex"></head>` +
+    `<body style="font-family:system-ui,sans-serif;max-width:32rem;margin:15vh auto;padding:0 1rem;color:#222">` +
+    `<h1 style="font-size:1.4rem">This page has been removed</h1>` +
+    `<p>FindYourStay is now a direct-booking stay directory. The travel guides that used to live here are gone.</p>` +
+    `<p><a href="/s" style="color:#0a7">Browse stays</a> or <a href="/">go to the homepage</a>.</p></body></html>`,
+    { status: 410, headers: { "Content-Type": "text/html; charset=utf-8" } },
+  );
+}
+
 export async function middleware(req: NextRequest) {
   const host = req.headers.get("host") ?? "";
   const hostOnly = host.split(":")[0];
   const appHostOnly = SITE_HOST.split(":")[0];
+
+  // Retired sections 410 on the app host only (tenant microsites keep their
+  // own routing below).
+  if (isAppHost(host) && GONE_PREFIXES.test(req.nextUrl.pathname)) {
+    return goneResponse();
+  }
 
   // Consolidate www -> apex (the canonical host) with a permanent redirect, so
   // www doesn't get mistaken for a tenant microsite and SEO stays on one host.

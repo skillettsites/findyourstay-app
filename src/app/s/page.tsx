@@ -17,6 +17,26 @@ function one(v: string | string[] | undefined): string | undefined {
   return Array.isArray(v) ? v[0] : v;
 }
 
+// Each city/country search variant declares itself canonical. Without this,
+// Google picks its own winner among the near-identical /s?city= pages and
+// reports "Duplicate, Google chose different canonical than user".
+export async function generateMetadata({ searchParams }: { searchParams: SP }) {
+  const sp = await searchParams;
+  const city = one(sp.city);
+  const country = one(sp.country);
+  const base = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://findyourstay.com").replace(/\/$/, "");
+  const canonical = city
+    ? `${base}/s?city=${encodeURIComponent(city)}`
+    : country
+      ? `${base}/s?country=${encodeURIComponent(country)}`
+      : `${base}/s`;
+  const place = (city ?? country)?.replace(/-/g, " ");
+  const title = place
+    ? `Stays in ${place.replace(/\b\w/g, (c) => c.toUpperCase())} | FindYourStay`
+    : "Search stays | FindYourStay";
+  return { title, alternates: { canonical } };
+}
+
 export default async function SearchPage({ searchParams }: { searchParams: SP }) {
   const sp = await searchParams;
 
