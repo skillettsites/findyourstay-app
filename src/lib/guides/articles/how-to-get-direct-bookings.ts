@@ -31,6 +31,12 @@ export const guide: Guide = {
       text: "Every booking that comes through Airbnb or Booking.com costs you money. Not in an abstract sense: a £100 room night nets you roughly £85 after platform fees, and on a busy summer week that gap compounds fast. The good news is that getting guests to book directly is not complicated. It requires a few reliable building blocks, consistency, and the patience to let the channel grow. This guide walks through exactly what those building blocks are.",
     },
     {
+      t: "callout",
+      tone: "info",
+      title: "Want the short version?",
+      text: "Everything below starts with one thing: somewhere of your own for guests to book. FindYourStay is a [direct booking website builder](/host) that does the building for you, on your own domain, with no commission on any booking. [Build your direct booking site](/host/build) free and see it before you decide.",
+    },
+    {
       t: "h2",
       text: "Why direct bookings matter: the numbers",
     },

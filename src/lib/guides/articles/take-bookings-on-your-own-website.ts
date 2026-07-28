@@ -31,6 +31,12 @@ export const guide: Guide = {
       text: "Every time a guest books through Airbnb, Booking.com, or Vrbo, you hand over a slice of your income. Combined host and guest fees often amount to 15 to 25% of the booking value. For a £150-a-night room, that is £22 to £37 gone before you have welcomed your first guest. Taking bookings on your own website removes that cost entirely. This guide explains how the whole process works, from payments to calendar management, so you can decide whether it is right for your B&B or guesthouse.",
     },
     {
+      t: "callout",
+      tone: "info",
+      title: "The done-for-you route",
+      text: "If you want the result without the setup, FindYourStay is a [direct booking website builder](/host) that builds and hosts the whole thing for you: availability, booking requests, iCal sync and your own Stripe or PayPal link, with no commission taken. [Build your direct booking site](/host/build) free and see it before you pay anything.",
+    },
+    {
       t: "h2",
       text: "What 'direct bookings' actually means",
     },

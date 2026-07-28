@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -9,11 +9,25 @@ import { RoomGallery } from "@/components/RoomGallery";
 import { BackButton } from "@/components/BackButton";
 import { PerksList } from "@/components/PerksList";
 import { Stagger, StaggerItem } from "@/components/Motion";
-import { getListingBySlug, getRelatedListings, recordEvent } from "@/lib/db";
+import { ViewBeacon } from "@/components/ViewBeacon";
+import { getListingBySlug, getRelatedListings } from "@/lib/db";
+import { isGoogleSourcedPhotos } from "@/lib/listingQuality";
 import { prettyType, formatPrice } from "@/lib/format";
 import type { Metadata } from "next";
 
-export const dynamic = "force-dynamic";
+// ISR. Listing content changes rarely (a host edit, a price tweak), so serving
+// a cached page for an hour is plenty fresh and stops every crawl of the 3,182
+// listing URLs turning into a fresh database round trip. Pages are still
+// generated on demand: nothing is prerendered at build time.
+export const revalidate = 3600;
+
+// Empty on purpose: nothing is prerendered at build time (3,182 listings would
+// make builds pointlessly slow), but returning an array is what opts the route
+// into ISR rather than per-request rendering. Pages are built on first visit and
+// then served from cache.
+export function generateStaticParams() {
+  return [];
+}
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
@@ -21,7 +35,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const l = await getListingBySlug(slug);
   if (!l) return { title: "Stay not found | FindYourStay" };
-  const title = `${l.propertyName} — ${l.cityName}, ${l.country} | FindYourStay`;
+  const title = `${l.propertyName}, ${l.cityName}, ${l.country} | FindYourStay`;
   const description = `${(l.description ?? `${prettyType(l.propertyType)} in ${l.cityName}.`).slice(0, 150)} Book direct, no fees.`;
   return {
     title,
@@ -37,11 +51,10 @@ export default async function RoomPage({ params }: { params: Promise<{ slug: str
   const listing = await getListingBySlug(slug);
   if (!listing) notFound();
 
-  void recordEvent(listing.id, "view");
   const related = await getRelatedListings(listing, 4);
   const photos = listing.photos;
   const hasPhotos = photos.length > 0;
-  const realPhotos = photos[0]?.startsWith("/places/");
+  const realPhotos = isGoogleSourcedPhotos(photos);
 
   // JSON-LD. We do NOT emit aggregateRating (no real reviews collected).
   const ld = {
@@ -69,6 +82,7 @@ export default async function RoomPage({ params }: { params: Promise<{ slug: str
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
+      <ViewBeacon listingId={listing.id} />
       <Header />
       <main className="mx-auto max-w-6xl px-4 sm:px-6 w-full py-6">
         <div className="mb-4">
@@ -139,7 +153,13 @@ export default async function RoomPage({ params }: { params: Promise<{ slug: str
           {/* Sticky booking box */}
           <div className="lg:col-span-1">
             <div className="lg:sticky lg:top-24">
-              <BookingBox listing={listing} />
+              {/* The booking box prefills the dates a guest picked on /s, which it
+                  reads from the URL. That makes it client-only, so it needs its
+                  own boundary now the page itself is cached rather than rendered
+                  per request. */}
+              <Suspense fallback={<div className="rounded-2xl border border-line bg-white shadow-card h-[420px]" />}>
+                <BookingBox listing={listing} />
+              </Suspense>
               <p className="text-xs text-muted text-center mt-3">
                 {realPhotos ? "Photos via Google · " : ""}
                 {listing.attribution}

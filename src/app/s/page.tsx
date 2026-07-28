@@ -6,12 +6,19 @@ import { ResultsMap, type MapPoint } from "@/components/ResultsMap";
 import { SortSelect } from "@/components/SortSelect";
 import { BackButton } from "@/components/BackButton";
 import { Stagger, StaggerItem } from "@/components/Motion";
-import { searchListings, recordImpressions } from "@/lib/db";
+import { headers } from "next/headers";
+import { searchListingsCached, recordImpressions } from "@/lib/db";
 import type { ListingQuery, PropertyType } from "@/lib/types";
 
-export const dynamic = "force-dynamic";
-
+// No route-level cache setting: this page reads request-time search params
+// (city, country, dates, guests, sort), so it has to render per request and
+// cannot be ISR. The expensive part, the listing query, is cached for 15
+// minutes instead, so repeat crawls of /s?city=... don't re-hit the database.
 type SP = Promise<Record<string, string | string[] | undefined>>;
+
+// Obvious crawlers: their hits are not host "impressions" and writing a row per
+// listing shown on every bot pass is pure database churn.
+const CRAWLER = /bot|crawler|crawling|spider|slurp|bingpreview|googleother|gptbot|claudebot|ccbot|perplexity|applebot|ahrefs|semrush|headlesschrome/i;
 
 function one(v: string | string[] | undefined): string | undefined {
   return Array.isArray(v) ? v[0] : v;
@@ -51,9 +58,11 @@ export default async function SearchPage({ searchParams }: { searchParams: SP })
     limit: 48,
   };
 
-  const { items, total } = await searchListings(query);
-  // Record one search impression per listing shown (host analytics). Best-effort.
-  void recordImpressions(items.map((l) => l.id));
+  const { items, total } = await searchListingsCached(query);
+  // Record one search impression per listing shown (host analytics). Best-effort,
+  // and skipped for crawlers so the numbers stay about real travellers.
+  const ua = (await headers()).get("user-agent") ?? "";
+  if (!CRAWLER.test(ua)) void recordImpressions(items.map((l) => l.id));
   const points: MapPoint[] = items
     .filter((l) => Number.isFinite(l.lat) && Number.isFinite(l.lng))
     .map((l) => ({ id: l.id, slug: l.slug, name: l.propertyName, lat: l.lat, lng: l.lng, price: l.pricePerNight, currency: l.currency, photo: l.photos[0] }));

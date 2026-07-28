@@ -40,6 +40,12 @@ export const guide: Guide = {
       ],
     },
     {
+      t: "callout",
+      tone: "info",
+      title: "The tactic that pays for all the others",
+      text: "Tactics 1 to 12 fill rooms; a site of your own decides how much of each booking you keep. FindYourStay is a [direct booking website builder](/host) that builds and hosts one for you, with no commission on any booking. [Build your direct booking site](/host/build) free and see it before you commit.",
+    },
+    {
       t: "h2",
       text: "Make your listing impossible to scroll past",
     },

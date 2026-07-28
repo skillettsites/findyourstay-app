@@ -40,6 +40,12 @@ export const guide: Guide = {
       ],
     },
     {
+      t: "callout",
+      tone: "info",
+      title: "If you would rather not build anything yourself",
+      text: "FindYourStay is the done-for-you option in this comparison: a [direct booking website builder](/host) where we do the building, hosting and search submission for you, with payments going straight to your own Stripe or PayPal and no commission on any booking. [Build your direct booking site](/host/build) free to see it first.",
+    },
+    {
       t: "h2",
       text: "General website builders: Wix and Squarespace",
     },

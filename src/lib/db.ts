@@ -1,8 +1,10 @@
 // Data layer backed by Supabase (shared project, `fys_` tables). All async.
 // Mirrors the previous local API so callers just add `await`.
 import "server-only";
+import { unstable_cache } from "next/cache";
 import { sb, T } from "./sb";
 import { submitToIndexNow } from "./indexnow";
+import { isSitemapWorthy } from "./listingQuality";
 import type { CitySummary, Listing, ListingQuery, ListingTier } from "./types";
 
 type Row = Record<string, unknown>;
@@ -87,6 +89,25 @@ export async function searchListings(query: ListingQuery = {}): Promise<{ items:
   const offset = query.offset ?? 0;
   const { data, count } = await qb.range(offset, offset + limit - 1);
   return { items: (data ?? []).map(rowToListing), total: count ?? 0 };
+}
+
+// Same search, memoised per query for 15 minutes. /s has to render at request
+// time (it reads search params) but the underlying result set changes rarely,
+// so repeat crawls of /s?city=... are served from the cache instead of hitting
+// Supabase on every single request.
+const searchCache = unstable_cache(
+  async (key: string) => searchListings(JSON.parse(key) as ListingQuery),
+  ["fys-search"],
+  { revalidate: 900, tags: ["listings"] },
+);
+
+export async function searchListingsCached(query: ListingQuery = {}): Promise<{ items: Listing[]; total: number }> {
+  // Stable key: sorted entries with undefined dropped, so equivalent queries hit
+  // the same cache entry regardless of property order.
+  const key = JSON.stringify(
+    Object.fromEntries(Object.entries(query).filter(([, v]) => v !== undefined).sort(([a], [b]) => a.localeCompare(b))),
+  );
+  return searchCache(key);
 }
 
 export async function getListingBySlug(slug: string): Promise<Listing | null> {
@@ -189,6 +210,31 @@ export async function getAllListingSlugs(limit = 50000): Promise<{ slug: string 
       .range(from, to);
     const rows = (data ?? []) as { slug: string }[];
     out.push(...rows);
+    if (rows.length < pageSize) break;
+  }
+  return out;
+}
+
+// Slugs for the sitemap: only listings that clear the quality bar in
+// listingQuality.ts. The full corpus is 3,182 slugs, almost all single-photo
+// seed rows Google has repeatedly declined to index; submitting them buries the
+// pages that can rank (/, /host, /guides, the city searches) in noise.
+export async function getSitemapListingSlugs(limit = 50000): Promise<{ slug: string }[]> {
+  const pageSize = 1000;
+  const out: { slug: string }[] = [];
+  for (let from = 0; from < limit; from += pageSize) {
+    const to = Math.min(from + pageSize, limit) - 1;
+    const { data } = await sb
+      .from(T.listings)
+      .select("slug,photos")
+      .in("status", ["active", "unclaimed"])
+      .order("slug", { ascending: true })
+      .range(from, to);
+    const rows = (data ?? []) as { slug: string; photos: unknown }[];
+    for (const r of rows) {
+      const photos = Array.isArray(r.photos) ? (r.photos as string[]) : [];
+      if (isSitemapWorthy(photos)) out.push({ slug: r.slug });
+    }
     if (rows.length < pageSize) break;
   }
   return out;
