@@ -39,8 +39,8 @@ export async function generateMetadata({ searchParams }: { searchParams: SP }) {
       : `${base}/s`;
   const place = (city ?? country)?.replace(/-/g, " ");
   const title = place
-    ? `Stays in ${place.replace(/\b\w/g, (c) => c.toUpperCase())} | FindYourStay`
-    : "Search stays | FindYourStay";
+    ? `Stays in ${place.replace(/\b\w/g, (c) => c.toUpperCase())}`
+    : "Search stays";
   return { title, alternates: { canonical } };
 }
 

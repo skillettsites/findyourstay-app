@@ -34,8 +34,8 @@ const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const l = await getListingBySlug(slug);
-  if (!l) return { title: "Stay not found | FindYourStay" };
-  const title = `${l.propertyName}, ${l.cityName}, ${l.country} | FindYourStay`;
+  if (!l) return { title: "Stay not found" };
+  const title = `${l.propertyName}, ${l.cityName}, ${l.country}`;
   const description = `${(l.description ?? `${prettyType(l.propertyType)} in ${l.cityName}.`).slice(0, 150)} Book direct, no fees.`;
   return {
     title,

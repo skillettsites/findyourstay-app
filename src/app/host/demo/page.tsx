@@ -5,7 +5,7 @@ import { DashboardView, type DashboardData } from "@/components/host/DashboardVi
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Host dashboard preview - FindYourStay",
+  title: "Host dashboard preview",
   description: "See the host dashboard before you sign up: impressions, views, website visits, enquiries, booking requests, a 30-day reach trend, plus edit-stay and edit-website tabs.",
 };
 

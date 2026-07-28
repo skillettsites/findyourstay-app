@@ -6,7 +6,7 @@ import { SiteBuilder } from "@/components/SiteBuilder";
 // Fully static: the builder is a client component with no server data, so there
 // is nothing to render per request. Crawlers get a prerendered page.
 export const metadata = {
-  title: "Build your direct booking website - FindYourStay",
+  title: "Build your direct booking website",
   description:
     "See your own direct booking website before you sign up. Pick a style, add your details, and watch it come to life. Make it live in minutes, with no commission on your bookings.",
   alternates: { canonical: "/host/build" },

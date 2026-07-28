@@ -12,7 +12,7 @@ import { EXAMPLE_TEMPLATES } from "@/lib/exampleStays";
 export const revalidate = 3600;
 
 export const metadata = {
-  title: "Your own direct booking website, built for you - FindYourStay for hosts",
+  title: "Your own direct booking website, built for you",
   description:
     "A direct booking website builder that does the building for you. We create and host your site on your own domain, sync your calendar, and guests pay you directly. No commission, ever. Listings from £79/year.",
   alternates: { canonical: "/host" },

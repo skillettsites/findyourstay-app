@@ -86,7 +86,7 @@ function BuildVisual() {
           ))}
         </div>
       </div>
-      <motion.p {...reveal(0.8)} className="text-xs text-muted mt-4 text-center">Pick a template — we fill it in and host it on your own domain.</motion.p>
+      <motion.p {...reveal(0.8)} className="text-xs text-muted mt-4 text-center">Pick a template, we fill it in and host it on your own domain.</motion.p>
     </CardFrame>
   );
 }
@@ -208,7 +208,7 @@ function AIVisual() {
       <div className="space-y-2.5">
         <motion.div {...reveal(0.1)} className="max-w-[80%] rounded-2xl rounded-bl-sm bg-mist px-3.5 py-2 text-sm">Where should I stay in Porto, near the river?</motion.div>
         <motion.div {...reveal(0.7)} className="ml-auto max-w-[85%] rounded-2xl rounded-br-sm bg-brand-gradient text-white px-3.5 py-2 text-sm">
-          Try <b>Casa do Rio</b> — a lovely riverside guesthouse. You can book it direct here →
+          Try <b>Casa do Rio</b>, a lovely riverside guesthouse. You can book it direct here →
         </motion.div>
       </div>
       <motion.div {...reveal(1.2)} className="mt-4 inline-flex items-center gap-1.5 text-xs text-emerald-700 bg-emerald-50 rounded-full px-3 py-1.5">
@@ -261,7 +261,7 @@ const FEATURES: Feat[] = [
   {
     eyebrow: "Get found, get more bookings",
     title: "We get you ranking on Google",
-    body: "We submit your site so it shows up when people search — and keeps climbing month after month.",
+    body: "We submit your site so it shows up when people search, and keeps climbing month after month.",
     plain: "In plain English: SEO and \"indexing\" just mean showing up on Google and Bing when someone searches. The higher you appear, the more people find you and book.",
     visual: <ChartVisual />,
   },

@@ -6,7 +6,7 @@ import { ConciergeChat } from "@/components/ConciergeChat";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "For travellers - FindYourStay",
+  title: "For travellers",
   description: "Find independent guesthouses, B&Bs and rentals worldwide and book direct with the owner, with no platform fees. Ask our trip assistant for ideas.",
 };
 
