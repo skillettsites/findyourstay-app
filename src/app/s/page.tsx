@@ -107,7 +107,7 @@ export default async function SearchPage({ searchParams }: { searchParams: SP })
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-2xl font-display font-bold">{heading}</h1>
-              <p className="text-sm text-muted">{total.toLocaleString()} stays{criteria ? ` · ${criteria}` : ""}</p>
+              <p className="text-sm text-muted">{total.toLocaleString()} stays{criteria ? ` · ${criteria}` : ""} · book direct with the owner, no platform fees</p>
             </div>
             <Suspense fallback={null}>
               <SortSelect />

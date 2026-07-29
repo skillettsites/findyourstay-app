@@ -132,10 +132,15 @@ export function ListingCard({ listing, hrefSuffix = "" }: { listing: Listing; hr
         ) : (
           <p className="text-muted text-sm">Book direct, no fees</p>
         )}
-        <p className="pt-1.5 text-ink">
-          <span className="font-bold">{formatPrice(listing.pricePerNight, listing.currency)}</span>
-          <span className="text-muted"> night</span>
-        </p>
+        <div className="pt-2 flex items-center justify-between gap-2">
+          <p className="text-ink">
+            <span className="font-bold">{formatPrice(listing.pricePerNight, listing.currency)}</span>
+            <span className="text-muted"> night</span>
+          </p>
+          <span className="shrink-0 text-xs font-semibold text-white bg-ink group-hover:bg-brand rounded-full px-3.5 py-1.5 transition-colors">
+            View stay
+          </span>
+        </div>
       </div>
     </Link>
   );
