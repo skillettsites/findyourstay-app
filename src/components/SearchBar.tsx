@@ -28,7 +28,7 @@ function nextMonths(n: number) {
   return out;
 }
 
-export function SearchBar({ compact = false, initialQ = "" }: { compact?: boolean; initialQ?: string }) {
+export function SearchBar({ compact = false, initialQ = "", fullWidth = false }: { compact?: boolean; initialQ?: string; fullWidth?: boolean }) {
   const router = useRouter();
   const [q, setQ] = useState(initialQ);
   const [citySlug, setCitySlug] = useState<string | null>(null);
@@ -106,19 +106,19 @@ export function SearchBar({ compact = false, initialQ = "" }: { compact?: boolea
   // ---------- COMPACT (header) ----------
   if (compact) {
     return (
-      <div ref={wrapRef} className="relative">
+      <div ref={wrapRef} className={`relative ${fullWidth ? "w-full" : ""}`}>
         <form
           onSubmit={(e) => { e.preventDefault(); buildAndGo(); }}
-          className="flex items-center gap-2 rounded-full border border-line shadow-card hover:shadow-float transition px-2 py-1.5 bg-white"
+          className={`flex items-center gap-2 rounded-full border border-line shadow-card hover:shadow-float transition px-2 py-1.5 bg-white ${fullWidth ? "w-full" : ""}`}
         >
           <input
             value={q}
             onChange={(e) => { setQ(e.target.value); setCitySlug(null); }}
             onFocus={() => setPanel("where")}
             placeholder="Search destinations"
-            className="px-3 py-1 text-sm outline-none w-40 sm:w-56 bg-transparent"
+            className={`px-3 py-1 text-sm outline-none bg-transparent ${fullWidth ? "flex-1 min-w-0" : "w-40 sm:w-56"}`}
           />
-          <button className="grid place-items-center w-8 h-8 rounded-full bg-brand-gradient text-white" aria-label="Search"><SearchIcon /></button>
+          <button className="grid place-items-center w-8 h-8 rounded-full bg-brand-gradient text-white shrink-0" aria-label="Search"><SearchIcon /></button>
         </form>
         {panel === "where" && (
           <div className="absolute left-0 right-0 top-full mt-2 z-50">

@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { Header } from "@/components/Header";
 import { CategoryRow } from "@/components/CategoryRow";
+import { SearchBar } from "@/components/SearchBar";
 
 // /s renders at request time (it reads search params) so it can't be ISR, and
 // the page component awaits a database call before returning anything. Without
@@ -12,6 +13,9 @@ export default function Loading() {
   return (
     <>
       <Header />
+      <div className="md:hidden px-4 sm:px-6 pt-3 pb-1">
+        <SearchBar compact fullWidth />
+      </div>
       <Suspense fallback={<div className="h-16" />}>
         <CategoryRow />
       </Suspense>

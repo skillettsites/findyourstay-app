@@ -5,6 +5,7 @@ import { ListingCard } from "@/components/ListingCard";
 import { ResultsMap, type MapPoint } from "@/components/ResultsMap";
 import { SortSelect } from "@/components/SortSelect";
 import { BackButton } from "@/components/BackButton";
+import { SearchBar } from "@/components/SearchBar";
 import { Stagger, StaggerItem } from "@/components/Motion";
 import { headers } from "next/headers";
 import { searchListingsCached, recordImpressions } from "@/lib/db";
@@ -75,6 +76,12 @@ export default async function SearchPage({ searchParams }: { searchParams: SP })
         ? `Stays in ${items[0]?.country ?? query.country.replace(/-/g, " ")}`
         : "All stays";
 
+  const searchValue = query.citySlug
+    ? items[0]?.cityName ?? query.citySlug.replace(/-/g, " ")
+    : query.country
+      ? items[0]?.country ?? query.country.replace(/-/g, " ")
+      : query.q ?? "";
+
   // Acknowledge the dates/flexible/guests the traveller chose (carried to the booking box).
   const inDate = one(sp.in);
   const outDate = one(sp.out);
@@ -94,6 +101,9 @@ export default async function SearchPage({ searchParams }: { searchParams: SP })
   return (
     <>
       <Header />
+      <div className="md:hidden px-4 sm:px-6 pt-3 pb-1">
+        <SearchBar compact fullWidth initialQ={searchValue} />
+      </div>
       <Suspense fallback={<div className="h-16" />}>
         <CategoryRow />
       </Suspense>
